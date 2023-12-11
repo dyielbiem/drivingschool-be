@@ -1,0 +1,83 @@
+service: driving-school-admin
+frameworkVersion: "3"
+
+custom:
+  superAdminTable: "driving_school_super_admin"
+  adminTable: "driving_school_admin"
+  serverless-dynamodb:
+    start:
+      migrate: true
+      port: 8000
+      dbPath: "./"
+      inMemory: false
+      shareDb: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [SuperAdminTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [AdminTable, Arn]
+  environment:
+    SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
+    ADMIN_TABLE: ${self:custom.adminTable}
+    SUPER_ADMIN_SECRET: ${env:SUPER_ADMIN_SECRET}
+    JWT_SECRET: ${env:JWT_SECRET}
+
+functions:
+  api:
+    handler: src/app.handler
+    events:
+      - httpApi: "*"
+
+resources:
+  Resources:
+    SuperAdminTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.superAdminTable}
+    AdminTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.adminTable}
+
+useDotenv: true
+
+plugins:
+  - serverless-dynamodb
+  - serverless-offline
