@@ -5,6 +5,7 @@ import createAdmin from "../controller/superAdmin/createAdmin.js";
 import loginSuperAdmin from "../controller/superAdmin/logInSuperAdmin.js";
 import deleteAdmin from "../controller/superAdmin/deleteAdmin.js";
 import fetchAllSuperAdmins from "../controller/superAdmin/fetchAllSuperAdmins.js";
+import fetchAllAdmins from "../controller/superAdmin/fetchAllAdmins.js";
 
 /*
 ------- Router for super admin
@@ -17,5 +18,6 @@ superAdminRouter.post("/signup", signUpSuperAdmin);
 superAdminRouter.post("/login", loginSuperAdmin);
 superAdminRouter.post("/create-admin", superAdminMiddleware, createAdmin);
 superAdminRouter.delete("/delete-admin", superAdminMiddleware, deleteAdmin);
+superAdminRouter.get("/fetch-admins", superAdminMiddleware, fetchAllAdmins);
 
 export default superAdminRouter;

@@ -1,6 +1,6 @@
 import express from "express";
 import serverless from "serverless-http";
-import superAdminRouter from "./routes/superAdminRoute.js";
+import superAdminRouter from "./routes/superAdminRoutes.js";
 
 const app = express();
 
