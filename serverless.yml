@@ -2,8 +2,10 @@ service: driving-school-admin
 frameworkVersion: "3"
 
 custom:
-  superAdminTable: "driving_school_super_admin"
-  adminTable: "driving_school_admin"
+  superAdminTable: "DrivingSchoolSuperAdmin"
+  adminTable: "DrivingSchoolAdmin"
+  drivingSchoolTable: "DrivingSchoolAccount"
+  courseTable: "DrivingSchoolCourse"
   serverless-dynamodb:
     start:
       migrate: true
@@ -21,29 +23,33 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
+            - dynamodb:*
+          Resource:
+            - Fn::GetAtt: [DrivingSchoolTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:*
           Resource:
             - Fn::GetAtt: [SuperAdminTable, Arn]
         - Effect: Allow
           Action:
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
+            - dynamodb:*
           Resource:
             - Fn::GetAtt: [AdminTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource:
+            - Fn::GetAtt: [CourseTable, Arn]
   environment:
+    DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
     ADMIN_TABLE: ${self:custom.adminTable}
-    SUPER_ADMIN_SECRET: ${env:SUPER_ADMIN_SECRET}
-    JWT_SECRET: ${env:JWT_SECRET}
+    COURSE_TABLE: ${self:custom.courseTable}
+    API_KEY: ${env:API_KEY}
+    SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
+    ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
+    STUDENT_JWT_SECRET: ${env:STUDENT_JWT_SECRET}
 
 functions:
   api:
@@ -53,14 +59,25 @@ functions:
 
 resources:
   Resources:
+    DrivingSchoolTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: drivingSchoolName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: drivingSchoolName
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.drivingSchoolTable}
     SuperAdminTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: username
+          - AttributeName: userName
             AttributeType: S
         KeySchema:
-          - AttributeName: username
+          - AttributeName: userName
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.superAdminTable}
@@ -68,13 +85,32 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: username
+          - AttributeName: drivingSchoolName
+            AttributeType: S
+          - AttributeName: adminUserName
             AttributeType: S
         KeySchema:
-          - AttributeName: username
+          - AttributeName: drivingSchoolName
             KeyType: HASH
+          - AttributeName: adminUserName
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.adminTable}
+    CourseTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: drivingSchoolName
+            AttributeType: S
+          - AttributeName: courseName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: drivingSchoolName
+            KeyType: HASH
+          - AttributeName: courseName
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.courseTable}
 
 useDotenv: true
 

@@ -3,7 +3,7 @@ import { DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
 /*
 ---- Controller to delete an existing admin role
----- /api/superadmins/create-admin (POST)
+---- /api/superadmin/create-admin (POST)
 */
 const deleteAdmin = async (req, res) => {
   try {
@@ -14,7 +14,7 @@ const deleteAdmin = async (req, res) => {
     const command = new DeleteCommand({
       TableName: process.env.ADMIN_TABLE,
       Key: {
-        username: adminUserName,
+        UserName: adminUserName,
       },
       ConditionExpression: "attribute_exists(username)",
     });

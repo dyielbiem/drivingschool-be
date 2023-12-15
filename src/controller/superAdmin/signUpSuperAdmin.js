@@ -4,28 +4,26 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to sign up a super admin
----- /api/superadmins/signup (POST)
+---- /api/superadmin/signup (POST)
 */
 const signUpSuperAdmin = async (req, res) => {
-  const { username, password, confirmPassword, secret } = req.body;
+  const { userName, passWord, confirmPassWord } = req.body;
   try {
-    if (!username || !password || !confirmPassword || !secret)
+    if (!userName || !passWord || !confirmPassWord)
       throw Error("All required fields must be filled");
-    if (process.env.SUPER_ADMIN_SECRET !== secret)
-      return res.status(401).json({ error: "Unauthorized" });
 
-    if (password !== confirmPassword) throw Error("Passwords do not match");
+    if (passWord !== confirmPassWord) throw Error("Passwords do not match");
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassWord = await bcrypt.hash(passWord, salt);
 
     const putCommand = new PutCommand({
       TableName: process.env.SUPER_ADMIN_TABLE,
       Item: {
-        username,
-        password: hashedPassword,
+        userName,
+        passWord: hashedPassWord,
       },
-      ConditionExpression: "attribute_not_exists(username)",
+      ConditionExpression: "attribute_not_exists(userName)",
     });
 
     const result = await dynamoClient.send(putCommand);

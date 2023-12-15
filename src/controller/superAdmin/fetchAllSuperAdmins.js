@@ -3,7 +3,7 @@ import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 /*
 ---- Controller to fetch all the super admin
----- /api/superadmins/ (GET)
+---- /api/superadmin/ (GET)
 */
 const fetchAllSuperAdmins = async (req, res) => {
   try {

@@ -3,16 +3,15 @@ import jwt from "jsonwebtoken";
 /*
 ---- Middleware for validation of super admin token
 */
-const superAdminMiddleware = async (req, res, next) => {
+const authorizeSuperAdmin = async (req, res, next) => {
   try {
     const authorization = req.headers.authorization;
     if (!authorization) throw Error;
     const token = authorization.split(" ")[1];
 
-    const { username } = jwt.verify(token, process.env.JWT_SECRET);
+    const { userName } = jwt.verify(token, process.env.SUPER_ADMIN_JWT_SECRET);
 
-    console.log(username);
-    req.body.superAdmin = username;
+    req.body.superAdmin = userName;
 
     next();
   } catch (error) {
@@ -20,4 +19,4 @@ const superAdminMiddleware = async (req, res, next) => {
   }
 };
 
-export default superAdminMiddleware;
+export default authorizeSuperAdmin;
