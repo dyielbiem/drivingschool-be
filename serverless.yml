@@ -2,9 +2,10 @@ service: driving-school-admin
 frameworkVersion: "3"
 
 custom:
+  drivingSchoolTable: "DrivingSchoolAccount"
   superAdminTable: "DrivingSchoolSuperAdmin"
   adminTable: "DrivingSchoolAdmin"
-  drivingSchoolTable: "DrivingSchoolAccount"
+  studentTable: "DrivingSchoolStudent"
   courseTable: "DrivingSchoolCourse"
   serverless-dynamodb:
     start:
@@ -40,20 +41,29 @@ provider:
           Action:
             - dynamodb:*
           Resource:
+            - Fn::GetAtt: [StudentTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource:
             - Fn::GetAtt: [CourseTable, Arn]
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
     ADMIN_TABLE: ${self:custom.adminTable}
+    STUDENT_TABLE: ${self:custom.studentTable}
     COURSE_TABLE: ${self:custom.courseTable}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
     STUDENT_JWT_SECRET: ${env:STUDENT_JWT_SECRET}
+    CRYPTO_SECRET: ${env:CRYPTO_SECRET}
+    CRYPTO_IV: ${env:CRYPTO_IV}
 
 functions:
   api:
     handler: src/app.handler
+    timeout: 20
     events:
       - httpApi: "*"
 
@@ -96,6 +106,21 @@ resources:
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.adminTable}
+    StudentTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: drivingSchoolName
+            AttributeType: S
+          - AttributeName: studentUserName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: drivingSchoolName
+            KeyType: HASH
+          - AttributeName: studentUserName
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.studentTable}
     CourseTable:
       Type: AWS::DynamoDB::Table
       Properties:

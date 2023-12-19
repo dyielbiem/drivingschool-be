@@ -6,6 +6,15 @@ import studentRouter from "./routes/studentRoutes.js";
 
 const app = express();
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "X-API-Key, Authorization, Content-Type"
+  );
+  next();
+});
 app.use(express.json());
 app.use("/api/superadmin", superAdminRouter);
 app.use("/api/admin", adminRouter);

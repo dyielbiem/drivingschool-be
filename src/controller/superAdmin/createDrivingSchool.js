@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { encrypt } from "../../utils/crypto.js";
 
 /*
 ---- Controller to create new admin role
@@ -9,6 +10,8 @@ import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 export const createDrivingSchool = async (req, res) => {
   try {
     const {
+      paymentLogInKey,
+      paymentTransactionKey,
       drivingSchoolName,
       address,
       city,
@@ -21,6 +24,8 @@ export const createDrivingSchool = async (req, res) => {
       superAdmin,
     } = req.body;
     if (
+      !paymentLogInKey ||
+      !paymentTransactionKey ||
       !drivingSchoolName ||
       !adminUserName ||
       !passWord ||
@@ -37,6 +42,9 @@ export const createDrivingSchool = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassWord = await bcrypt.hash(passWord, salt);
 
+    const encryptedPaymentLogInKey = encrypt(paymentLogInKey);
+    const encryptedTransactionKey = encrypt(paymentTransactionKey);
+
     const command = new TransactWriteCommand({
       TransactItems: [
         {
@@ -49,6 +57,8 @@ export const createDrivingSchool = async (req, res) => {
               state,
               zip,
               country,
+              paymentLogInKey: encryptedPaymentLogInKey,
+              paymentTransactionKey: encryptedTransactionKey,
             },
             ConditionExpression: "attribute_not_exists(drivingSchoolName)",
           },
@@ -77,7 +87,7 @@ export const createDrivingSchool = async (req, res) => {
     if (String(error.message).includes("Transaction cancelled"))
       return res
         .status(400)
-        .json({ error: "The driving school or admin already exists" });
+        .json({ error: "The driving school already exists" });
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json({ error });
   }
