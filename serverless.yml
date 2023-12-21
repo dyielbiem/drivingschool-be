@@ -39,27 +39,52 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:*
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [DrivingSchoolTable, Arn]
         - Effect: Allow
           Action:
-            - dynamodb:*
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [SuperAdminTable, Arn]
         - Effect: Allow
           Action:
-            - dynamodb:*
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [AdminTable, Arn]
         - Effect: Allow
           Action:
-            - dynamodb:*
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [StudentTable, Arn]
         - Effect: Allow
           Action:
-            - dynamodb:*
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [CourseTable, Arn]
   environment:
