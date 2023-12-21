@@ -49,6 +49,17 @@ const payment = (
   order.setInvoiceNumber(paymentID);
   order.setDescription(courseName);
 
+  const drivingSchoolIDField = new APIContracts.UserField();
+  drivingSchoolIDField.setName("Driving School ID");
+  drivingSchoolIDField.setValue(merchantInfo.drivingSchoolID);
+
+  const studentUserNameField = new APIContracts.UserField();
+  studentUserNameField.setName("Student Username");
+  studentUserNameField.setValue(studentInfo.userName);
+
+  const userFields = new APIContracts.TransactionRequestType.UserFields();
+  userFields.setUserField([drivingSchoolIDField, studentUserNameField]);
+
   const transactionRequest = new APIContracts.TransactionRequestType();
 
   transactionRequest.setTransactionType(
@@ -60,6 +71,7 @@ const payment = (
   transactionRequest.setCustomer(customer);
   transactionRequest.setBillTo(billAndShipTo);
   transactionRequest.setShipTo(billAndShipTo);
+  transactionRequest.setUserFields(userFields);
 
   const createRequest = new APIContracts.CreateTransactionRequest();
   createRequest.setMerchantAuthentication(merchantAuthentication);

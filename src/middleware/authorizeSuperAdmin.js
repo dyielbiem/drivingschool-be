@@ -9,9 +9,12 @@ const authorizeSuperAdmin = async (req, res, next) => {
     if (!authorization) throw Error;
     const token = authorization.split(" ")[1];
 
-    const { userName } = jwt.verify(token, process.env.SUPER_ADMIN_JWT_SECRET);
+    const { superAdminUserName } = jwt.verify(
+      token,
+      process.env.SUPER_ADMIN_JWT_SECRET
+    );
 
-    req.body.superAdmin = userName;
+    req.body.superAdmin = superAdminUserName;
 
     next();
   } catch (error) {

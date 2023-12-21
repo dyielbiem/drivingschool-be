@@ -1,5 +1,6 @@
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
+import { nanoid } from "nanoid";
 
 /*
 ---- Controller to log in an admin
@@ -9,7 +10,7 @@ const addCourse = async (req, res) => {
   try {
     const {
       adminUserName,
-      drivingSchoolName,
+      drivingSchoolID,
       courseName,
       coursePrice,
       courseDesc,
@@ -19,10 +20,28 @@ const addCourse = async (req, res) => {
     if (!courseName || !coursePrice || !courseType)
       throw Error("All required fields must be filled");
 
-    const command = new PutCommand({
+    // Check if course is already existing
+    const checkCourseCommand = new QueryCommand({
+      TableName: process.env.COURSE_TABLE,
+      IndexName: "DrivingSchoolIndex",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+      FilterExpression: "courseName = :courseNameValue",
+      ExpressionAttributeValues: {
+        ":drivingSchoolIDValue": drivingSchoolID,
+        ":courseNameValue": courseName,
+      },
+    });
+
+    const { Items } = await dynamoClient.send(checkCourseCommand);
+    if (Items.length > 0) throw Error("The course already exists");
+
+    // If course does not exist, add it to the database
+    const courseID = nanoid();
+    const putCommand = new PutCommand({
       TableName: process.env.COURSE_TABLE,
       Item: {
-        drivingSchoolName,
+        courseID,
+        drivingSchoolID,
         courseName,
         coursePrice: { N: coursePrice },
         courseDesc,
@@ -31,13 +50,17 @@ const addCourse = async (req, res) => {
         addedBy: adminUserName,
         dateAdded: Date(),
       },
-      ConditionExpression:
-        "attribute_not_exists(drivingSchoolName) AND attribute_not_exists(courseName)",
     });
 
-    const result = await dynamoClient.send(command);
+    await dynamoClient.send(putCommand);
 
-    res.status(200).json(result);
+    res.status(200).json({
+      drivingSchoolID,
+      courseID,
+      courseName,
+      courseDesc,
+      coursePrice,
+    });
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res.status(400).json({ error: "Course already exists" });

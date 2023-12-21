@@ -1,0 +1,18 @@
+[
+  {
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "studentUserName": "jlusername",
+    "courseID": "Zv1rTWJLkVaEsPDEAs_Ly",
+    "paymentID": "JpmRpNMMeWD6ttUpIarD",
+    "passWord": "$2a$10$yEy40lUlAmzYp/kEHv80X.xJNX8DAHZtCGrPdNEGprX6SdZDOBYFe",
+    "zip": "44628",
+    "lastName": "MT",
+    "country": "US",
+    "address": "Address St.",
+    "city": "City City",
+    "firstName": "JL",
+    "company": "WebAct",
+    "state": "TX",
+    "email": "email@email.com"
+  }
+]

@@ -16,7 +16,7 @@ const enrollStudent = async (req, res) => {
       userName,
       passWord,
       confirmPassWord,
-      drivingSchoolName,
+      drivingSchoolID,
       firstName,
       lastName,
       company,
@@ -31,6 +31,7 @@ const enrollStudent = async (req, res) => {
       cardExpiration,
       courseName,
       chargeAmount,
+      courseID,
     } = req.body;
 
     if (
@@ -51,9 +52,10 @@ const enrollStudent = async (req, res) => {
       !cardNumber ||
       !cardCode ||
       !cardExpiration ||
-      !drivingSchoolName ||
+      !drivingSchoolID ||
       !courseName ||
-      !chargeAmount
+      !chargeAmount ||
+      !courseID
     )
       throw Error("All fields must be filled");
 
@@ -63,7 +65,7 @@ const enrollStudent = async (req, res) => {
     const drivingSchoolGetCommand = new GetCommand({
       TableName: process.env.DRIVING_SCHOOL_TABLE,
       Key: {
-        drivingSchoolName,
+        drivingSchoolID,
       },
     });
 
@@ -78,7 +80,7 @@ const enrollStudent = async (req, res) => {
     const studentGetCommand = new GetCommand({
       TableName: process.env.STUDENT_TABLE,
       Key: {
-        drivingSchoolName,
+        drivingSchoolID,
         studentUserName: userName,
       },
     });
@@ -95,6 +97,7 @@ const enrollStudent = async (req, res) => {
     const merchantInfo = {
       loginKey: paymentLogInKey,
       transactionKey: paymentTransactionKey,
+      drivingSchoolID,
     };
 
     const studentInfo = {
@@ -135,10 +138,10 @@ const enrollStudent = async (req, res) => {
     const putCommand = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
       Item: {
-        drivingSchoolName,
+        drivingSchoolID,
         studentUserName: userName,
         passWord: hashedPassWord,
-        courseName,
+        courseID,
         firstName,
         lastName,
         company,
@@ -148,13 +151,17 @@ const enrollStudent = async (req, res) => {
         zip,
         country,
         email,
-        paymentID: respond.refID,
+        paymentID: respond.refId,
       },
     });
 
-    const result = await dynamoClient.send(putCommand);
+    await dynamoClient.send(putCommand);
 
-    res.status(200).json(result);
+    res.status(200).json({
+      drivingSchoolID,
+      userName,
+      paymentID: respond.refId,
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

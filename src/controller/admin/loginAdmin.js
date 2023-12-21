@@ -9,14 +9,14 @@ import jwt from "jsonwebtoken";
 */
 const loginAdmin = async (req, res) => {
   try {
-    const { userName, passWord, drivingSchoolName } = req.body;
-    if (!userName || !passWord || !drivingSchoolName)
+    const { userName, passWord, drivingSchoolID } = req.body;
+    if (!userName || !passWord || !drivingSchoolID)
       throw Error("All required fields must be filled");
 
     const command = new GetCommand({
       TableName: process.env.ADMIN_TABLE,
       Key: {
-        drivingSchoolName,
+        drivingSchoolID,
         adminUserName: userName,
       },
     });
@@ -29,7 +29,7 @@ const loginAdmin = async (req, res) => {
     if (!isPasswordCorrect) throw Error("Username or password is incorrect");
 
     const token = jwt.sign(
-      { adminUserName: userName, drivingSchoolName },
+      { adminUserName: userName, drivingSchoolID },
       process.env.ADMIN_JWT_SECRET,
       {
         expiresIn: "3h",

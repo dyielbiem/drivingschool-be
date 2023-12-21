@@ -9,11 +9,26 @@ custom:
   courseTable: "DrivingSchoolCourse"
   serverless-dynamodb:
     start:
+      optimizeDbBeforeStartup: false
       migrate: true
       port: 8000
       dbPath: "./"
       inMemory: false
       shareDb: true
+      seed: true
+    seed:
+      domain:
+        sources:
+          - table: ${self:custom.superAdminTable}
+            sources: [./seed/DrivingSchoolSuperAdmin.json]
+          - table: ${self:custom.adminTable}
+            sources: [./seed/DrivingSchoolAdmin.json]
+          - table: ${self:custom.drivingSchoolTable}
+            sources: [./seed/DrivingSchoolAccount.json]
+          - table: ${self:custom.courseTable}
+            sources: [./seed/DrivingSchoolCourse.json]
+          - table: ${self:custom.studentTable}
+            sources: [./seed/DrivingSchoolStudent.json]
 
 provider:
   name: aws
@@ -73,21 +88,30 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
+          - AttributeName: drivingSchoolID
+            AttributeType: S
           - AttributeName: drivingSchoolName
             AttributeType: S
         KeySchema:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.drivingSchoolTable}
+        GlobalSecondaryIndexes:
+          - IndexName: DrivingSchoolNameIndex
+            KeySchema:
+              - AttributeName: drivingSchoolName
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
     SuperAdminTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: userName
+          - AttributeName: superAdminUserName
             AttributeType: S
         KeySchema:
-          - AttributeName: userName
+          - AttributeName: superAdminUserName
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.superAdminTable}
@@ -95,12 +119,12 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             AttributeType: S
           - AttributeName: adminUserName
             AttributeType: S
         KeySchema:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             KeyType: HASH
           - AttributeName: adminUserName
             KeyType: RANGE
@@ -110,32 +134,46 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             AttributeType: S
           - AttributeName: studentUserName
             AttributeType: S
         KeySchema:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             KeyType: HASH
           - AttributeName: studentUserName
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.studentTable}
+        GlobalSecondaryIndexes:
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
     CourseTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             AttributeType: S
-          - AttributeName: courseName
+          - AttributeName: courseID
             AttributeType: S
         KeySchema:
-          - AttributeName: drivingSchoolName
+          - AttributeName: drivingSchoolID
             KeyType: HASH
-          - AttributeName: courseName
+          - AttributeName: courseID
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.courseTable}
+        GlobalSecondaryIndexes:
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
 
 useDotenv: true
 

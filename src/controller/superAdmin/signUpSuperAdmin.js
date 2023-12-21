@@ -7,9 +7,9 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 ---- /api/superadmin/signup (POST)
 */
 const signUpSuperAdmin = async (req, res) => {
-  const { userName, passWord, confirmPassWord } = req.body;
+  const { userName, displayName, passWord, confirmPassWord } = req.body;
   try {
-    if (!userName || !passWord || !confirmPassWord)
+    if (!userName || !passWord || !confirmPassWord || !displayName)
       throw Error("All required fields must be filled");
 
     if (passWord !== confirmPassWord) throw Error("Passwords do not match");
@@ -20,15 +20,16 @@ const signUpSuperAdmin = async (req, res) => {
     const putCommand = new PutCommand({
       TableName: process.env.SUPER_ADMIN_TABLE,
       Item: {
-        userName,
+        superAdminUserName: userName,
+        displayName,
         passWord: hashedPassWord,
       },
-      ConditionExpression: "attribute_not_exists(userName)",
+      ConditionExpression: "attribute_not_exists(superAdminUserName)",
     });
 
-    const result = await dynamoClient.send(putCommand);
+    await dynamoClient.send(putCommand);
 
-    res.status(200).json(result);
+    res.status(200).json({ userName, displayName });
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res.status(400).json({ error: "Username is already in use" });

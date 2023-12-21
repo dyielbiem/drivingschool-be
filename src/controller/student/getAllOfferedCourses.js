@@ -1,4 +1,4 @@
-import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -7,13 +7,14 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const getAllOfferedCourses = async (req, res) => {
   try {
-    const drivingSchoolName = req.query.drivingSchoolName;
-    if (!drivingSchoolName) throw Error("Driving school name must be provided");
+    const drivingSchoolID = req.query.drivingSchoolID;
+    if (!drivingSchoolID) throw Error("Driving school ID must be provided");
 
+    // Get the Authorize API log in and transaction key of the driving school
     const drivingSchoolCommand = new GetCommand({
       TableName: process.env.DRIVING_SCHOOL_TABLE,
       Key: {
-        drivingSchoolName,
+        drivingSchoolID,
       },
       ProjectionExpression:
         "drivingSchoolName, paymentLogInKey, paymentTransactionKey",
@@ -23,19 +24,20 @@ const getAllOfferedCourses = async (req, res) => {
 
     if (!Item) throw Error("The driving school does not exist");
 
-    const coursesCommand = new ScanCommand({
+    // Get all the active courses offered by the driving school
+    const coursesCommand = new QueryCommand({
       TableName: process.env.COURSE_TABLE,
-      FilterExpression:
-        "drivingSchoolName = :drivingSchoolName AND isActive = :isActive",
+      IndexName: "DrivingSchoolIndex",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+      FilterExpression: "isActive = :isActiveValue",
       ExpressionAttributeValues: {
-        ":drivingSchoolName": drivingSchoolName,
-        ":isActive": { BOOL: true },
+        ":drivingSchoolIDValue": drivingSchoolID,
+        ":isActiveValue": { BOOL: true },
       },
-      ProjectionExpression: "courseName, coursePrice, courseDesc",
+      ProjectionExpression: "courseName, coursePrice, courseDesc, courseID",
     });
 
     const { Items } = await dynamoClient.send(coursesCommand);
-
     if (Object.keys(Items).length === 0) throw Error("No courses are offered");
 
     res.status(200).json({ ...Item, courses: [...Items] });

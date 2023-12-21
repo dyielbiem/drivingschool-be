@@ -16,7 +16,7 @@ const loginSuperAdmin = async (req, res) => {
     const command = new GetCommand({
       TableName: process.env.SUPER_ADMIN_TABLE,
       Key: {
-        userName,
+        superAdminUserName: userName,
       },
     });
 
@@ -29,11 +29,15 @@ const loginSuperAdmin = async (req, res) => {
     if (!isPassowrdCorrect) throw Error("Username or password is incorrect");
 
     // If super admin credentials are correct, generate a token
-    const token = jwt.sign({ userName }, process.env.SUPER_ADMIN_JWT_SECRET, {
-      expiresIn: "3h",
-    });
+    const token = jwt.sign(
+      { superAdminUserName: userName },
+      process.env.SUPER_ADMIN_JWT_SECRET,
+      {
+        expiresIn: "3h",
+      }
+    );
 
-    res.status(200).json({ username: Item.userName, token });
+    res.status(200).json({ username: Item.superAdminUserName, token });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json({ error });
