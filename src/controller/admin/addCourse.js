@@ -3,8 +3,8 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 import { nanoid } from "nanoid";
 
 /*
----- Controller to log in an admin
----- /api/admin/login (POST)
+---- Controller to add a course
+---- /api/admin/course (POST)
 */
 const addCourse = async (req, res) => {
   try {

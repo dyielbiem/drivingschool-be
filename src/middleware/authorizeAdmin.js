@@ -9,7 +9,7 @@ const authorizeAdmin = async (req, res, next) => {
     if (!authorization) throw Error;
     const token = authorization.split(" ")[1];
 
-    const { adminID, adminUserName, drivingSchoolID } = jwt.verify(
+    const { adminUserName, drivingSchoolID } = jwt.verify(
       token,
       process.env.ADMIN_JWT_SECRET
     );

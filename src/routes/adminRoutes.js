@@ -3,6 +3,10 @@ import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import authorizeAdmin from "../middleware/authorizeAdmin.js";
 import loginAdmin from "../controller/admin/loginAdmin.js";
 import addCourse from "../controller/admin/addCourse.js";
+import addSection from "../controller/admin/addSection.js";
+import fetchAllSections from "../controller/admin/fetchAllSections.js";
+import addChapter from "../controller/admin/addChapter.js";
+import fetchAllChapters from "../controller/admin/fetchALlChapters.js";
 
 const adminRouter = Router();
 
@@ -12,5 +16,9 @@ const adminRouter = Router();
 */
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
 adminRouter.post("/course", authorizeAdmin, addCourse);
+adminRouter.post("/section", authorizeAdmin, addSection);
+adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
+adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
+adminRouter.get("/section/chapter/list", authorizeAdmin, fetchAllChapters);
 
 export default adminRouter;

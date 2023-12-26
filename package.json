@@ -11,7 +11,8 @@
     "nanoid": "^5.0.4",
     "remove": "^0.1.5",
     "serverless-dynamodb": "^0.2.47",
-    "serverless-http": "^3.1.1"
+    "serverless-http": "^3.1.1",
+    "ulid": "^2.3.0"
   },
   "scripts": {
     "dev": "nodemon --exec serverless offline start"

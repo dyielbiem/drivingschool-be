@@ -1,0 +1,53 @@
+[
+  {
+    "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
+    "chapterTitle": "Chapter 1",
+    "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
+    "chapterContent": {
+      "M": { "string": "Sample1", "image": "Sample2" }
+    },
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "dateAdded": "Tue Dec 26 2023 23:06:05 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
+    "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
+    "chapterTitle": "Chapter 2",
+    "chapterContent": {
+      "M": { "string": "Sample1", "image": "Sample2" }
+    },
+    "addedBy": "Temecula_Admin",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "dateAdded": "Tue Dec 26 2023 23:06:13 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "chapterID": "01HJKAKDXADRQ29AFX50WS3N3R",
+    "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
+    "chapterTitle": "Chapter 3",
+    "chapterContent": "Sample",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "dateAdded": "Tue Dec 26 2023 23:06:29 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "chapterID": "01HJKC7PYJX7H5R1EPM9R78S7T",
+    "chapterContent": "Sample",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "sectionID": "01HJK86DV17PYKAP6N8Y7Z998A",
+    "chapterTitle": "Chapter 1",
+    "dateAdded": "Tue Dec 26 2023 23:35:02 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "chapterID": "01HJKC9WHVCY31R3WB2MQRTEJH",
+    "chapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "sectionID": "01HJK86DV17PYKAP6N8Y7Z998A",
+    "chapterTitle": "Chapter 2",
+    "dateAdded": "Tue Dec 26 2023 23:36:14 GMT+0800 (Singapore Standard Time)"
+  }
+]

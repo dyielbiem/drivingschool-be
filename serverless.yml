@@ -7,6 +7,8 @@ custom:
   adminTable: "DrivingSchoolAdmin"
   studentTable: "DrivingSchoolStudent"
   courseTable: "DrivingSchoolCourse"
+  sectionTable: "DrivingSchoolSection"
+  chapterTable: "DrivingSchoolChapter"
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
@@ -29,6 +31,10 @@ custom:
             sources: [./seed/DrivingSchoolCourse.json]
           - table: ${self:custom.studentTable}
             sources: [./seed/DrivingSchoolStudent.json]
+          - table: ${self:custom.sectionTable}
+            sources: [./seed/DrivingSchoolSection.json]
+          - table: ${self:custom.chapterTable}
+            sources: [./seed/DrivingSchoolChapter.json]
 
 provider:
   name: aws
@@ -87,12 +93,34 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [CourseTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [SectionTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ChapterTable, Arn]
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
     ADMIN_TABLE: ${self:custom.adminTable}
     STUDENT_TABLE: ${self:custom.studentTable}
     COURSE_TABLE: ${self:custom.courseTable}
+    SECTION_TABLE: ${self:custom.sectionTable}
+    CHAPTER_TABLE: ${self:custom.chapterTable}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
@@ -194,6 +222,46 @@ resources:
           - IndexName: DrivingSchoolIndex
             KeySchema:
               - AttributeName: drivingSchoolID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    SectionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: sectionID
+            AttributeType: S
+          - AttributeName: drivingSchoolID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: sectionID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.sectionTable}
+        GlobalSecondaryIndexes:
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    ChapterTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: chapterID
+            AttributeType: S
+          - AttributeName: sectionID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: chapterID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.chapterTable}
+        GlobalSecondaryIndexes:
+          - IndexName: SectionIndex
+            KeySchema:
+              - AttributeName: sectionID
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
