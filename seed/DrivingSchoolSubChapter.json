@@ -1,0 +1,68 @@
+[
+  {
+    "subChapterTitle": "Driver's License: A Privilege",
+    "subChapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "subChapterID": "01HJNWQK3ZMZ6DBEXZKJN8VNND",
+    "dateAdded": "Wed Dec 27 2023 23:01:49 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "subChapterTitle": "Obeying the Laws",
+    "subChapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "subChapterID": "01HJNWRMX6K50Z8E86565M4A2W",
+    "dateAdded": "Wed Dec 27 2023 23:02:23 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "subChapterTitle": "The Eyes and Vision",
+    "subChapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "subChapterID": "01HJNWT3AP01X1PWEQE7N0KF7D",
+    "dateAdded": "Wed Dec 27 2023 23:03:11 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "subChapterTitle": "Importance of Driver's Education",
+    "subChapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "subChapterID": "01HJNXW0G1EW6J3RXT38NSQ8FG",
+    "dateAdded": "Wed Dec 27 2023 23:21:42 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "subChapterTitle": "Gravity",
+    "subChapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "chapterID": "01HJKAKDXADRQ29AFX50WS3N3R",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "subChapterID": "01HJNY5QMMYSWRMCF5KYQQXX08",
+    "dateAdded": "Wed Dec 27 2023 23:27:01 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "subChapterTitle": "Inertia and Energy",
+    "subChapterContent": {
+      "M": { "string": "Sample", "image": "Sample" }
+    },
+    "chapterID": "01HJKAKDXADRQ29AFX50WS3N3R",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "subChapterID": "01HJNY6379R9HVVS7PCC6XV9HY",
+    "dateAdded": "Wed Dec 27 2023 23:27:13 GMT+0800 (Singapore Standard Time)"
+  }
+]

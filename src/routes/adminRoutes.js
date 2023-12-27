@@ -7,6 +7,8 @@ import addSection from "../controller/admin/addSection.js";
 import fetchAllSections from "../controller/admin/fetchAllSections.js";
 import addChapter from "../controller/admin/addChapter.js";
 import fetchAllChapters from "../controller/admin/fetchALlChapters.js";
+import addSubChapter from "../controller/admin/addSubChapter.js";
+import fetchAllSubChapters from "../controller/admin/fetchAllSubChapters.js";
 
 const adminRouter = Router();
 
@@ -20,5 +22,11 @@ adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
 adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
 adminRouter.get("/section/chapter/list", authorizeAdmin, fetchAllChapters);
+adminRouter.post("/section/chapter/subchapter", authorizeAdmin, addSubChapter);
+adminRouter.get(
+  "/section/chapter/subchapter/list",
+  authorizeAdmin,
+  fetchAllSubChapters
+);
 
 export default adminRouter;

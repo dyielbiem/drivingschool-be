@@ -29,6 +29,10 @@ const addSection = async (req, res) => {
 
     res.status(400).json({ sectionID, sectionTitle });
   } catch (error) {
+    if (error.message === "The conditional request failed")
+      return res
+        .status(400)
+        .json({ error: "An error occurred, please try again" });
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
   }

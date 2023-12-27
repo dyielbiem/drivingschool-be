@@ -6,7 +6,6 @@ import { ulid } from "ulid";
 ---- Controller to add a chapter to a section
 ---- /api/admin/section/chapter (POST)
 */
-
 const addChapter = async (req, res) => {
   try {
     const {
@@ -33,12 +32,17 @@ const addChapter = async (req, res) => {
         addedBy: adminUserName,
         dateAdded: Date(),
       },
+      ConditionExpression: "attribute_not_exists(chapterID)",
     });
 
     await dynamoClient.send(command);
 
     res.status(200).json({ chapterID, chapterTitle, chapterContent });
   } catch (error) {
+    if (error.message === "The conditional request failed")
+      return res
+        .status(400)
+        .json({ error: "An error occurred, please try again" });
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
   }

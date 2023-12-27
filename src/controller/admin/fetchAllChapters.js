@@ -5,7 +5,6 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 ---- Controller to fetch all the chapters of a section
 ---- /api/admin/section/chapter/list (GET)
 */
-
 const fetchAllChapters = async (req, res) => {
   try {
     const sectionID = req.query.sectionID;
@@ -24,7 +23,7 @@ const fetchAllChapters = async (req, res) => {
 
     const result = await dynamoClient.send(command);
     if (result.Items.length === 0)
-      return res.status(200).json({ sections: [] });
+      return res.status(200).json({ chapters: [] });
 
     const sortedChapters = result.Items.sort((a, b) =>
       a.chapterID.localeCompare(b.chapterID)

@@ -50,6 +50,7 @@ const addCourse = async (req, res) => {
         addedBy: adminUserName,
         dateAdded: Date(),
       },
+      ConditionExpression: "attribute_not_exists(courseID)",
     });
 
     await dynamoClient.send(putCommand);
@@ -63,7 +64,9 @@ const addCourse = async (req, res) => {
     });
   } catch (error) {
     if (error.message === "The conditional request failed")
-      return res.status(400).json({ error: "Course already exists" });
+      return res
+        .status(400)
+        .json({ error: "An error occurred, please try again" });
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
   }

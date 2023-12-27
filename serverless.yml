@@ -9,6 +9,7 @@ custom:
   courseTable: "DrivingSchoolCourse"
   sectionTable: "DrivingSchoolSection"
   chapterTable: "DrivingSchoolChapter"
+  subChapterTable: "DrivingSchoolSubChapter"
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
@@ -35,6 +36,8 @@ custom:
             sources: [./seed/DrivingSchoolSection.json]
           - table: ${self:custom.chapterTable}
             sources: [./seed/DrivingSchoolChapter.json]
+          - table: ${self:custom.subChapterTable}
+            sources: [./seed/DrivingSchoolSubChapter.json]
 
 provider:
   name: aws
@@ -113,6 +116,16 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [ChapterTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [SubChapterTable, Arn]
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
@@ -121,6 +134,7 @@ provider:
     COURSE_TABLE: ${self:custom.courseTable}
     SECTION_TABLE: ${self:custom.sectionTable}
     CHAPTER_TABLE: ${self:custom.chapterTable}
+    SUB_CHAPTER_TABLE: ${self:custom.subChapterTable}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
@@ -262,6 +276,26 @@ resources:
           - IndexName: SectionIndex
             KeySchema:
               - AttributeName: sectionID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    SubChapterTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: subChapterID
+            AttributeType: S
+          - AttributeName: chapterID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: subChapterID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.subChapterTable}
+        GlobalSecondaryIndexes:
+          - IndexName: ChapterIndex
+            KeySchema:
+              - AttributeName: chapterID
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
