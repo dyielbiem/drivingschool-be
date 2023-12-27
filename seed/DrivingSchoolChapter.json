@@ -1,7 +1,7 @@
 [
   {
     "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
-    "chapterTitle": "Chapter 1",
+    "chapterTitle": "Driving is Your Responsibility",
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
     "chapterContent": {
       "M": { "string": "Sample1", "image": "Sample2" }
@@ -13,7 +13,7 @@
   {
     "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
-    "chapterTitle": "Chapter 2",
+    "chapterTitle": "The Human Factors Affecting the Driver",
     "chapterContent": {
       "M": { "string": "Sample1", "image": "Sample2" }
     },
@@ -24,7 +24,7 @@
   {
     "chapterID": "01HJKAKDXADRQ29AFX50WS3N3R",
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
-    "chapterTitle": "Chapter 3",
+    "chapterTitle": "Natural Forces Effecting the Automobile",
     "chapterContent": "Sample",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
