@@ -10,6 +10,7 @@ custom:
   sectionTable: "DrivingSchoolSection"
   chapterTable: "DrivingSchoolChapter"
   subChapterTable: "DrivingSchoolSubChapter"
+  questionTable: "DrivingSchoolQuestion"
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
@@ -38,7 +39,8 @@ custom:
             sources: [./seed/DrivingSchoolChapter.json]
           - table: ${self:custom.subChapterTable}
             sources: [./seed/DrivingSchoolSubChapter.json]
-
+          - table: ${self:custom.questionTable}
+            sources: [./seed/DrivingSchoolQuestion.json]
 provider:
   name: aws
   runtime: nodejs18.x
@@ -126,6 +128,16 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [SubChapterTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [QuestionTable, Arn]
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
@@ -135,6 +147,7 @@ provider:
     SECTION_TABLE: ${self:custom.sectionTable}
     CHAPTER_TABLE: ${self:custom.chapterTable}
     SUB_CHAPTER_TABLE: ${self:custom.subChapterTable}
+    QUESTION_TABLE: ${self:custom.questionTable}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
@@ -296,6 +309,34 @@ resources:
           - IndexName: ChapterIndex
             KeySchema:
               - AttributeName: chapterID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    QuestionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: questionID
+            AttributeType: S
+          - AttributeName: chapterID
+            AttributeType: S
+          - AttributeName: sectionID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: questionID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.questionTable}
+        GlobalSecondaryIndexes:
+          - IndexName: ChapterIndex
+            KeySchema:
+              - AttributeName: chapterID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: SectionIndex
+            KeySchema:
+              - AttributeName: sectionID
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
