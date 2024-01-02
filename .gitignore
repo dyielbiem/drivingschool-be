@@ -2,3 +2,4 @@ node_modules
 .serverless
 .env
 testingFile.js
+shared-local-instance.db

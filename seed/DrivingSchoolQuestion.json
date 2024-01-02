@@ -70,5 +70,41 @@
     },
     "correctAnswer": "option4",
     "dateAdded": "Thu Dec 28 2023 23:16:04 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "questionID": "01HK5DWFKYDJSHXCA4YE64ZE5W",
+    "question": "What is the section question 1?",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
+    "choices": {
+      "L": ["option1", "option2", "option3", "option4"]
+    },
+    "correctAnswer": "option4",
+    "dateAdded": "Tue Jan 02 2024 23:50:11 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "questionID": "01HK5DX8K12SPHREQXWR9XXDRR",
+    "question": "What is the section question 2?",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
+    "choices": {
+      "L": ["option1", "option2", "option3", "option4"]
+    },
+    "correctAnswer": "option4",
+    "dateAdded": "Tue Jan 02 2024 23:50:37 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "questionID": "01HK5EPYVY8FCCYM54RXG3R6PW",
+    "question": "What is the section 22?",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "sectionID": "01HJK86DV17PYKAP6N8Y7Z998A",
+    "choices": {
+      "L": ["option1", "option2", "option3", "option4"]
+    },
+    "correctAnswer": "option4",
+    "dateAdded": "Wed Jan 03 2024 00:04:39 GMT+0800 (Singapore Standard Time)"
   }
 ]
