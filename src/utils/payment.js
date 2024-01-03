@@ -60,6 +60,13 @@ const payment = (
   const userFields = new APIContracts.TransactionRequestType.UserFields();
   userFields.setUserField([drivingSchoolIDField, studentUserNameField]);
 
+  const emailCustomerSetting = new APIContracts.SettingType();
+  emailCustomerSetting.setSettingName("emailCustomer");
+  emailCustomerSetting.setSettingValue("true");
+
+  const transactionSettings = new APIContracts.ArrayOfSetting();
+  transactionSettings.setSetting([emailCustomerSetting]);
+
   const transactionRequest = new APIContracts.TransactionRequestType();
 
   transactionRequest.setTransactionType(
@@ -72,6 +79,7 @@ const payment = (
   transactionRequest.setBillTo(billAndShipTo);
   transactionRequest.setShipTo(billAndShipTo);
   transactionRequest.setUserFields(userFields);
+  transactionRequest.setTransactionSettings(transactionSettings);
 
   const createRequest = new APIContracts.CreateTransactionRequest();
   createRequest.setMerchantAuthentication(merchantAuthentication);
