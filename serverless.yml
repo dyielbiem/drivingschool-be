@@ -11,6 +11,7 @@ custom:
   chapterTable: "DrivingSchoolChapter"
   subChapterTable: "DrivingSchoolSubChapter"
   questionTable: "DrivingSchoolQuestion"
+  resultTable: "DrivingSchoolResult"
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
@@ -41,6 +42,9 @@ custom:
             sources: [./seed/DrivingSchoolSubChapter.json]
           - table: ${self:custom.questionTable}
             sources: [./seed/DrivingSchoolQuestion.json]
+          - table: ${self:custom.resultTable}
+            sources: [./seed/DrivingSchoolResult.json]
+
 provider:
   name: aws
   runtime: nodejs18.x
@@ -138,6 +142,16 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [QuestionTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ResultTable, Arn]
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
@@ -148,6 +162,7 @@ provider:
     CHAPTER_TABLE: ${self:custom.chapterTable}
     SUB_CHAPTER_TABLE: ${self:custom.subChapterTable}
     QUESTION_TABLE: ${self:custom.questionTable}
+    RESULT_TABLE: ${self:custom.resultTable}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
@@ -338,6 +353,46 @@ resources:
             KeySchema:
               - AttributeName: sectionID
                 KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    ResultTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: resultID
+            AttributeType: S
+          - AttributeName: chapterID
+            AttributeType: S
+          - AttributeName: sectionID
+            AttributeType: S
+          - AttributeName: studentUserName
+            AttributeType: S
+          - AttributeName: drivingSchoolID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: resultID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.resultTable}
+        GlobalSecondaryIndexes:
+          - IndexName: ChapterIndex
+            KeySchema:
+              - AttributeName: chapterID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: SectionIndex
+            KeySchema:
+              - AttributeName: sectionID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: StudentIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+              - AttributeName: studentUserName
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL
 
