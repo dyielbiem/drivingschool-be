@@ -2,13 +2,13 @@ import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
----- Controller to fetch the test of a chapter
----- /api/admin/section/chapter/test (GET)
+---- Controller to fetch the test of a section
+---- /api/admin/section/test (GET)
 */
 const fetchSectionTest = async (req, res) => {
   try {
     const sectionID = req.query.sectionID;
-    if (!sectionID) throw Error("Chapter ID must be provided");
+    if (!sectionID) throw Error("Section ID must be provided");
 
     const command = new QueryCommand({
       TableName: process.env.QUESTION_TABLE,
