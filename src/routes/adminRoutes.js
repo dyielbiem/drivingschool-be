@@ -12,7 +12,7 @@ import fetchAllSubChapters from "../controller/admin/fetchAllSubChapters.js";
 import addChapterQuestion from "../controller/admin/addChapterQuestion.js";
 import fetchChapterTest from "../controller/admin/fetchChapterTest.js";
 import addSectionQuestion from "../controller/admin/addSectionQuestion.js";
-import fetchSectionTest from "../controller/admin/fetchSectionTest .js";
+import fetchSectionTest from "../controller/admin/fetchSectionTest.js";
 
 const adminRouter = Router();
 

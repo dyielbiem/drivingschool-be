@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 /*
----- Middleware for validation of super admin token
+---- Middleware for validation of admin token
 */
 const authorizeAdmin = async (req, res, next) => {
   try {
