@@ -21,7 +21,7 @@ const addSection = async (req, res) => {
       KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
       FilterExpression: "isActive = :isActiveValue",
       ExpressionAttributeValues: {
-        ":isActiveValue": { BOOL: true },
+        ":isActiveValue": true,
         ":drivingSchoolIDValue": drivingSchoolID,
       },
       ProjectionExpression: "sectionID, isActive",
@@ -42,7 +42,7 @@ const addSection = async (req, res) => {
           },
           UpdateExpression: "SET isActive = :isActiveValue",
           ExpressionAttributeValues: {
-            ":isActiveValue": { BOOL: false },
+            ":isActiveValue": false,
           },
         },
       });
@@ -59,7 +59,7 @@ const addSection = async (req, res) => {
           sectionTitle,
           addedBy: adminUserName,
           dateAdded: Date(),
-          isActive: { BOOL: true },
+          isActive: true,
         },
         ConditionExpression: "attribute_not_exists(sectionID)",
       },

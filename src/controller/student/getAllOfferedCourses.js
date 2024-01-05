@@ -32,7 +32,7 @@ const getAllOfferedCourses = async (req, res) => {
       FilterExpression: "isActive = :isActiveValue",
       ExpressionAttributeValues: {
         ":drivingSchoolIDValue": drivingSchoolID,
-        ":isActiveValue": { BOOL: true },
+        ":isActiveValue": true,
       },
       ProjectionExpression: "courseName, coursePrice, courseDesc, courseID",
     });

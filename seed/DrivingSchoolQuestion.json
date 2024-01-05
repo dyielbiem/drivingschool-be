@@ -5,9 +5,7 @@
     "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option1",
     "dateAdded": "Thu Dec 28 2023 22:33:11 GMT+0800 (Singapore Standard Time)"
   },
@@ -17,9 +15,7 @@
     "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option2",
     "dateAdded": "Thu Dec 28 2023 22:33:27 GMT+0800 (Singapore Standard Time)"
   },
@@ -29,9 +25,7 @@
     "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option3",
     "dateAdded": "Thu Dec 28 2023 22:35:14 GMT+0800 (Singapore Standard Time)"
   },
@@ -41,9 +35,7 @@
     "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option4",
     "dateAdded": "Thu Dec 28 2023 22:35:28 GMT+0800 (Singapore Standard Time)"
   },
@@ -53,9 +45,7 @@
     "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option4",
     "dateAdded": "Thu Dec 28 2023 23:09:54 GMT+0800 (Singapore Standard Time)"
   },
@@ -65,9 +55,7 @@
     "chapterID": "01HJKAKDXADRQ29AFX50WS3N3R",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option4",
     "dateAdded": "Thu Dec 28 2023 23:16:04 GMT+0800 (Singapore Standard Time)"
   },
@@ -77,9 +65,7 @@
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option4",
     "dateAdded": "Tue Jan 02 2024 23:50:11 GMT+0800 (Singapore Standard Time)"
   },
@@ -89,9 +75,7 @@
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option4",
     "dateAdded": "Tue Jan 02 2024 23:50:37 GMT+0800 (Singapore Standard Time)"
   },
@@ -101,9 +85,7 @@
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
     "sectionID": "01HJK86DV17PYKAP6N8Y7Z998A",
-    "choices": {
-      "L": ["option1", "option2", "option3", "option4"]
-    },
+    "choices": ["option1", "option2", "option3", "option4"],
     "correctAnswer": "option4",
     "dateAdded": "Wed Jan 03 2024 00:04:39 GMT+0800 (Singapore Standard Time)"
   }

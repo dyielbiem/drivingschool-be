@@ -3,9 +3,9 @@
     "courseName": "$39.00 Online Drivers Education DMV Approved 30 Hour Course",
     "courseType": "Online course",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
-    "coursePrice": { "N": "39" },
+    "coursePrice": 39,
     "addedBy": "Temecula_Admin",
-    "isActive": { "BOOL": true },
+    "isActive": true,
     "courseID": "ffHdRYaGaMvuwEH7oy3LN",
     "dateAdded": "Thu Dec 21 2023 22:20:53 GMT+0800 (Singapore Standard Time)"
   },
@@ -13,9 +13,9 @@
     "courseName": "BEST BUY PACKAGE - $449 - 30 Hour Online Drivers Education & 6 HRS BTW DRIVING LESSONS & Unlimited Practice Permit Questions ($19.99 Value for Free)",
     "courseType": "Online course",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
-    "coursePrice": { "N": "449" },
+    "coursePrice": 449,
     "addedBy": "Temecula_Admin",
-    "isActive": { "BOOL": true },
+    "isActive": true,
     "courseID": "Zv1rTWJLkVaEsPDEAs_Ly",
     "dateAdded": "Thu Dec 21 2023 22:22:00 GMT+0800 (Singapore Standard Time)"
   }
