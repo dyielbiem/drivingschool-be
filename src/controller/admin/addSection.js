@@ -1,4 +1,8 @@
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  PutCommand,
+  QueryCommand,
+  TransactWriteCommand,
+} from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import { ulid } from "ulid";
 
@@ -11,21 +15,58 @@ const addSection = async (req, res) => {
     const { drivingSchoolID, sectionTitle, adminUserName } = req.body;
     if (!sectionTitle) throw Error("Section title must be provided");
 
-    const sectionID = ulid();
-
-    const command = new PutCommand({
+    const getActiveSectionCommand = new QueryCommand({
       TableName: process.env.SECTION_TABLE,
-      Item: {
-        sectionID,
-        drivingSchoolID,
-        sectionTitle,
-        addedBy: adminUserName,
-        dateAdded: Date(),
+      IndexName: "DrivingSchoolIndex",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+      FilterExpression: "isActive = :isActiveValue",
+      ExpressionAttributeValues: {
+        ":isActiveValue": { BOOL: true },
+        ":drivingSchoolIDValue": drivingSchoolID,
       },
-      ConditionExpression: "attribute_not_exists(sectionID)",
+      ProjectionExpression: "sectionID, isActive",
     });
 
-    await dynamoClient.send(command);
+    const { Items: activeSection } = await dynamoClient.send(
+      getActiveSectionCommand
+    );
+
+    const transactParams = { TransactItems: [] };
+
+    if (activeSection.length !== 0) {
+      transactParams.TransactItems.push({
+        Update: {
+          TableName: process.env.SECTION_TABLE,
+          Key: {
+            sectionID: activeSection[0].sectionID,
+          },
+          UpdateExpression: "SET isActive = :isActiveValue",
+          ExpressionAttributeValues: {
+            ":isActiveValue": { BOOL: false },
+          },
+        },
+      });
+    }
+
+    const sectionID = ulid();
+
+    transactParams.TransactItems.push({
+      Put: {
+        TableName: process.env.SECTION_TABLE,
+        Item: {
+          sectionID,
+          drivingSchoolID,
+          sectionTitle,
+          addedBy: adminUserName,
+          dateAdded: Date(),
+          isActive: { BOOL: true },
+        },
+        ConditionExpression: "attribute_not_exists(sectionID)",
+      },
+    });
+
+    const transactCommand = new TransactWriteCommand(transactParams);
+    await dynamoClient.send(transactCommand);
 
     res.status(400).json({ sectionID, sectionTitle });
   } catch (error) {
