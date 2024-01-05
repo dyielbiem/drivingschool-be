@@ -14,10 +14,14 @@ const authorizeSuperAdmin = async (req, res, next) => {
       process.env.SUPER_ADMIN_JWT_SECRET
     );
 
+    if (!superAdminUserName) throw Error;
+
     req.body.superAdmin = superAdminUserName;
 
     next();
   } catch (error) {
+    if (error.name === "TokenExpiredError")
+      return res.status(401).json({ error: "TokenExpiredError" });
     res.status(401).json({ error: "Unauthorized" });
   }
 };

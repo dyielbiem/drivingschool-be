@@ -7,6 +7,7 @@ import deleteAdmin from "../controller/superAdmin/deleteAdmin.js";
 import fetchAllSuperAdmins from "../controller/superAdmin/fetchAllSuperAdmins.js";
 import fetchAllAdmins from "../controller/superAdmin/fetchAllAdmins.js";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
+import obtainAccessToken from "../controller/superAdmin/obtainAccessToken.js";
 
 /*
 ------- Router for super admin
@@ -15,6 +16,7 @@ import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 const superAdminRouter = Router();
 
 superAdminRouter.get("/", authorizeSuperAdmin, fetchAllSuperAdmins);
+superAdminRouter.get("/access-token", obtainAccessToken);
 superAdminRouter.post("/signup", authenticateAPIKey, signUpSuperAdmin);
 superAdminRouter.post("/login", authenticateAPIKey, loginSuperAdmin);
 superAdminRouter.post(

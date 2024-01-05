@@ -14,11 +14,15 @@ const authorizeAdmin = async (req, res, next) => {
       process.env.ADMIN_JWT_SECRET
     );
 
+    if (!adminUserName || !drivingSchoolID) throw Error;
+
     req.body.adminUserName = adminUserName;
     req.body.drivingSchoolID = drivingSchoolID;
 
     next();
   } catch (error) {
+    if (error.name === "TokenExpiredError")
+      return res.status(401).json({ error: "TokenExpiredError" });
     res.status(401).json({ error: "Unauthorized" });
   }
 };

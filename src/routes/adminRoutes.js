@@ -13,6 +13,7 @@ import addChapterQuestion from "../controller/admin/addChapterQuestion.js";
 import fetchChapterTest from "../controller/admin/fetchChapterTest.js";
 import addSectionQuestion from "../controller/admin/addSectionQuestion.js";
 import fetchSectionTest from "../controller/admin/fetchSectionTest.js";
+import obtainAccessToken from "../controller/admin/obtainAccessToken.js";
 
 const adminRouter = Router();
 
@@ -21,6 +22,7 @@ const adminRouter = Router();
 ------- /api/admin/*
 */
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
+adminRouter.get("/access-token", obtainAccessToken);
 adminRouter.post("/course", authorizeAdmin, addCourse);
 adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);

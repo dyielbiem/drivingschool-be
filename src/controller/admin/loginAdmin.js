@@ -1,7 +1,10 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../utils/generateToken.js";
 
 /*
 ---- Controller to log in an admin
@@ -28,15 +31,15 @@ const loginAdmin = async (req, res) => {
 
     if (!isPasswordCorrect) throw Error("Username or password is incorrect");
 
-    const token = jwt.sign(
-      { adminUserName: userName, drivingSchoolID },
-      process.env.ADMIN_JWT_SECRET,
-      {
-        expiresIn: "3h",
-      }
+    const jwtPayload = { adminUserName: userName, drivingSchoolID };
+    const accessToken = generateAccessToken(
+      jwtPayload,
+      process.env.ADMIN_JWT_SECRET
     );
 
-    res.status(200).json({ username: userName, token });
+    const refreshToken = generateRefreshToken(jwtPayload);
+
+    res.status(200).json({ username: userName, accessToken, refreshToken });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json({ error });

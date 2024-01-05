@@ -8,6 +8,7 @@ import fetchSectionTest from "../controller/student/fetchSectionTest.js";
 import fetchChapterTest from "../controller/student/fetchChapterTest.js";
 import generateSectionTestResult from "../controller/student/generateSectionTestResult.js";
 import generateChapterTestResult from "../controller/student/generateChapterTestResult.js";
+import obtainAccessToken from "../controller/student/obtainAccessToken.js";
 
 const studentRouter = Router();
 
@@ -16,6 +17,7 @@ const studentRouter = Router();
 ------- /api/student/*
 */
 studentRouter.get("/enroll/courses", authenticateAPIKey, getAllOfferedCourses);
+studentRouter.get("/access-token", obtainAccessToken);
 studentRouter.post("/enroll", authenticateAPIKey, enrollStudent);
 studentRouter.post("/login", authenticateAPIKey, loginStudent);
 studentRouter.get("/section/test", authorizeStudent, fetchSectionTest);
