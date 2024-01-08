@@ -12,14 +12,13 @@ import {
 */
 const loginAdmin = async (req, res) => {
   try {
-    const { userName, passWord, drivingSchoolID } = req.body;
-    if (!userName || !passWord || !drivingSchoolID)
+    const { userName, passWord } = req.body;
+    if (!userName || !passWord)
       throw Error("All required fields must be filled");
 
     const command = new GetCommand({
       TableName: process.env.ADMIN_TABLE,
       Key: {
-        drivingSchoolID,
         adminUserName: userName,
       },
     });
@@ -31,7 +30,10 @@ const loginAdmin = async (req, res) => {
 
     if (!isPasswordCorrect) throw Error("Username or password is incorrect");
 
-    const jwtPayload = { adminUserName: userName, drivingSchoolID };
+    const jwtPayload = {
+      adminUserName: userName,
+      drivingSchoolID: Item.drivingSchoolID,
+    };
     const accessToken = generateAccessToken(
       jwtPayload,
       process.env.ADMIN_JWT_SECRET

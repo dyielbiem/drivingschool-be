@@ -87,15 +87,14 @@ export const createDrivingSchool = async (req, res) => {
           Put: {
             TableName: process.env.ADMIN_TABLE,
             Item: {
-              drivingSchoolID,
               adminUserName,
+              drivingSchoolID,
               adminDisplayName,
               passWord: hashedPassWord,
               addedBy: superAdmin,
               dateAdded: Date(),
             },
-            ConditionExpression:
-              "attribute_not_exists(drivingSchoolID) AND attribute_not_exists(adminUserName)",
+            ConditionExpression: "attribute_not_exists(adminUserName)",
           },
         },
       ],
@@ -109,10 +108,12 @@ export const createDrivingSchool = async (req, res) => {
       adminDisplayName,
     });
   } catch (error) {
-    if (String(error.message).includes("Transaction cancelled"))
+    const duplicateUserNameError = error.CancellationReasons?.[1]?.Code;
+    if (duplicateUserNameError === "ConditionalCheckFailed")
       return res
         .status(400)
-        .json({ error: "The driving school already exists" });
+        .json({ error: "The admin username is already taken" });
+
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json({ error });
   }
