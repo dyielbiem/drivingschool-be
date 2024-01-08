@@ -4,6 +4,9 @@ import authorizeStudent from "../middleware/authorizeStudent.js";
 import getAllOfferedCourses from "../controller/student/getAllOfferedCourses.js";
 import enrollStudent from "../controller/student/enrollStudent.js";
 import loginStudent from "../controller/student/loginStudent.js";
+import fetchSection from "../controller/student/fetchSection.js";
+import fetchAllChapters from "../controller/student/fetchAllChapters.js";
+import fetchAllSubChapters from "../controller/student/fetchAllSubChapters.js";
 import fetchSectionTest from "../controller/student/fetchSectionTest.js";
 import fetchChapterTest from "../controller/student/fetchChapterTest.js";
 import generateSectionTestResult from "../controller/student/generateSectionTestResult.js";
@@ -20,6 +23,13 @@ studentRouter.get("/enroll/courses", authenticateAPIKey, getAllOfferedCourses);
 studentRouter.get("/access-token", obtainAccessToken);
 studentRouter.post("/enroll", authenticateAPIKey, enrollStudent);
 studentRouter.post("/login", authenticateAPIKey, loginStudent);
+studentRouter.get("/section", authorizeStudent, fetchSection);
+studentRouter.get("/section/chapter/list", authorizeStudent, fetchAllChapters);
+studentRouter.get(
+  "/section/chapter/subchapter/list",
+  authorizeStudent,
+  fetchAllSubChapters
+);
 studentRouter.get("/section/test", authorizeStudent, fetchSectionTest);
 studentRouter.get("/section/chapter/test", authorizeStudent, fetchChapterTest);
 studentRouter.post(

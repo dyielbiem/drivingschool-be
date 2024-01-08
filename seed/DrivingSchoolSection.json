@@ -1,18 +1,18 @@
 [
   {
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
-    "sectionTitle": "22 Chapters",
-    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
-    "addedBy": "Temecula_Admin",
-    "dateAdded": "Tue Dec 26 2023 21:06:57 GMT+0800 (Singapore Standard Time)",
-    "isActive": false
-  },
-  {
-    "sectionID": "01HJK86DV17PYKAP6N8Y7Z998A",
     "sectionTitle": "11 Chapters",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "addedBy": "Temecula_Admin",
-    "dateAdded": "Tue Dec 26 2023 21:07:08 GMT+0800 (Singapore Standard Time)",
+    "dateAdded": "Tue Dec 26 2023 21:06:57 GMT+0800 (Singapore Standard Time)",
     "isActive": true
+  },
+  {
+    "sectionID": "01HJK86DV17PYKAP6N8Y7Z998A",
+    "sectionTitle": "22 Chapters",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "dateAdded": "Tue Dec 26 2023 21:07:08 GMT+0800 (Singapore Standard Time)",
+    "isActive": false
   }
 ]

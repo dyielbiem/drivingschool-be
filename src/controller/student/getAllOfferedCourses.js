@@ -34,7 +34,8 @@ const getAllOfferedCourses = async (req, res) => {
         ":drivingSchoolIDValue": drivingSchoolID,
         ":isActiveValue": true,
       },
-      ProjectionExpression: "courseName, coursePrice, courseDesc, courseID",
+      ProjectionExpression:
+        "courseName, coursePrice, courseDesc, courseID, courseType",
     });
 
     const { Items } = await dynamoClient.send(coursesCommand);
