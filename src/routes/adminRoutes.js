@@ -6,7 +6,7 @@ import addCourse from "../controller/admin/addCourse.js";
 import addSection from "../controller/admin/addSection.js";
 import fetchAllSections from "../controller/admin/fetchAllSections.js";
 import addChapter from "../controller/admin/addChapter.js";
-import fetchAllChapters from "../controller/admin/fetchALlChapters.js";
+import fetchAllChapters from "../controller/admin/fetchAllChapters.js";
 import addSubChapter from "../controller/admin/addSubChapter.js";
 import fetchAllSubChapters from "../controller/admin/fetchAllSubChapters.js";
 import addChapterQuestion from "../controller/admin/addChapterQuestion.js";
