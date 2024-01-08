@@ -1,4 +1,4 @@
-service: driving-school-admin
+service: driving-school-backend
 frameworkVersion: "3"
 
 custom:
