@@ -22,7 +22,13 @@ const fetchAllChapters = async (req, res) => {
 
     const { Items: chapters } = await dynamoClient.send(command);
 
-    res.status(200).json({ chapters: chapters });
+    if (chapters.length === 0) return res.status(200).json({ chapters: [] });
+
+    const sortedChapters = chapters.sort((a, b) =>
+      a.chapterID.localeCompare(b.chapterID)
+    );
+
+    res.status(200).json({ chapters: sortedChapters });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

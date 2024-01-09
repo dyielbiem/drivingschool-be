@@ -22,7 +22,14 @@ const fetchAllSubChapters = async (req, res) => {
 
     const { Items: subChapters } = await dynamoClient.send(command);
 
-    res.status(200).json({ subChapters: subChapters });
+    if (subChapters.length === 0)
+      return res.status(200).json({ subChapters: [] });
+
+    const sortedSubChapters = subChapters.sort((a, b) =>
+      a.subChapterID.localeCompare(b.subChapterID)
+    );
+
+    res.status(200).json({ subChapters: sortedSubChapters });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
