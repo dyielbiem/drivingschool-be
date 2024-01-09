@@ -1,9 +1,9 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import bcrypt from "bcryptjs";
+import dynamoClient from "../../db_connection/dbCLient.js";
 import {
   generateAccessToken,
-  generateRefreshToken,
+  generateRefreshToken
 } from "../../utils/generateToken.js";
 
 /*
@@ -19,8 +19,8 @@ const loginAdmin = async (req, res) => {
     const command = new GetCommand({
       TableName: process.env.ADMIN_TABLE,
       Key: {
-        adminUserName: userName,
-      },
+        adminUserName: userName
+      }
     });
 
     const { Item } = await dynamoClient.send(command);
@@ -32,7 +32,7 @@ const loginAdmin = async (req, res) => {
 
     const jwtPayload = {
       adminUserName: userName,
-      drivingSchoolID: Item.drivingSchoolID,
+      drivingSchoolID: Item.drivingSchoolID
     };
     const accessToken = generateAccessToken(
       jwtPayload,

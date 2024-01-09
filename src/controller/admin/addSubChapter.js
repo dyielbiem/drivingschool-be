@@ -1,6 +1,6 @@
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { ulid } from "ulid";
+import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to add a sub-chapter to a section
@@ -13,7 +13,7 @@ const addSubChapter = async (req, res) => {
       drivingSchoolID,
       adminUserName,
       subChapterTitle,
-      subChapterContent,
+      subChapterContent
     } = req.body;
 
     if (!chapterID || !subChapterTitle || !subChapterContent)
@@ -30,9 +30,9 @@ const addSubChapter = async (req, res) => {
         subChapterContent,
         drivingSchoolID,
         addedBy: adminUserName,
-        dateAdded: Date(),
+        dateAdded: Date()
       },
-      ConditionExpression: "attribute_not_exists(subChapterID)",
+      ConditionExpression: "attribute_not_exists(subChapterID)"
     });
 
     await dynamoClient.send(command);

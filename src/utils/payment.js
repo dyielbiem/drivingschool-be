@@ -13,8 +13,8 @@ const payment = (
   cardInfo,
   courseName
 ) => {
-  const APIContracts = authorizenet.APIContracts;
-  const APIControllers = authorizenet.APIControllers;
+  const { APIContracts } = authorizenet;
+  const { APIControllers } = authorizenet;
 
   const decryptedPaymentLogInKey = decrypt(merchantInfo.loginKey);
   const decryptedPaymentTransactionKey = decrypt(merchantInfo.transactionKey);
@@ -90,8 +90,8 @@ const payment = (
     createRequest.getJSON()
   );
 
-  return new Promise(async (resolve) => {
-    await transactionController.execute(() => {
+  return new Promise((resolve) => {
+    transactionController.execute(() => {
       const response = transactionController.getResponse();
       resolve(response);
     });

@@ -1,9 +1,9 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import bcrypt from "bcryptjs";
+import dynamoClient from "../../db_connection/dbCLient.js";
 import {
   generateAccessToken,
-  generateRefreshToken,
+  generateRefreshToken
 } from "../../utils/generateToken.js";
 
 /*
@@ -20,8 +20,8 @@ const loginStudent = async (req, res) => {
       TableName: process.env.STUDENT_TABLE,
       Key: {
         drivingSchoolID,
-        studentUserName: userName,
-      },
+        studentUserName: userName
+      }
     });
 
     const { Item } = await dynamoClient.send(command);

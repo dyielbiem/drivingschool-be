@@ -1,6 +1,6 @@
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { ulid } from "ulid";
+import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to add a test question for a chapter
@@ -14,7 +14,7 @@ const addChapterQuestion = async (req, res) => {
       chapterID,
       question,
       choices,
-      correctAnswer,
+      correctAnswer
     } = req.body;
 
     if (!chapterID || !question || !choices || !correctAnswer)
@@ -32,9 +32,9 @@ const addChapterQuestion = async (req, res) => {
         correctAnswer,
         drivingSchoolID,
         addedBy: adminUserName,
-        dateAdded: Date(),
+        dateAdded: Date()
       },
-      ConditionExpression: "attribute_not_exists(questionID)",
+      ConditionExpression: "attribute_not_exists(questionID)"
     });
 
     await dynamoClient.send(command);

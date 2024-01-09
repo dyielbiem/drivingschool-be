@@ -14,9 +14,9 @@ const fetchSection = async (req, res) => {
     const getCourseCommand = new GetCommand({
       TableName: process.env.COURSE_TABLE,
       Key: {
-        courseID,
+        courseID
       },
-      ProjectionExpression: "courseID, courseType",
+      ProjectionExpression: "courseID, courseType"
     });
 
     const { Item: course } = await dynamoClient.send(getCourseCommand);
@@ -33,9 +33,9 @@ const fetchSection = async (req, res) => {
       FilterExpression: "isActive = :isActiveValue",
       ExpressionAttributeValues: {
         ":drivingSchoolIDValue": drivingSchoolID,
-        ":isActiveValue": true,
+        ":isActiveValue": true
       },
-      ProjectionExpression: "sectionID, sectionTitle",
+      ProjectionExpression: "sectionID, sectionTitle"
     });
 
     const { Items } = await dynamoClient.send(queryActiveSectionCommand);

@@ -1,7 +1,7 @@
-import payment from "../../utils/payment.js";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -31,7 +31,7 @@ const enrollStudent = async (req, res) => {
       cardExpiration,
       courseName,
       chargeAmount,
-      courseID,
+      courseID
     } = req.body;
 
     if (
@@ -65,8 +65,8 @@ const enrollStudent = async (req, res) => {
     const drivingSchoolGetCommand = new GetCommand({
       TableName: process.env.DRIVING_SCHOOL_TABLE,
       Key: {
-        drivingSchoolID,
-      },
+        drivingSchoolID
+      }
     });
 
     const drivingSchoolResult = await dynamoClient.send(
@@ -81,8 +81,8 @@ const enrollStudent = async (req, res) => {
       TableName: process.env.STUDENT_TABLE,
       Key: {
         drivingSchoolID,
-        studentUserName: userName,
-      },
+        studentUserName: userName
+      }
     });
 
     const studentResult = await dynamoClient.send(studentGetCommand);
@@ -97,7 +97,7 @@ const enrollStudent = async (req, res) => {
     const merchantInfo = {
       loginKey: paymentLogInKey,
       transactionKey: paymentTransactionKey,
-      drivingSchoolID,
+      drivingSchoolID
     };
 
     const studentInfo = {
@@ -110,13 +110,13 @@ const enrollStudent = async (req, res) => {
       state,
       zip,
       country,
-      email,
+      email
     };
 
     const cardInfo = {
       number: cardNumber,
       code: cardCode,
-      expiration: cardExpiration,
+      expiration: cardExpiration
     };
 
     // Create a request to Authorize.net API Gateway
@@ -151,8 +151,8 @@ const enrollStudent = async (req, res) => {
         zip,
         country,
         email,
-        paymentID: respond.refId,
-      },
+        paymentID: respond.refId
+      }
     });
 
     await dynamoClient.send(putCommand);
@@ -160,7 +160,7 @@ const enrollStudent = async (req, res) => {
     res.status(200).json({
       drivingSchoolID,
       userName,
-      paymentID: respond.refId,
+      paymentID: respond.refId
     });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });

@@ -1,6 +1,6 @@
 import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { nanoid } from "nanoid";
+import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to add a course
@@ -14,7 +14,7 @@ const addCourse = async (req, res) => {
       courseName,
       coursePrice,
       courseDesc,
-      courseType,
+      courseType
     } = req.body;
 
     if (!courseName || !coursePrice || !courseType)
@@ -28,8 +28,8 @@ const addCourse = async (req, res) => {
       FilterExpression: "courseName = :courseNameValue",
       ExpressionAttributeValues: {
         ":drivingSchoolIDValue": drivingSchoolID,
-        ":courseNameValue": courseName,
-      },
+        ":courseNameValue": courseName
+      }
     });
 
     const { Items } = await dynamoClient.send(checkCourseCommand);
@@ -48,9 +48,9 @@ const addCourse = async (req, res) => {
         courseType,
         isActive: true,
         addedBy: adminUserName,
-        dateAdded: Date(),
+        dateAdded: Date()
       },
-      ConditionExpression: "attribute_not_exists(courseID)",
+      ConditionExpression: "attribute_not_exists(courseID)"
     });
 
     await dynamoClient.send(putCommand);
@@ -60,7 +60,7 @@ const addCourse = async (req, res) => {
       courseID,
       courseName,
       courseDesc,
-      coursePrice,
+      coursePrice
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

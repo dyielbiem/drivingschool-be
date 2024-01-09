@@ -1,10 +1,6 @@
-import {
-  PutCommand,
-  QueryCommand,
-  TransactWriteCommand,
-} from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
+import { QueryCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
+import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to add a section of a driving school
@@ -22,9 +18,9 @@ const addSection = async (req, res) => {
       FilterExpression: "isActive = :isActiveValue",
       ExpressionAttributeValues: {
         ":isActiveValue": true,
-        ":drivingSchoolIDValue": drivingSchoolID,
+        ":drivingSchoolIDValue": drivingSchoolID
       },
-      ProjectionExpression: "sectionID, isActive",
+      ProjectionExpression: "sectionID, isActive"
     });
 
     const { Items: activeSection } = await dynamoClient.send(
@@ -38,13 +34,13 @@ const addSection = async (req, res) => {
         Update: {
           TableName: process.env.SECTION_TABLE,
           Key: {
-            sectionID: activeSection[0].sectionID,
+            sectionID: activeSection[0].sectionID
           },
           UpdateExpression: "SET isActive = :isActiveValue",
           ExpressionAttributeValues: {
-            ":isActiveValue": false,
-          },
-        },
+            ":isActiveValue": false
+          }
+        }
       });
     }
 
@@ -59,10 +55,10 @@ const addSection = async (req, res) => {
           sectionTitle,
           addedBy: adminUserName,
           dateAdded: Date(),
-          isActive: true,
+          isActive: true
         },
-        ConditionExpression: "attribute_not_exists(sectionID)",
-      },
+        ConditionExpression: "attribute_not_exists(sectionID)"
+      }
     });
 
     const transactCommand = new TransactWriteCommand(transactParams);

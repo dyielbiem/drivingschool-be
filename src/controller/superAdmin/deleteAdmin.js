@@ -1,5 +1,5 @@
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to delete an existing admin role
@@ -14,9 +14,9 @@ const deleteAdmin = async (req, res) => {
     const command = new DeleteCommand({
       TableName: process.env.ADMIN_TABLE,
       Key: {
-        UserName: adminUserName,
+        UserName: adminUserName
       },
-      ConditionExpression: "attribute_exists(username)",
+      ConditionExpression: "attribute_exists(username)"
     });
 
     const result = await dynamoClient.send(command);

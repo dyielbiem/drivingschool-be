@@ -22,9 +22,9 @@ const signUpSuperAdmin = async (req, res) => {
       Item: {
         superAdminUserName: userName,
         displayName,
-        passWord: hashedPassWord,
+        passWord: hashedPassWord
       },
-      ConditionExpression: "attribute_not_exists(superAdminUserName)",
+      ConditionExpression: "attribute_not_exists(superAdminUserName)"
     });
 
     await dynamoClient.send(putCommand);

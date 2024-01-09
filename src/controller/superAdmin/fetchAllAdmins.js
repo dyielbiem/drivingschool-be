@@ -1,5 +1,5 @@
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
 ---- Controller to fetch all the super admin
@@ -8,7 +8,7 @@ import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 const fetchAllAdmins = async (req, res) => {
   try {
     const command = new ScanCommand({
-      TableName: process.env.ADMIN_TABLE,
+      TableName: process.env.ADMIN_TABLE
     });
 
     const result = await dynamoClient.send(command);

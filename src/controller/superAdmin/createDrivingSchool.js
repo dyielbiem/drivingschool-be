@@ -1,14 +1,14 @@
 import bcrypt from "bcryptjs";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { TransactWriteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { encrypt } from "../../utils/crypto.js";
 import { nanoid } from "nanoid";
+import dynamoClient from "../../db_connection/dbCLient.js";
+import { encrypt } from "../../utils/crypto.js";
 
 /*
 ---- Controller to create new admin role
 ---- /api/superadmin/create-admin (POST)
 */
-export const createDrivingSchool = async (req, res) => {
+const createDrivingSchool = async (req, res) => {
   try {
     const {
       paymentLogInKey,
@@ -23,7 +23,7 @@ export const createDrivingSchool = async (req, res) => {
       adminDisplayName,
       passWord,
       confirmPassWord,
-      superAdmin,
+      superAdmin
     } = req.body;
     if (
       !paymentLogInKey ||
@@ -54,8 +54,8 @@ export const createDrivingSchool = async (req, res) => {
       IndexName: "DrivingSchoolNameIndex",
       KeyConditionExpression: "drivingSchoolName = :drivingSchoolNameValue",
       ExpressionAttributeValues: {
-        ":drivingSchoolNameValue": drivingSchoolName,
-      },
+        ":drivingSchoolNameValue": drivingSchoolName
+      }
     });
 
     const { Items } = await dynamoClient.send(checkDrivingSchoolCommand);
@@ -78,10 +78,10 @@ export const createDrivingSchool = async (req, res) => {
               zip,
               country,
               paymentLogInKey: encryptedPaymentLogInKey,
-              paymentTransactionKey: encryptedTransactionKey,
+              paymentTransactionKey: encryptedTransactionKey
             },
-            ConditionExpression: "attribute_not_exists(drivingSchoolID)",
-          },
+            ConditionExpression: "attribute_not_exists(drivingSchoolID)"
+          }
         },
         {
           Put: {
@@ -92,12 +92,12 @@ export const createDrivingSchool = async (req, res) => {
               adminDisplayName,
               passWord: hashedPassWord,
               addedBy: superAdmin,
-              dateAdded: Date(),
+              dateAdded: Date()
             },
-            ConditionExpression: "attribute_not_exists(adminUserName)",
-          },
-        },
-      ],
+            ConditionExpression: "attribute_not_exists(adminUserName)"
+          }
+        }
+      ]
     });
 
     await dynamoClient.send(transactWriteCommand);
@@ -105,7 +105,7 @@ export const createDrivingSchool = async (req, res) => {
       drivingSchoolID,
       drivingSchoolName,
       adminUserName,
-      adminDisplayName,
+      adminDisplayName
     });
   } catch (error) {
     const duplicateUserNameError = error.CancellationReasons?.[1]?.Code;

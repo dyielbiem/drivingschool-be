@@ -1,7 +1,7 @@
 import { QueryCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import generateTestScore from "../../utils/generateTestScore.js";
-import { ulid } from "ulid";
 
 /*
 ---- Controller to generate the chapter test result
@@ -19,9 +19,9 @@ const generateChapterTestResult = async (req, res) => {
       IndexName: "ChapterIndex",
       KeyConditionExpression: "chapterID = :chapterIDValue",
       ExpressionAttributeValues: {
-        ":chapterIDValue": chapterID,
+        ":chapterIDValue": chapterID
       },
-      ProjectionExpression: "questionID, correctAnswer",
+      ProjectionExpression: "questionID, correctAnswer"
     });
 
     const { Items: test } = await dynamoClient.send(getCorrectAnswerCommand);
@@ -44,9 +44,9 @@ const generateChapterTestResult = async (req, res) => {
         studentUserName,
         chapterID,
         score: numberOfCorrects,
-        numberOfQuestions: test.length,
+        numberOfQuestions: test.length
       },
-      ConditionExpression: "attribute_not_exists(resultID)",
+      ConditionExpression: "attribute_not_exists(resultID)"
     });
 
     await dynamoClient.send(putResultCommand);
@@ -54,7 +54,7 @@ const generateChapterTestResult = async (req, res) => {
       resultID,
       chapterID,
       numberOfQuestions: test.length,
-      score: numberOfCorrects,
+      score: numberOfCorrects
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

@@ -6,7 +6,7 @@ let dynamoClientParams = new DynamoDBClient({});
 if (process.env.IS_OFFLINE) {
   dynamoClientParams = new DynamoDBClient({
     region: "localhost",
-    endpoint: "http://0.0.0.0:8000",
+    endpoint: "http://0.0.0.0:8000"
   });
 }
 

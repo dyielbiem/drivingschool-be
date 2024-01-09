@@ -15,9 +15,9 @@ const fetchAllSubChapters = async (req, res) => {
       IndexName: "ChapterIndex",
       KeyConditionExpression: "chapterID = :chapterIDValue",
       ExpressionAttributeValues: {
-        ":chapterIDValue": chapterID,
+        ":chapterIDValue": chapterID
       },
-      ProjectionExpression: "subChapterID, subChapterTitle, subChapterContent",
+      ProjectionExpression: "subChapterID, subChapterTitle, subChapterContent"
     });
 
     const { Items: subChapters } = await dynamoClient.send(command);

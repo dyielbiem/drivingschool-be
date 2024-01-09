@@ -21,4 +21,5 @@ app.use("/api/superadmin", superAdminRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/student", studentRouter);
 
+// eslint-disable-next-line import/prefer-default-export
 export const handler = serverless(app);

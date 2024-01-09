@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import dynamoClient from "../../db_connection/dbCLient.js";
 import {
   generateAccessToken,
-  generateRefreshToken,
+  generateRefreshToken
 } from "../../utils/generateToken.js";
 
 /*
@@ -19,8 +19,8 @@ const loginSuperAdmin = async (req, res) => {
     const command = new GetCommand({
       TableName: process.env.SUPER_ADMIN_TABLE,
       Key: {
-        superAdminUserName: userName,
-      },
+        superAdminUserName: userName
+      }
     });
 
     // Check if super admin is existing
@@ -40,9 +40,11 @@ const loginSuperAdmin = async (req, res) => {
 
     const refreshToken = generateRefreshToken(jwtPayload);
 
-    res
-      .status(200)
-      .json({ username: Item.superAdminUserName, accessToken, refreshToken });
+    res.status(200).json({
+      username: Item.superAdminUserName,
+      accessToken,
+      refreshToken
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json({ error });

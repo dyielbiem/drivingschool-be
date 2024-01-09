@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 */
 const authorizeAdmin = async (req, res, next) => {
   try {
-    const authorization = req.headers.authorization;
+    const { authorization } = req.headers;
     if (!authorization) throw Error;
     const token = authorization.split(" ")[1];
 

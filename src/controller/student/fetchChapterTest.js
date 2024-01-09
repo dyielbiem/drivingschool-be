@@ -7,7 +7,7 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const fetchChapterTest = async (req, res) => {
   try {
-    const chapterID = req.query.chapterID;
+    const { chapterID } = req.query;
     if (!chapterID) throw Error("Chapter ID must be provided");
 
     const command = new QueryCommand({
@@ -15,9 +15,9 @@ const fetchChapterTest = async (req, res) => {
       IndexName: "ChapterIndex",
       KeyConditionExpression: "chapterID = :chapterIDValue",
       ExpressionAttributeValues: {
-        ":chapterIDValue": chapterID,
+        ":chapterIDValue": chapterID
       },
-      ProjectionExpression: "questionID, question, choices",
+      ProjectionExpression: "questionID, question, choices"
     });
 
     const result = await dynamoClient.send(command);

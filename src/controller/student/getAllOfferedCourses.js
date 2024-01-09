@@ -7,17 +7,17 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const getAllOfferedCourses = async (req, res) => {
   try {
-    const drivingSchoolID = req.query.drivingSchoolID;
+    const { drivingSchoolID } = req.query;
     if (!drivingSchoolID) throw Error("Driving school ID must be provided");
 
     // Get the Authorize API log in and transaction key of the driving school
     const drivingSchoolCommand = new GetCommand({
       TableName: process.env.DRIVING_SCHOOL_TABLE,
       Key: {
-        drivingSchoolID,
+        drivingSchoolID
       },
       ProjectionExpression:
-        "drivingSchoolName, paymentLogInKey, paymentTransactionKey",
+        "drivingSchoolName, paymentLogInKey, paymentTransactionKey"
     });
 
     const { Item } = await dynamoClient.send(drivingSchoolCommand);
@@ -32,10 +32,10 @@ const getAllOfferedCourses = async (req, res) => {
       FilterExpression: "isActive = :isActiveValue",
       ExpressionAttributeValues: {
         ":drivingSchoolIDValue": drivingSchoolID,
-        ":isActiveValue": true,
+        ":isActiveValue": true
       },
       ProjectionExpression:
-        "courseName, coursePrice, courseDesc, courseID, courseType",
+        "courseName, coursePrice, courseDesc, courseID, courseType"
     });
 
     const { Items } = await dynamoClient.send(coursesCommand);

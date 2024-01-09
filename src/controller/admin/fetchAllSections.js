@@ -14,9 +14,9 @@ const fetchAllSections = async (req, res) => {
       IndexName: "DrivingSchoolIndex",
       KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
       ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
+        ":drivingSchoolIDValue": drivingSchoolID
       },
-      ProjectionExpression: "sectionID, sectionTitle, isActive",
+      ProjectionExpression: "sectionID, sectionTitle, isActive"
     });
 
     const result = await dynamoClient.send(command);

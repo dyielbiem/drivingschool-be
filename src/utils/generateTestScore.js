@@ -1,5 +1,5 @@
 /*
----- Utility function to generate sscore for a section or chapter test
+---- Utility function to generate score for a section or chapter test
 */
 const generateTestScore = (test, answers) => {
   let numberOfCorrects = 0;

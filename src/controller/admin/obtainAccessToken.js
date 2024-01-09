@@ -7,7 +7,7 @@ import { generateAccessToken } from "../../utils/generateToken.js";
 */
 const obtainAccessToken = async (req, res) => {
   try {
-    const authorization = req.headers.authorization;
+    const { authorization } = req.headers;
     if (!authorization) throw Error("Refresh token must be provided");
 
     const refreshToken = authorization.split(" ")[1];
@@ -25,7 +25,7 @@ const obtainAccessToken = async (req, res) => {
     const accessToken = generateAccessToken(
       {
         adminUserName,
-        drivingSchoolID,
+        drivingSchoolID
       },
       process.env.ADMIN_JWT_SECRET
     );
