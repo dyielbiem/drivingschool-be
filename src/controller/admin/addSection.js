@@ -64,7 +64,7 @@ const addSection = async (req, res) => {
     const transactCommand = new TransactWriteCommand(transactParams);
     await dynamoClient.send(transactCommand);
 
-    res.status(400).json({ sectionID, sectionTitle });
+    res.status(200).json({ sectionID, sectionTitle });
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res
