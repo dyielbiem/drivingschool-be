@@ -24,7 +24,7 @@ const fetchAllSections = async (req, res) => {
       return res.status(200).json({ sections: [] });
 
     const sortedSections = result.Items.sort((a, b) =>
-      a.sectionID.localeCompare(b.sectionID)
+      b.sectionID.localeCompare(a.sectionID)
     );
 
     res.status(200).json({ sections: sortedSections });
