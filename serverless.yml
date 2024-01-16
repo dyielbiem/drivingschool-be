@@ -12,6 +12,9 @@ custom:
   subChapterTable: "DrivingSchoolSubChapter"
   questionTable: "DrivingSchoolQuestion"
   resultTable: "DrivingSchoolResult"
+
+  serverless-offline:
+    httpPort: 5000
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
