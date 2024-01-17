@@ -12,6 +12,7 @@ custom:
   subChapterTable: "DrivingSchoolSubChapter"
   questionTable: "DrivingSchoolQuestion"
   resultTable: "DrivingSchoolResult"
+  couponTable: "DrivingSchoolCoupon"
 
   serverless-offline:
     httpPort: 5000
@@ -47,6 +48,8 @@ custom:
             sources: [./seed/DrivingSchoolQuestion.json]
           - table: ${self:custom.resultTable}
             sources: [./seed/DrivingSchoolResult.json]
+          - table: ${self:custom.couponTable}
+            sources: [./seed/DrivingSchoolCoupon.json]
 
 provider:
   name: aws
@@ -155,6 +158,17 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [ResultTable, Arn]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [CouponTable, Arn]
+
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
     SUPER_ADMIN_TABLE: ${self:custom.superAdminTable}
@@ -166,6 +180,7 @@ provider:
     SUB_CHAPTER_TABLE: ${self:custom.subChapterTable}
     QUESTION_TABLE: ${self:custom.questionTable}
     RESULT_TABLE: ${self:custom.resultTable}
+    COUPON_TABLE: ${self:custom.couponTable}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
@@ -402,6 +417,28 @@ resources:
                 KeyType: HASH
               - AttributeName: studentUserName
                 KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+    CouponTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: drivingSchoolID
+            AttributeType: S
+          - AttributeName: couponCode
+            AttributeType: S
+        KeySchema:
+          - AttributeName: drivingSchoolID
+            KeyType: HASH
+          - AttributeName: couponCode
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.couponTable}
+        GlobalSecondaryIndexes:
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
             Projection:
               ProjectionType: ALL
 

@@ -1,0 +1,32 @@
+[
+  {
+    "fromDate": "01-01-2023",
+    "couponAmount": 23.99,
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "toDate": "01-16-2025",
+    "isActive": true,
+    "couponCode": "discount",
+    "dateAdded": "Wed Jan 17 2024 21:45:47 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "fromDate": "01-01-2023",
+    "couponAmount": 23.99,
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "toDate": "02-20-2024",
+    "isActive": false,
+    "couponCode": "promo",
+    "dateAdded": "Wed Jan 17 2024 21:49:54 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "fromDate": "01-01-2023",
+    "couponAmount": 23.99,
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "Temecula_Admin",
+    "toDate": "01-02-2023",
+    "isActive": true,
+    "couponCode": "expired",
+    "dateAdded": "Wed Jan 17 2024 21:49:54 GMT+0800 (Singapore Standard Time)"
+  }
+]

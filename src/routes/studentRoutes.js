@@ -12,6 +12,7 @@ import fetchChapterTest from "../controller/student/fetchChapterTest.js";
 import generateSectionTestResult from "../controller/student/generateSectionTestResult.js";
 import generateChapterTestResult from "../controller/student/generateChapterTestResult.js";
 import obtainAccessToken from "../controller/student/obtainAccessToken.js";
+import redeemCoupon from "../controller/student/redeemCoupon.js";
 
 const studentRouter = Router();
 
@@ -23,6 +24,7 @@ studentRouter.get("/enroll/courses", authenticateAPIKey, getAllOfferedCourses);
 studentRouter.get("/access-token", obtainAccessToken);
 studentRouter.post("/enroll", authenticateAPIKey, enrollStudent);
 studentRouter.post("/login", authenticateAPIKey, loginStudent);
+studentRouter.post("/coupon", authenticateAPIKey, redeemCoupon);
 studentRouter.get("/section", authorizeStudent, fetchSection);
 studentRouter.get("/section/chapter/list", authorizeStudent, fetchAllChapters);
 studentRouter.get(

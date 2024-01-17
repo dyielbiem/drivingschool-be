@@ -15,6 +15,8 @@ import fetchChapterTest from "../controller/admin/fetchChapterTest.js";
 import addSectionQuestion from "../controller/admin/addSectionQuestion.js";
 import fetchSectionTest from "../controller/admin/fetchSectionTest.js";
 import obtainAccessToken from "../controller/admin/obtainAccessToken.js";
+import createCoupon from "../controller/admin/createCoupon.js";
+import fetchAllCoupons from "../controller/admin/fetchAllCoupons.js";
 
 const adminRouter = Router();
 
@@ -44,5 +46,7 @@ adminRouter.post(
 adminRouter.get("/section/chapter/test", authorizeAdmin, fetchChapterTest);
 adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
+adminRouter.post("/coupon", authorizeAdmin, createCoupon);
+adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 
 export default adminRouter;
