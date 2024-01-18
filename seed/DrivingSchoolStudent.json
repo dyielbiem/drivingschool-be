@@ -27,7 +27,10 @@
     "billingPhoneNumber": "999-999-9999",
     "billingAddress": "Address St.",
     "courseID": "LSfZ7Wj-Wr9wGGjsGZx0j",
-    "paidAmount": 226.01
+    "paidAmount": 226.01,
+    "enrollmentDate": "Thu Jan 18 2024 22:19:35 GMT+0800 (Singapore Standard Time)",
+    "billingCity": "City City",
+    "mailingCity": "City City"
   },
   {
     "passWord": "$2a$10$FDIhocl0i4Erg0SgYpLc9.UUXn1z8.8t3ndWBWP6BJiyTbu1fbcs6",
@@ -57,6 +60,9 @@
     "billingPhoneNumber": "999-999-9999",
     "billingAddress": "Address St.",
     "courseID": "LSfZ7Wj-Wr9wGGjsGZx0j",
-    "paidAmount": 226.01
+    "paidAmount": 226.01,
+    "enrollmentDate": "Thu Jan 18 2024 23:39:35 GMT+0800 (Singapore Standard Time)",
+    "billingCity": "City City",
+    "mailingCity": "City City"
   }
 ]

@@ -186,6 +186,7 @@ const enrollStudent = async (req, res) => {
         billingLastName: billingInformation.lastName,
         billingCompany: billingInformation.company,
         billingAddress: billingInformation.address,
+        billingCity: billingInformation.city,
         billingState: billingInformation.state,
         billingZip: billingInformation.zip,
         billingCountry: billingInformation.country,
@@ -195,11 +196,13 @@ const enrollStudent = async (req, res) => {
         mailingLastName: mailingInformation.lastName,
         mailingCompany: mailingInformation.company,
         mailingAddress: mailingInformation.address,
+        mailingCity: mailingInformation.city,
         mailingState: mailingInformation.state,
         mailingZip: mailingInformation.zip,
         mailingCountry: mailingInformation.country,
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
+        enrollmentDate: Date(),
         paidAmount: finalChargeAmount
       }
     });
