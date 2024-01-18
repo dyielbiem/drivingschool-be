@@ -6,56 +6,74 @@ import { decrypt } from "./crypto.js";
 ---- to create a payment transaction
 */
 const payment = (
-  merchantInfo,
-  paymentID,
-  chargeAmount,
-  studentInfo,
-  cardInfo,
-  courseName
+  drivingSchoolCredentials,
+  accountInformation,
+  mailingInformation,
+  billingInformation,
+  cardInformation,
+  courseInformation,
+  finalChargeAmount,
+  paymentID
 ) => {
   const { APIContracts } = authorizenet;
   const { APIControllers } = authorizenet;
 
-  const decryptedPaymentLogInKey = decrypt(merchantInfo.loginKey);
-  const decryptedPaymentTransactionKey = decrypt(merchantInfo.transactionKey);
+  const decryptedPaymentLogInKey = decrypt(
+    drivingSchoolCredentials.paymentLogInKey
+  );
+  const decryptedPaymentTransactionKey = decrypt(
+    drivingSchoolCredentials.paymentTransactionKey
+  );
 
   const merchantAuthentication = new APIContracts.MerchantAuthenticationType();
   merchantAuthentication.setName(decryptedPaymentLogInKey);
   merchantAuthentication.setTransactionKey(decryptedPaymentTransactionKey);
 
   const customer = new APIContracts.CustomerType();
-  customer.setId(studentInfo.userName);
-  customer.setEmail(studentInfo.email);
+  customer.setId(accountInformation.userName);
+  customer.setEmail(billingInformation.email);
+  customer.setType("individual");
 
-  const billAndShipTo = new APIContracts.CustomerAddressType();
-  billAndShipTo.setFirstName(studentInfo.firstName);
-  billAndShipTo.setLastName(studentInfo.lastName);
-  billAndShipTo.setCompany(studentInfo.company);
-  billAndShipTo.setAddress(studentInfo.address);
-  billAndShipTo.setCity(studentInfo.city);
-  billAndShipTo.setState(studentInfo.state);
-  billAndShipTo.setZip(studentInfo.zip);
-  billAndShipTo.setCountry(studentInfo.country);
+  const billTo = new APIContracts.CustomerAddressType();
+  billTo.setFirstName(billingInformation.firstName);
+  billTo.setLastName(billingInformation.lastName);
+  billTo.setCompany(billingInformation.company);
+  billTo.setAddress(billingInformation.address);
+  billTo.setCity(billingInformation.city);
+  billTo.setState(billingInformation.state);
+  billTo.setZip(billingInformation.zip);
+  billTo.setCountry(billingInformation.country);
+  billTo.setPhoneNumber(billingInformation.phoneNumber);
+
+  const shipTo = new APIContracts.CustomerAddressType();
+  shipTo.setFirstName(mailingInformation.firstName);
+  shipTo.setLastName(mailingInformation.lastName);
+  shipTo.setCompany(mailingInformation.company);
+  shipTo.setAddress(mailingInformation.address);
+  shipTo.setCity(mailingInformation.city);
+  shipTo.setState(mailingInformation.state);
+  shipTo.setZip(mailingInformation.zip);
+  shipTo.setCountry(mailingInformation.country);
 
   const paymentCardInfo = new APIContracts.CreditCardType();
-  paymentCardInfo.setCardNumber(cardInfo.number);
-  paymentCardInfo.setCardCode(cardInfo.code);
-  paymentCardInfo.setExpirationDate(cardInfo.expiration);
+  paymentCardInfo.setCardNumber(cardInformation.cardNumber);
+  paymentCardInfo.setCardCode(cardInformation.cardCode);
+  paymentCardInfo.setExpirationDate(cardInformation.cardExpiration);
 
   const paymentType = new APIContracts.PaymentType();
   paymentType.setCreditCard(paymentCardInfo);
 
   const order = new APIContracts.OrderType();
   order.setInvoiceNumber(paymentID);
-  order.setDescription(courseName);
+  order.setDescription(courseInformation.courseName);
 
   const drivingSchoolIDField = new APIContracts.UserField();
   drivingSchoolIDField.setName("Driving School ID");
-  drivingSchoolIDField.setValue(merchantInfo.drivingSchoolID);
+  drivingSchoolIDField.setValue(drivingSchoolCredentials.drivingSchoolID);
 
   const studentUserNameField = new APIContracts.UserField();
   studentUserNameField.setName("Student Username");
-  studentUserNameField.setValue(studentInfo.userName);
+  studentUserNameField.setValue(accountInformation.userName);
 
   const userFields = new APIContracts.TransactionRequestType.UserFields();
   userFields.setUserField([drivingSchoolIDField, studentUserNameField]);
@@ -73,11 +91,11 @@ const payment = (
     APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION
   );
   transactionRequest.setPayment(paymentType);
-  transactionRequest.setAmount(chargeAmount);
+  transactionRequest.setAmount(finalChargeAmount);
   transactionRequest.setOrder(order);
   transactionRequest.setCustomer(customer);
-  transactionRequest.setBillTo(billAndShipTo);
-  transactionRequest.setShipTo(billAndShipTo);
+  transactionRequest.setBillTo(billTo);
+  transactionRequest.setShipTo(shipTo);
   transactionRequest.setUserFields(userFields);
   transactionRequest.setTransactionSettings(transactionSettings);
 
