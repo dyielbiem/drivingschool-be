@@ -4,6 +4,14 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
+const getFinalChargeAmount = (couponItem, chargeAmount) => {
+  if (!couponItem?.couponAmount) return chargeAmount;
+
+  if (couponItem?.couponAmount >= chargeAmount) return 0;
+
+  return chargeAmount - couponItem.couponAmount;
+};
+
 /*
 ---- Controller to enroll a student
 ---- /api/student/enroll (POST)
@@ -31,7 +39,8 @@ const enrollStudent = async (req, res) => {
       cardExpiration,
       courseName,
       chargeAmount,
-      courseID
+      courseID,
+      couponCode
     } = req.body;
 
     if (
@@ -75,6 +84,38 @@ const enrollStudent = async (req, res) => {
 
     if (!drivingSchoolResult.Item)
       throw Error("The driving school does not exist");
+
+    // Check if the provided coupon is valid
+    let couponItem;
+    if (couponCode) {
+      const couponCommand = new GetCommand({
+        TableName: process.env.COUPON_TABLE,
+        Key: {
+          drivingSchoolID,
+          couponCode
+        }
+      });
+
+      const { Item } = await dynamoClient.send(couponCommand);
+
+      if (!Item) throw Error("Invalid coupon code");
+
+      const expiryDate = new Date(Item.toDate);
+      expiryDate.setDate(expiryDate.getDate() + 1);
+
+      if (!Item.isActive || expiryDate < new Date())
+        throw Error("Invalid coupon code");
+
+      couponItem = Item;
+    }
+
+    // Get the final charge amount
+    const finalChargeAmount = parseFloat(
+      getFinalChargeAmount(couponItem, chargeAmount).toFixed(2)
+    );
+
+    if (finalChargeAmount === 0)
+      throw Error("The coupon code is not applicable for this transaction ");
 
     // Check if username is available
     const studentGetCommand = new GetCommand({
@@ -124,7 +165,7 @@ const enrollStudent = async (req, res) => {
     const respond = await payment(
       merchantInfo,
       paymentID,
-      chargeAmount,
+      finalChargeAmount,
       studentInfo,
       cardInfo,
       courseName
