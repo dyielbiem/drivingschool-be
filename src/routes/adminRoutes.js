@@ -17,6 +17,7 @@ import fetchSectionTest from "../controller/admin/fetchSectionTest.js";
 import obtainAccessToken from "../controller/admin/obtainAccessToken.js";
 import createCoupon from "../controller/admin/createCoupon.js";
 import fetchAllCoupons from "../controller/admin/fetchAllCoupons.js";
+import fetchAllBillingInfo from "../controller/admin/fetchAllBillingInfo.js";
 
 const adminRouter = Router();
 
@@ -48,5 +49,6 @@ adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
 adminRouter.post("/coupon", authorizeAdmin, createCoupon);
 adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
+adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);
 
 export default adminRouter;
