@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
-import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
@@ -24,7 +24,7 @@ const enrollStudent = async (req, res) => {
       mailingInformation,
       billingInformation,
       cardInformation,
-      courseInformation,
+      courseID,
       couponCode
     } = req.body;
 
@@ -77,12 +77,7 @@ const enrollStudent = async (req, res) => {
     )
       throw Error("Card information must be complete");
 
-    if (
-      !courseInformation?.courseName ||
-      !courseInformation?.coursePrice ||
-      !courseInformation?.courseID
-    )
-      throw Error("Course information must be complete");
+    if (!courseID) throw Error("Course ID must be provided");
 
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
@@ -101,6 +96,53 @@ const enrollStudent = async (req, res) => {
 
     if (!drivingSchoolResult.Item)
       throw Error("The driving school does not exist");
+
+    // Check if username is available
+    const studentGetCommand = new GetCommand({
+      TableName: process.env.STUDENT_TABLE,
+      Key: {
+        drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
+        studentUserName: accountInformation.userName
+      }
+    });
+
+    const studentResult = await dynamoClient.send(studentGetCommand);
+
+    if (studentResult.Item) throw Error("Username is already in use");
+
+    // Check if course ID is valid
+    const courseCommand = new GetCommand({
+      TableName: process.env.COURSE_TABLE,
+      Key: {
+        courseID: courseID
+      },
+      ProjectionExpression: "courseID, courseType, courseName, coursePrice"
+    });
+
+    const { Item: courseResult } = await dynamoClient.send(courseCommand);
+    if (!courseResult) throw Error("Invalid course ID");
+
+    // If course is online type, get the active section
+    let sectionResult;
+    if (courseResult.courseType === "Online") {
+      const sectionCommand = new QueryCommand({
+        TableName: process.env.SECTION_TABLE,
+        IndexName: "DrivingSchoolIndex",
+        KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+        FilterExpression: "isActive  = :isActiveValue",
+        ExpressionAttributeValues: {
+          ":drivingSchoolIDValue": drivingSchoolCredentials.drivingSchoolID,
+          ":isActiveValue": true
+        },
+        ProjectionExpression: "sectionID"
+      });
+
+      const { Items: tempSectionResult } =
+        await dynamoClient.send(sectionCommand);
+      sectionResult = tempSectionResult;
+      if (sectionResult.length === 0)
+        throw Error("The driving school has no active section");
+    }
 
     // Check if the provided coupon is valid
     let couponItem;
@@ -128,39 +170,26 @@ const enrollStudent = async (req, res) => {
 
     // Get the final charge amount
     const finalChargeAmount = parseFloat(
-      getFinalChargeAmount(couponItem, courseInformation.coursePrice).toFixed(2)
+      getFinalChargeAmount(couponItem, courseResult.coursePrice).toFixed(2)
     );
 
     if (finalChargeAmount === 0)
       throw Error("The coupon code is not applicable for this transaction");
 
-    // Check if username is available
-    const studentGetCommand = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
-        studentUserName: accountInformation.userName
-      }
-    });
-
-    const studentResult = await dynamoClient.send(studentGetCommand);
-
-    if (studentResult.Item) throw Error("Username is already in use");
-
     const paymentID = nanoid(20);
-
     const salt = await bcrypt.genSalt(10);
     const hashedPassWord = await bcrypt.hash(accountInformation.passWord, salt);
 
     // Create a request to Authorize.net API Gateway
-    // to charge the credit card3
+    // to charge the credit card
     const respond = await payment(
       drivingSchoolCredentials,
       accountInformation,
       mailingInformation,
       billingInformation,
       cardInformation,
-      courseInformation,
+      courseID,
+      courseResult.courseName,
       finalChargeAmount,
       paymentID
     );
@@ -176,7 +205,8 @@ const enrollStudent = async (req, res) => {
         drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
         studentUserName: accountInformation.userName,
         passWord: hashedPassWord,
-        courseID: courseInformation.courseID,
+        courseID: courseID,
+        sectionID: sectionResult[0]?.sectionID,
         usedCouponCode: couponCode,
         paymentID: respond.refId,
         transactionID: respond.transactionResponse.transId,
@@ -215,6 +245,7 @@ const enrollStudent = async (req, res) => {
       paymentID: respond.refId,
       transactionID: respond.transactionResponse.transId,
       paidAmount: finalChargeAmount,
+      sectionID: sectionResult[0]?.sectionID,
       message: "The enrollment process was successful"
     });
   } catch (error) {

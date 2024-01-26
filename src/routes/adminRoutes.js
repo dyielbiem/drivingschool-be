@@ -18,6 +18,7 @@ import obtainAccessToken from "../controller/admin/obtainAccessToken.js";
 import createCoupon from "../controller/admin/createCoupon.js";
 import fetchAllCoupons from "../controller/admin/fetchAllCoupons.js";
 import fetchAllBillingInfo from "../controller/admin/fetchAllBillingInfo.js";
+import fetchAllStudentSections from "../controller/admin/fetchAllStudentSections.js";
 
 const adminRouter = Router();
 
@@ -47,6 +48,11 @@ adminRouter.post(
 adminRouter.get("/section/chapter/test", authorizeAdmin, fetchChapterTest);
 adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
+adminRouter.get(
+  "/student/section/list",
+  authorizeAdmin,
+  fetchAllStudentSections
+);
 adminRouter.post("/coupon", authorizeAdmin, createCoupon);
 adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);

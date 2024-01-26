@@ -11,7 +11,8 @@ const payment = (
   mailingInformation,
   billingInformation,
   cardInformation,
-  courseInformation,
+  courseID,
+  courseName,
   finalChargeAmount,
   paymentID
 ) => {
@@ -65,7 +66,7 @@ const payment = (
 
   const order = new APIContracts.OrderType();
   order.setInvoiceNumber(paymentID);
-  order.setDescription(courseInformation.courseName);
+  order.setDescription(`${courseID} - ${courseName}`);
 
   const drivingSchoolIDField = new APIContracts.UserField();
   drivingSchoolIDField.setName("Driving School ID");
