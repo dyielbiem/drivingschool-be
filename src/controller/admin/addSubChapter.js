@@ -16,7 +16,7 @@ const addSubChapter = async (req, res) => {
       subChapterContent
     } = req.body;
 
-    if (!chapterID || !subChapterTitle || !subChapterContent)
+    if (!chapterID || !subChapterTitle)
       throw Error("All required fields must filled");
 
     const subChapterID = ulid();
