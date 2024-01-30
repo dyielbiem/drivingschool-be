@@ -35,13 +35,17 @@ const getAllOfferedCourses = async (req, res) => {
         ":isActiveValue": true
       },
       ProjectionExpression:
-        "courseName, coursePrice, courseDesc, courseID, courseType"
+        "courseName, coursePrice, courseDesc, courseID, courseType, dateAdded"
     });
 
     const { Items } = await dynamoClient.send(coursesCommand);
     if (Object.keys(Items).length === 0) throw Error("No courses are offered");
 
-    res.status(200).json({ ...Item, courses: [...Items] });
+    const sortedCourses = Items.sort(
+      (a, b) => new Date(a.dateAdded) - new Date(b.dateAdded)
+    );
+
+    res.status(200).json({ ...Item, courses: sortedCourses });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

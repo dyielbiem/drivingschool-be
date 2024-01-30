@@ -5,6 +5,7 @@ import loginAdmin from "../controller/admin/loginAdmin.js";
 import addCourse from "../controller/admin/addCourse.js";
 import addSection from "../controller/admin/addSection.js";
 import fetchAllCourses from "../controller/admin/fetchAllCourses.js";
+import fetchSectionByID from "../controller/admin/fetchSectionByID.js";
 import fetchAllSections from "../controller/admin/fetchAllSections.js";
 import addChapter from "../controller/admin/addChapter.js";
 import fetchAllChapters from "../controller/admin/fetchAllChapters.js";
@@ -19,6 +20,7 @@ import createCoupon from "../controller/admin/createCoupon.js";
 import fetchAllCoupons from "../controller/admin/fetchAllCoupons.js";
 import fetchAllBillingInfo from "../controller/admin/fetchAllBillingInfo.js";
 import fetchAllStudentSections from "../controller/admin/fetchAllStudentSections.js";
+import fetchAllStudentsPerSection from "../controller/admin/fetchAllStudentsPerSection.js";
 
 const adminRouter = Router();
 
@@ -31,6 +33,7 @@ adminRouter.get("/access-token", obtainAccessToken);
 adminRouter.post("/course", authorizeAdmin, addCourse);
 adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
+adminRouter.get("/section", authorizeAdmin, fetchSectionByID);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
 adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
 adminRouter.get("/section/chapter/list", authorizeAdmin, fetchAllChapters);
@@ -53,6 +56,7 @@ adminRouter.get(
   authorizeAdmin,
   fetchAllStudentSections
 );
+adminRouter.get("/student/all", authorizeAdmin, fetchAllStudentsPerSection);
 adminRouter.post("/coupon", authorizeAdmin, createCoupon);
 adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);

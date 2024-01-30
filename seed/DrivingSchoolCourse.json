@@ -6,27 +6,27 @@
     "coursePrice": 39,
     "addedBy": "Temecula_Admin",
     "isActive": true,
-    "courseID": "ffHdRYaGaMvuwEH7oy3LN",
-    "dateAdded": "Thu Dec 21 2023 22:20:53 GMT+0800 (Singapore Standard Time)"
+    "courseID": "Ix1lyANRN14SmauaLiaj1",
+    "dateAdded": "Tue Jan 30 2024 19:45:10 GMT+0800 (Singapore Standard Time)"
   },
   {
-    "courseName": "BEST BUY PACKAGE - $900 - 30 Hour Online Drivers Education & 6 HRS BTW DRIVING LESSONS & Unlimited Practice Permit Questions ($19.99 Value for Free)",
-    "courseType": "Non-online",
-    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
-    "coursePrice": 900,
-    "addedBy": "Temecula_Admin",
-    "isActive": false,
-    "courseID": "Zv1rTWJLkVaEsPDfAs_Ly",
-    "dateAdded": "Thu Dec 21 2023 20:22:00 GMT+0800 (Singapore Standard Time)"
-  },
-  {
-    "courseName": "BEST BUY PACKAGE - $449 - 30 Hour Online Drivers Education & 6 HRS BTW DRIVING LESSONS & Unlimited Practice Permit Questions ($19.99 Value for Free)",
+    "courseName": "BEST BUY PACKAGE - $459 - 30 Hour Online Drivers Education & 6 HRS BTW DRIVING LESSONS & Unlimited Practice Permit Questions ($19.99 Value for Free)",
     "courseType": "Online",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "coursePrice": 459,
+    "addedBy": "Temecula_Admin",
+    "isActive": true,
+    "courseID": "YvALcUk_kZB34qu35aosI",
+    "dateAdded": "Tue Jan 30 2024 19:45:27 GMT+0800 (Singapore Standard Time)"
+  },
+  {
+    "courseName": "$449 - 6 Hours Behind the Wheel Training (3 Two Hour Lessons)",
+    "courseType": "Non-online",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "coursePrice": 449,
     "addedBy": "Temecula_Admin",
     "isActive": true,
-    "courseID": "Zv1rTWJLkVaEsPDEAs_Ly",
-    "dateAdded": "Thu Dec 21 2023 22:22:00 GMT+0800 (Singapore Standard Time)"
+    "courseID": "kpFabPa6LHy3Yt38h4miW",
+    "dateAdded": "Tue Jan 30 2024 19:45:58 GMT+0800 (Singapore Standard Time)"
   }
 ]

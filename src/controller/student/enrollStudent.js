@@ -123,26 +123,21 @@ const enrollStudent = async (req, res) => {
     if (!courseResult) throw Error("Invalid course ID");
 
     // If course is online type, get the active section
-    let sectionResult;
-    if (courseResult.courseType === "Online") {
-      const sectionCommand = new QueryCommand({
-        TableName: process.env.SECTION_TABLE,
-        IndexName: "DrivingSchoolIndex",
-        KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-        FilterExpression: "isActive  = :isActiveValue",
-        ExpressionAttributeValues: {
-          ":drivingSchoolIDValue": drivingSchoolCredentials.drivingSchoolID,
-          ":isActiveValue": true
-        },
-        ProjectionExpression: "sectionID"
-      });
+    const sectionCommand = new QueryCommand({
+      TableName: process.env.SECTION_TABLE,
+      IndexName: "DrivingSchoolIndex",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+      FilterExpression: "isActive  = :isActiveValue",
+      ExpressionAttributeValues: {
+        ":drivingSchoolIDValue": drivingSchoolCredentials.drivingSchoolID,
+        ":isActiveValue": true
+      },
+      ProjectionExpression: "sectionID"
+    });
 
-      const { Items: tempSectionResult } =
-        await dynamoClient.send(sectionCommand);
-      sectionResult = tempSectionResult;
-      if (sectionResult.length === 0)
-        throw Error("The driving school has no active section");
-    }
+    const { Items: sectionResult } = await dynamoClient.send(sectionCommand);
+    if (sectionResult.length === 0)
+      throw Error("The driving school has no active section");
 
     // Check if the provided coupon is valid
     let couponItem;
@@ -233,7 +228,9 @@ const enrollStudent = async (req, res) => {
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
         enrollmentDate: Date(),
-        paidAmount: finalChargeAmount
+        paidAmount: finalChargeAmount,
+        isActive: true,
+        courseType: courseResult.courseType
       }
     });
 
@@ -246,7 +243,8 @@ const enrollStudent = async (req, res) => {
       transactionID: respond.transactionResponse.transId,
       paidAmount: finalChargeAmount,
       sectionID: sectionResult[0]?.sectionID,
-      message: "The enrollment process was successful"
+      message: "The enrollment process was successful",
+      courseType: courseResult.courseType
     });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });

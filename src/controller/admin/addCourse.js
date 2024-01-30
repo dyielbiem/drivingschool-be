@@ -60,7 +60,8 @@ const addCourse = async (req, res) => {
       courseID,
       courseName,
       courseDesc,
-      coursePrice
+      coursePrice,
+      courseType
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

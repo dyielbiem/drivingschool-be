@@ -75,6 +75,9 @@ const fetchAllStudentSections = async (req, res) => {
         return groupStudentsBySection.push({ ...item, NoOfStudents: 0 });
 
       groupStudentsBySection[itemIndex].sectionTitle = item.sectionTitle;
+      groupStudentsBySection[itemIndex].isActive = item.isActive;
+      delete groupStudentsBySection[itemIndex].studentUserName;
+      delete groupStudentsBySection[itemIndex].drivingSchoolID;
     });
 
     const sortedStudentSections = groupStudentsBySection.sort((a, b) =>
