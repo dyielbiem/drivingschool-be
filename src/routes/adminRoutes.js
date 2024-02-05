@@ -8,7 +8,9 @@ import fetchAllCourses from "../controller/admin/fetchAllCourses.js";
 import fetchSectionByID from "../controller/admin/fetchSectionByID.js";
 import fetchAllSections from "../controller/admin/fetchAllSections.js";
 import addChapter from "../controller/admin/addChapter.js";
+import updateChapterContent from "../controller/admin/updateChapterContent.js";
 import fetchAllChapters from "../controller/admin/fetchAllChapters.js";
+import fetchChapterByID from "../controller/admin/fetchChapterByID.js";
 import addSubChapter from "../controller/admin/addSubChapter.js";
 import fetchAllSubChapters from "../controller/admin/fetchAllSubChapters.js";
 import addChapterQuestion from "../controller/admin/addChapterQuestion.js";
@@ -36,7 +38,13 @@ adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
 adminRouter.get("/section", authorizeAdmin, fetchSectionByID);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
 adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
+adminRouter.patch(
+  "/section/chapter/content",
+  authorizeAdmin,
+  updateChapterContent
+);
 adminRouter.get("/section/chapter/list", authorizeAdmin, fetchAllChapters);
+adminRouter.get("/section/chapter", authorizeAdmin, fetchChapterByID);
 adminRouter.post("/section/chapter/subchapter", authorizeAdmin, addSubChapter);
 adminRouter.get(
   "/section/chapter/subchapter/list",
