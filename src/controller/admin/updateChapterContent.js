@@ -2,7 +2,7 @@ import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
----- Controller to add a chapter to a section
+---- Controller to add or update the content of a chapter
 ---- /api/admin/section/chapter/content (PATCH)
 */
 const updateChapterContent = async (req, res) => {

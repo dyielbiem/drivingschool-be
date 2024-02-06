@@ -23,6 +23,8 @@ import fetchAllCoupons from "../controller/admin/fetchAllCoupons.js";
 import fetchAllBillingInfo from "../controller/admin/fetchAllBillingInfo.js";
 import fetchAllStudentSections from "../controller/admin/fetchAllStudentSections.js";
 import fetchAllStudentsPerSection from "../controller/admin/fetchAllStudentsPerSection.js";
+import fetchSubChapterByID from "../controller/admin/fetchSubChapterByID.js";
+import updateSubChapterContent from "../controller/admin/updateSubChapterContent.js";
 
 const adminRouter = Router();
 
@@ -45,6 +47,16 @@ adminRouter.patch(
 );
 adminRouter.get("/section/chapter/list", authorizeAdmin, fetchAllChapters);
 adminRouter.get("/section/chapter", authorizeAdmin, fetchChapterByID);
+adminRouter.get(
+  "/section/chapter/subchapter",
+  authorizeAdmin,
+  fetchSubChapterByID
+);
+adminRouter.patch(
+  "/section/chapter/subchapter/content",
+  authorizeAdmin,
+  updateSubChapterContent
+);
 adminRouter.post("/section/chapter/subchapter", authorizeAdmin, addSubChapter);
 adminRouter.get(
   "/section/chapter/subchapter/list",
