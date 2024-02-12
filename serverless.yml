@@ -13,7 +13,11 @@ custom:
   questionTable: "DrivingSchoolQuestion"
   resultTable: "DrivingSchoolResult"
   couponTable: "DrivingSchoolCoupon"
-
+  imagesBucket: "driving-school-backend-images"
+  s3:
+    host: localhost
+    directory: src/s3_local
+    port: 8001
   serverless-offline:
     httpPort: 5000
   serverless-dynamodb:
@@ -168,6 +172,15 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [CouponTable, Arn]
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+            - s3:ListBucket
+          Resource:
+            - "arn:aws:s3:::${self:custom.imagesBucket}/*"
+            - "arn:aws:s3:::${self:custom.imagesBucket}"
 
   environment:
     DRIVING_SCHOOL_TABLE: ${self:custom.drivingSchoolTable}
@@ -181,6 +194,7 @@ provider:
     QUESTION_TABLE: ${self:custom.questionTable}
     RESULT_TABLE: ${self:custom.resultTable}
     COUPON_TABLE: ${self:custom.couponTable}
+    IMAGES_BUCKET: ${self:custom.imagesBucket}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
     ADMIN_JWT_SECRET: ${env:ADMIN_JWT_SECRET}
@@ -441,9 +455,32 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+    ImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.imagesBucket}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+    ImagesBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ImagesBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "s3:GetObject"
+              Resource:
+                - !Join ["/", [!GetAtt [ImagesBucket, Arn], "*"]]
+              Principal: "*"
 
 useDotenv: true
 
 plugins:
   - serverless-dynamodb
   - serverless-offline
+  - serverless-s3-local

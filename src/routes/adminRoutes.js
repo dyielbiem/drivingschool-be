@@ -25,6 +25,8 @@ import fetchAllStudentSections from "../controller/admin/fetchAllStudentSections
 import fetchAllStudentsPerSection from "../controller/admin/fetchAllStudentsPerSection.js";
 import fetchSubChapterByID from "../controller/admin/fetchSubChapterByID.js";
 import updateSubChapterContent from "../controller/admin/updateSubChapterContent.js";
+import generatePutPreSignedURL from "../controller/admin/generatePutPreSignedURL.js";
+import fetchAllUploadedImageKey from "../controller/admin/fetchAllUploadedImageKey.js";
 
 const adminRouter = Router();
 
@@ -34,6 +36,12 @@ const adminRouter = Router();
 */
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
 adminRouter.get("/access-token", obtainAccessToken);
+adminRouter.get(
+  "/s3/presigned-url/put",
+  authorizeAdmin,
+  generatePutPreSignedURL
+);
+adminRouter.get("/s3/image/key/list", authorizeAdmin, fetchAllUploadedImageKey);
 adminRouter.post("/course", authorizeAdmin, addCourse);
 adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
