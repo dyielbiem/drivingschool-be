@@ -16,9 +16,11 @@ const generatePutPreSignedURL = async (req, res) => {
       Key: `image/${key}`
     });
 
-    const signedURL = await getSignedUrl(s3Client, command, { expiresIn: 600 });
+    const preSignedURL = await getSignedUrl(s3Client, command, {
+      expiresIn: 600
+    });
 
-    res.status(200).json({ signedURL, imageKey: key });
+    res.status(200).json({ preSignedURL, imageKey: key });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

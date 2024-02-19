@@ -27,6 +27,8 @@ import fetchSubChapterByID from "../controller/admin/fetchSubChapterByID.js";
 import updateSubChapterContent from "../controller/admin/updateSubChapterContent.js";
 import generatePutPreSignedURL from "../controller/admin/generatePutPreSignedURL.js";
 import fetchAllUploadedImageKey from "../controller/admin/fetchAllUploadedImageKey.js";
+import deleteChapter from "../controller/admin/deleteChapter.js";
+import deleteSubChapter from "../controller/admin/deleteSubChapter.js";
 
 const adminRouter = Router();
 
@@ -48,6 +50,7 @@ adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
 adminRouter.get("/section", authorizeAdmin, fetchSectionByID);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
 adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
+adminRouter.delete("/section/chapter", authorizeAdmin, deleteChapter);
 adminRouter.patch(
   "/section/chapter/content",
   authorizeAdmin,
@@ -66,6 +69,11 @@ adminRouter.patch(
   updateSubChapterContent
 );
 adminRouter.post("/section/chapter/subchapter", authorizeAdmin, addSubChapter);
+adminRouter.delete(
+  "/section/chapter/subchapter",
+  authorizeAdmin,
+  deleteSubChapter
+);
 adminRouter.get(
   "/section/chapter/subchapter/list",
   authorizeAdmin,
