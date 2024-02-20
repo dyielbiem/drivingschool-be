@@ -7,17 +7,19 @@ import s3Client from "../../s3_connection/s3Client.js";
 */
 const fetchAllUploadedImageKey = async (req, res) => {
   try {
+    const { drivingSchoolID } = req.body;
+
     const command = new ListObjectsCommand({
       Bucket: process.env.IMAGES_BUCKET,
-      Prefix: "image/"
+      Prefix: `image/${drivingSchoolID}/`
     });
 
     const response = await s3Client.send(command);
     if (!response.Contents) return res.status(200).json({ imageKeys: [] });
 
-    res
-      .status(200)
-      .json({ imageKeys: response.Contents.map((image) => image.Key) });
+    res.status(200).json({
+      imageKeys: response.Contents.map((image) => image.Key).reverse()
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
