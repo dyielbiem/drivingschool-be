@@ -29,6 +29,14 @@ import generatePutPreSignedURL from "../controller/admin/generatePutPreSignedURL
 import fetchAllUploadedImageKey from "../controller/admin/fetchAllUploadedImageKey.js";
 import deleteChapter from "../controller/admin/deleteChapter.js";
 import deleteSubChapter from "../controller/admin/deleteSubChapter.js";
+import deleteCoupon from "../controller/admin/deleteCoupon.js";
+import updateCoupon from "../controller/admin/updateCoupon.js";
+import deleteCourse from "../controller/admin/deleteCourse.js";
+import updateCourse from "../controller/admin/updateCourse.js";
+import updateStudentStatus from "../controller/admin/updateStudentStatus.js";
+import updateSectionTitle from "../controller/admin/updateSectionTitle.js";
+import updateChapterTitle from "../controller/admin/updateChapterTitle.js";
+import updateSubChapterTitle from "../controller/admin/updateSubChapterTitle.js";
 
 const adminRouter = Router();
 
@@ -45,12 +53,16 @@ adminRouter.get(
 );
 adminRouter.get("/s3/image/key/list", authorizeAdmin, fetchAllUploadedImageKey);
 adminRouter.post("/course", authorizeAdmin, addCourse);
-adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
+adminRouter.patch("/course", authorizeAdmin, updateCourse);
+adminRouter.delete("/course", authorizeAdmin, deleteCourse);
+adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/section", authorizeAdmin, fetchSectionByID);
+adminRouter.patch("/section/title", authorizeAdmin, updateSectionTitle);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
 adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
 adminRouter.delete("/section/chapter", authorizeAdmin, deleteChapter);
+adminRouter.patch("/section/chapter/title", authorizeAdmin, updateChapterTitle);
 adminRouter.patch(
   "/section/chapter/content",
   authorizeAdmin,
@@ -67,6 +79,11 @@ adminRouter.patch(
   "/section/chapter/subchapter/content",
   authorizeAdmin,
   updateSubChapterContent
+);
+adminRouter.patch(
+  "/section/chapter/subchapter/title",
+  authorizeAdmin,
+  updateSubChapterTitle
 );
 adminRouter.post("/section/chapter/subchapter", authorizeAdmin, addSubChapter);
 adminRouter.delete(
@@ -92,8 +109,11 @@ adminRouter.get(
   authorizeAdmin,
   fetchAllStudentSections
 );
+adminRouter.patch("/student/status", authorizeAdmin, updateStudentStatus);
 adminRouter.get("/student/all", authorizeAdmin, fetchAllStudentsPerSection);
 adminRouter.post("/coupon", authorizeAdmin, createCoupon);
+adminRouter.delete("/coupon", authorizeAdmin, deleteCoupon);
+adminRouter.patch("/coupon", authorizeAdmin, updateCoupon);
 adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);
 
