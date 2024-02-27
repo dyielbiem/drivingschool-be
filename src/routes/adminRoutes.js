@@ -37,6 +37,7 @@ import updateStudentStatus from "../controller/admin/updateStudentStatus.js";
 import updateSectionTitle from "../controller/admin/updateSectionTitle.js";
 import updateChapterTitle from "../controller/admin/updateChapterTitle.js";
 import updateSubChapterTitle from "../controller/admin/updateSubChapterTitle.js";
+import addStudent from "../controller/admin/addStudent.js";
 
 const adminRouter = Router();
 
@@ -104,6 +105,7 @@ adminRouter.post(
 adminRouter.get("/section/chapter/test", authorizeAdmin, fetchChapterTest);
 adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
+adminRouter.post("/student", authorizeAdmin, addStudent);
 adminRouter.get(
   "/student/section/list",
   authorizeAdmin,

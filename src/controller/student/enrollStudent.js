@@ -122,7 +122,7 @@ const enrollStudent = async (req, res) => {
     const { Item: courseResult } = await dynamoClient.send(courseCommand);
     if (!courseResult) throw Error("Invalid course ID");
 
-    // If course is online type, get the active section
+    // If course is valid, get the active section
     const sectionCommand = new QueryCommand({
       TableName: process.env.SECTION_TABLE,
       IndexName: "DrivingSchoolIndex",
