@@ -1,6 +1,11 @@
 import authorizenet from "authorizenet";
 import { decrypt } from "./crypto.js";
 
+const compressedField = (field, maxLength) => {
+  if (field.length <= maxLength) return field;
+  return `${field.substring(0, maxLength - 3)}...`;
+};
+
 /*
 ---- Utility function to make a request to Authorize API Gateway 
 ---- to create a payment transaction
@@ -31,42 +36,46 @@ const payment = (
   merchantAuthentication.setTransactionKey(decryptedPaymentTransactionKey);
 
   const customer = new APIContracts.CustomerType();
-  customer.setId(accountInformation.userName);
-  customer.setEmail(billingInformation.email);
+  customer.setId(compressedField(accountInformation.userName, 20));
+  customer.setEmail(compressedField(billingInformation.email, 255));
   customer.setType("individual");
 
   const billTo = new APIContracts.CustomerAddressType();
-  billTo.setFirstName(billingInformation.firstName);
-  billTo.setLastName(billingInformation.lastName);
-  billTo.setCompany(billingInformation.company);
-  billTo.setAddress(billingInformation.address);
-  billTo.setCity(billingInformation.city);
-  billTo.setState(billingInformation.state);
-  billTo.setZip(billingInformation.zip);
-  billTo.setCountry(billingInformation.country);
-  billTo.setPhoneNumber(billingInformation.phoneNumber);
+  billTo.setFirstName(compressedField(billingInformation.firstName, 50));
+  billTo.setLastName(compressedField(billingInformation.lastName, 50));
+  billTo.setCompany(compressedField(billingInformation.company, 50));
+  billTo.setAddress(compressedField(billingInformation.address, 60));
+  billTo.setCity(compressedField(billingInformation.city, 40));
+  billTo.setState(compressedField(billingInformation.state, 40));
+  billTo.setZip(compressedField(billingInformation.zip, 20));
+  billTo.setCountry(compressedField(billingInformation.country, 60));
+  billTo.setPhoneNumber(compressedField(billingInformation.city, 25));
 
   const shipTo = new APIContracts.CustomerAddressType();
-  shipTo.setFirstName(mailingInformation.firstName);
-  shipTo.setLastName(mailingInformation.lastName);
-  shipTo.setCompany(mailingInformation.company);
-  shipTo.setAddress(mailingInformation.address);
-  shipTo.setCity(mailingInformation.city);
-  shipTo.setState(mailingInformation.state);
-  shipTo.setZip(mailingInformation.zip);
-  shipTo.setCountry(mailingInformation.country);
+  shipTo.setFirstName(compressedField(mailingInformation.firstName, 50));
+  shipTo.setLastName(compressedField(mailingInformation.lastName, 50));
+  shipTo.setCompany(compressedField(mailingInformation.company, 50));
+  shipTo.setAddress(compressedField(mailingInformation.address, 60));
+  shipTo.setCity(compressedField(mailingInformation.city, 40));
+  shipTo.setState(compressedField(mailingInformation.state, 40));
+  shipTo.setZip(compressedField(mailingInformation.zip, 20));
+  shipTo.setCountry(compressedField(mailingInformation.country, 60));
 
   const paymentCardInfo = new APIContracts.CreditCardType();
-  paymentCardInfo.setCardNumber(cardInformation.cardNumber);
-  paymentCardInfo.setCardCode(cardInformation.cardCode);
-  paymentCardInfo.setExpirationDate(cardInformation.cardExpiration);
+  paymentCardInfo.setCardNumber(
+    compressedField(cardInformation.cardNumber, 16)
+  );
+  paymentCardInfo.setCardCode(compressedField(cardInformation.cardCode, 4));
+  paymentCardInfo.setExpirationDate(
+    compressedField(cardInformation.cardExpiration, 7)
+  );
 
   const paymentType = new APIContracts.PaymentType();
   paymentType.setCreditCard(paymentCardInfo);
 
   const order = new APIContracts.OrderType();
   order.setInvoiceNumber(paymentID);
-  order.setDescription(`${courseID} - ${courseName}`);
+  order.setDescription(compressedField(`ID: ${courseID} | ${courseName}`, 255));
 
   const drivingSchoolIDField = new APIContracts.UserField();
   drivingSchoolIDField.setName("Driving School ID");

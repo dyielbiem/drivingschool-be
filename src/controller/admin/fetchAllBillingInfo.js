@@ -13,6 +13,7 @@ const fetchAllBillingInfo = async (req, res) => {
       TableName: process.env.STUDENT_TABLE,
       IndexName: "DrivingSchoolIndex",
       KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+      FilterExpression: "attribute_exists(transactionID)",
       ExpressionAttributeValues: {
         ":drivingSchoolIDValue": drivingSchoolID
       },

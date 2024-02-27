@@ -190,7 +190,12 @@ const enrollStudent = async (req, res) => {
     );
 
     if (respond.messages.resultCode !== "Ok")
-      return res.status(400).json(respond);
+      return res.status(400).json({
+        error:
+          respond.transactionResponse?.errors[0]?.errorText ||
+          respond.messages?.message[0]?.text ||
+          "An error occured in payment transaction"
+      });
 
     // Add the student to database upon the
     // successful payment transaction
