@@ -8,9 +8,9 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 const updateSiteSettings = async (req, res) => {
   try {
     const { drivingSchoolID, email, noOfRows } = req.body;
-    if (!email || !noOfRows)
-      throw Error("All required fields must be provided");
-    if (typeof noOfRows !== "number") throw Error("Rows must be a number");
+    if (!email) throw Error("Email must be provided");
+    if (noOfRows && typeof noOfRows !== "number")
+      throw Error("Rows must be a number");
 
     const command = new UpdateCommand({
       TableName: process.env.DRIVING_SCHOOL_TABLE,
@@ -20,7 +20,7 @@ const updateSiteSettings = async (req, res) => {
       UpdateExpression: "SET email = :emailValue, noOfRows = :noOfRowsValue",
       ExpressionAttributeValues: {
         ":emailValue": email,
-        ":noOfRowsValue": noOfRows
+        ":noOfRowsValue": noOfRows || ""
       },
       ConditionExpression: "attribute_exists(drivingSchoolID)",
       ReturnValues: "ALL_NEW"

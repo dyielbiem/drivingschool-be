@@ -8,8 +8,6 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 const updateEmailContent = async (req, res) => {
   try {
     const { drivingSchoolID, emailSubject, emailBody } = req.body;
-    if (!emailSubject || !emailBody)
-      throw Error("All required fields must be provided");
 
     const command = new UpdateCommand({
       TableName: process.env.DRIVING_SCHOOL_TABLE,
@@ -19,8 +17,8 @@ const updateEmailContent = async (req, res) => {
       UpdateExpression:
         "SET emailSubject = :emailSubjectValue, emailBody = :emailBodyValue",
       ExpressionAttributeValues: {
-        ":emailSubjectValue": emailSubject,
-        ":emailBodyValue": emailBody
+        ":emailSubjectValue": emailSubject || "",
+        ":emailBodyValue": emailBody || ""
       },
       ConditionExpression: "attribute_exists(drivingSchoolID)",
       ReturnValues: "ALL_NEW"
