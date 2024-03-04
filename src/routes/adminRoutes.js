@@ -38,6 +38,10 @@ import updateSectionTitle from "../controller/admin/updateSectionTitle.js";
 import updateChapterTitle from "../controller/admin/updateChapterTitle.js";
 import updateSubChapterTitle from "../controller/admin/updateSubChapterTitle.js";
 import addStudent from "../controller/admin/addStudent.js";
+import fetchSiteSettings from "../controller/admin/fetchSiteSettings.js";
+import updateSiteSettings from "../controller/admin/updateSiteSettings.js";
+import fetchEmailContent from "../controller/admin/fetchEmailContent.js";
+import updateEmailContent from "../controller/admin/updateEmailContent.js";
 
 const adminRouter = Router();
 
@@ -118,5 +122,9 @@ adminRouter.delete("/coupon", authorizeAdmin, deleteCoupon);
 adminRouter.patch("/coupon", authorizeAdmin, updateCoupon);
 adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);
+adminRouter.get("/setting/site", authorizeAdmin, fetchSiteSettings);
+adminRouter.patch("/setting/site", authorizeAdmin, updateSiteSettings);
+adminRouter.get("/setting/email", authorizeAdmin, fetchEmailContent);
+adminRouter.patch("/setting/email", authorizeAdmin, updateEmailContent);
 
 export default adminRouter;
