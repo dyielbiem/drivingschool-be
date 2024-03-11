@@ -35,7 +35,7 @@ const fetchSection = async (req, res) => {
 
     if (!section) throw Error("The student does not belong to any section");
 
-    res.status(400).json(section);
+    res.status(200).json(section);
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
