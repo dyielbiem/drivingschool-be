@@ -7,7 +7,7 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const fetchSectionTest = async (req, res) => {
   try {
-    const { sectionID } = req.query;
+    const { sectionID } = req.body;
     if (!sectionID) throw Error("Section ID must be provided");
 
     const command = new QueryCommand({

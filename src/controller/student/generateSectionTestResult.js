@@ -1,4 +1,4 @@
-import { QueryCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import generateTestScore from "../../utils/generateTestScore.js";
@@ -10,8 +10,7 @@ import generateTestScore from "../../utils/generateTestScore.js";
 const generateSectionTestResult = async (req, res) => {
   try {
     const { sectionID, answers, studentUserName, drivingSchoolID } = req.body;
-    if (!sectionID || !answers)
-      throw Error("All required fields must be filled");
+    if (!answers) throw Error("All required fields must be filled");
     if (typeof answers === "string")
       throw Error("The field 'answers' must be an array, not a string");
     const getCorrectAnswerCommand = new QueryCommand({
@@ -44,12 +43,32 @@ const generateSectionTestResult = async (req, res) => {
         studentUserName,
         sectionID,
         score: numberOfCorrects,
-        numberOfQuestions: test.length
+        numberOfQuestions: test.length,
+        answers
       },
       ConditionExpression: "attribute_not_exists(resultID)"
     });
 
     await dynamoClient.send(putResultCommand);
+
+    const isCourseCompletedCommand = new UpdateCommand({
+      TableName: process.env.STUDENT_TABLE,
+      Key: {
+        drivingSchoolID,
+        studentUserName
+      },
+      UpdateExpression:
+        "SET isCourseCompleted = :isCourseCompletedValue, completionDate = :completionDateValue",
+      ExpressionAttributeValues: {
+        ":isCourseCompletedValue": true,
+        ":completionDateValue": Date()
+      },
+      ConditionExpression:
+        "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
+    });
+
+    await dynamoClient.send(isCourseCompletedCommand);
+
     res.status(200).json({
       resultID,
       sectionID,
