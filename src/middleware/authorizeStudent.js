@@ -9,15 +9,15 @@ const authorizeStudent = async (req, res, next) => {
     if (!authorization) throw Error;
     const token = authorization.split(" ")[1];
 
-    const { studentUserName, drivingSchoolID } = jwt.verify(
-      token,
-      process.env.STUDENT_JWT_SECRET
-    );
+    const { studentUserName, drivingSchoolID, courseID, sectionID } =
+      jwt.verify(token, process.env.STUDENT_JWT_SECRET);
 
     if (!studentUserName || !drivingSchoolID) throw Error;
 
     req.body.studentUserName = studentUserName;
     req.body.drivingSchoolID = drivingSchoolID;
+    req.body.courseID = courseID;
+    req.body.sectionID = sectionID;
 
     next();
   } catch (error) {

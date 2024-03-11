@@ -31,7 +31,12 @@ const loginStudent = async (req, res) => {
 
     if (!isPasswordCorrect) throw Error("Username or password is incorrect");
 
-    const jwtPayload = { studentUserName: userName, drivingSchoolID };
+    const jwtPayload = {
+      studentUserName: userName,
+      drivingSchoolID,
+      courseID: Item.courseID,
+      sectionID: Item.sectionID
+    };
 
     const accessToken = generateAccessToken(
       jwtPayload,

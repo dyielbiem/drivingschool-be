@@ -1,4 +1,4 @@
-import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -7,44 +7,35 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const fetchSection = async (req, res) => {
   try {
-    const { courseID } = req.query;
-    const { drivingSchoolID } = req.body;
-    if (!courseID) throw Error("Course ID must be provided");
+    const { courseID, sectionID } = req.body;
 
     const getCourseCommand = new GetCommand({
       TableName: process.env.COURSE_TABLE,
       Key: {
-        courseID
+        courseID: courseID
       },
       ProjectionExpression: "courseID, courseType"
     });
 
     const { Item: course } = await dynamoClient.send(getCourseCommand);
-
     if (!course) throw Error("Invalid course ID");
 
     if (course.courseType !== "Online")
       return res.status(200).json({ message: "Course is non-online type" });
 
-    const queryActiveSectionCommand = new QueryCommand({
+    const getSectionCommand = new GetCommand({
       TableName: process.env.SECTION_TABLE,
-      IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "isActive = :isActiveValue",
-      ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":isActiveValue": true
+      Key: {
+        sectionID: sectionID
       },
       ProjectionExpression: "sectionID, sectionTitle"
     });
 
-    const { Items } = await dynamoClient.send(queryActiveSectionCommand);
+    const { Item: section } = await dynamoClient.send(getSectionCommand);
 
-    const activeSection = Items?.[0];
+    if (!section) throw Error("The student does not belong to any section");
 
-    if (!activeSection) throw Error("The driving school has no active section");
-
-    res.status(400).json({ ...activeSection });
+    res.status(400).json(section);
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
