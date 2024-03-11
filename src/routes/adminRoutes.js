@@ -25,7 +25,7 @@ import fetchAllStudentSections from "../controller/admin/fetchAllStudentSections
 import fetchAllStudentsPerSection from "../controller/admin/fetchAllStudentsPerSection.js";
 import fetchSubChapterByID from "../controller/admin/fetchSubChapterByID.js";
 import updateSubChapterContent from "../controller/admin/updateSubChapterContent.js";
-import generatePutPreSignedURL from "../controller/admin/generatePutPreSignedURL.js";
+import generateImageSignedURL from "../controller/admin/generateImageSignedURL.js";
 import fetchAllUploadedImageKey from "../controller/admin/fetchAllUploadedImageKey.js";
 import deleteChapter from "../controller/admin/deleteChapter.js";
 import deleteSubChapter from "../controller/admin/deleteSubChapter.js";
@@ -42,6 +42,7 @@ import fetchSiteSettings from "../controller/admin/fetchSiteSettings.js";
 import updateSiteSettings from "../controller/admin/updateSiteSettings.js";
 import fetchEmailContent from "../controller/admin/fetchEmailContent.js";
 import updateEmailContent from "../controller/admin/updateEmailContent.js";
+import generateCourseImageSignedURL from "../controller/admin/generateCourseImageSignedURL.js";
 
 const adminRouter = Router();
 
@@ -54,10 +55,15 @@ adminRouter.get("/access-token", obtainAccessToken);
 adminRouter.get(
   "/s3/presigned-url/put",
   authorizeAdmin,
-  generatePutPreSignedURL
+  generateImageSignedURL
 );
 adminRouter.get("/s3/image/key/list", authorizeAdmin, fetchAllUploadedImageKey);
 adminRouter.post("/course", authorizeAdmin, addCourse);
+adminRouter.get(
+  "/s3/presigned-url/course/put",
+  authorizeAdmin,
+  generateCourseImageSignedURL
+);
 adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
 adminRouter.patch("/course", authorizeAdmin, updateCourse);
 adminRouter.delete("/course", authorizeAdmin, deleteCourse);
