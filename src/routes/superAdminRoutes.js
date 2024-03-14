@@ -8,6 +8,7 @@ import fetchAllSuperAdmins from "../controller/superAdmin/fetchAllSuperAdmins.js
 import fetchAllAdmins from "../controller/superAdmin/fetchAllAdmins.js";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import obtainAccessToken from "../controller/superAdmin/obtainAccessToken.js";
+import validateRefreshToken from "../controller/superAdmin/validateRefreshToken.js";
 
 /*
 ------- Router for super admin
@@ -17,6 +18,7 @@ const superAdminRouter = Router();
 
 superAdminRouter.get("/", authorizeSuperAdmin, fetchAllSuperAdmins);
 superAdminRouter.get("/access-token", obtainAccessToken);
+superAdminRouter.get("/refresh-token/validate", validateRefreshToken);
 superAdminRouter.post("/signup", authenticateAPIKey, signUpSuperAdmin);
 superAdminRouter.post("/login", authenticateAPIKey, loginSuperAdmin);
 superAdminRouter.post(

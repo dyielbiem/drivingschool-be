@@ -43,6 +43,7 @@ import updateSiteSettings from "../controller/admin/updateSiteSettings.js";
 import fetchEmailContent from "../controller/admin/fetchEmailContent.js";
 import updateEmailContent from "../controller/admin/updateEmailContent.js";
 import generateCourseImageSignedURL from "../controller/admin/generateCourseImageSignedURL.js";
+import validateRefreshToken from "../controller/admin/validateRefreshToken.js";
 
 const adminRouter = Router();
 
@@ -52,6 +53,7 @@ const adminRouter = Router();
 */
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
 adminRouter.get("/access-token", obtainAccessToken);
+adminRouter.get("/refresh-token/validate", validateRefreshToken);
 adminRouter.get(
   "/s3/presigned-url/put",
   authorizeAdmin,
