@@ -1,4 +1,4 @@
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -61,7 +61,19 @@ const fetchAllStudentsPerSection = async (req, res) => {
       (a, b) => new Date(a.enrollmentDate) - new Date(b.enrollmentDate)
     );
 
-    res.status(200).json({ allStudents });
+    const noOfRowsCommand = new GetCommand({
+      TableName: process.env.DRIVING_SCHOOL_TABLE,
+      Key: {
+        drivingSchoolID
+      },
+      ProjectionExpression: "noOfRows"
+    });
+
+    const {
+      Item: { noOfRows }
+    } = await dynamoClient.send(noOfRowsCommand);
+
+    res.status(200).json({ allStudents, noOfRows: noOfRows || 0 });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
