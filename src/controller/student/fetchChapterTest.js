@@ -17,7 +17,7 @@ const fetchChapterTest = async (req, res) => {
       ExpressionAttributeValues: {
         ":chapterIDValue": chapterID
       },
-      ProjectionExpression: "questionID, question, choices"
+      ProjectionExpression: "questionID, question, otherChoices, correctAnswer"
     });
 
     const result = await dynamoClient.send(command);
@@ -26,6 +26,19 @@ const fetchChapterTest = async (req, res) => {
     const test = result.Items.sort((a, b) =>
       a.questionID.localeCompare(b.questionID)
     );
+
+    test.forEach((question) => {
+      const choices = [...question.otherChoices, question.correctAnswer].sort(
+        () => Math.random() - 0.5
+      );
+
+      Object.assign(question, {
+        ...question,
+        choices,
+        otherChoices: undefined,
+        correctAnswer: undefined
+      });
+    });
 
     res.status(200).json({ test });
   } catch (error) {

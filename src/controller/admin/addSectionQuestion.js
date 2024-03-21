@@ -13,12 +13,21 @@ const addSectionQuestion = async (req, res) => {
       adminUserName,
       sectionID,
       question,
-      choices,
+      otherChoices,
       correctAnswer
     } = req.body;
 
-    if (!sectionID || !question || !choices || !correctAnswer)
+    if (!sectionID || !question || !otherChoices || !correctAnswer)
       throw Error("All required fields must be filled");
+
+    if (!Array.isArray(otherChoices))
+      throw Error("Other choices must be a array");
+
+    if (otherChoices.length === 0)
+      throw Error("Other choices must be provided");
+
+    if (otherChoices.includes(correctAnswer))
+      throw Error("Correct answer must not be listed in other choices");
 
     const questionID = ulid();
 
@@ -28,7 +37,7 @@ const addSectionQuestion = async (req, res) => {
         questionID,
         sectionID,
         question,
-        choices,
+        otherChoices,
         correctAnswer,
         drivingSchoolID,
         addedBy: adminUserName,
@@ -38,6 +47,10 @@ const addSectionQuestion = async (req, res) => {
     });
 
     await dynamoClient.send(command);
+
+    const choices = [...otherChoices, correctAnswer].sort(
+      () => Math.random() - 0.5
+    );
 
     res
       .status(200)
