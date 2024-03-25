@@ -44,6 +44,8 @@ import fetchEmailContent from "../controller/admin/fetchEmailContent.js";
 import updateEmailContent from "../controller/admin/updateEmailContent.js";
 import generateCourseImageSignedURL from "../controller/admin/generateCourseImageSignedURL.js";
 import validateRefreshToken from "../controller/admin/validateRefreshToken.js";
+import deleteQuestion from "../controller/admin/deleteQuestion.js";
+import updateQuestion from "../controller/admin/updateQuestion.js";
 
 const adminRouter = Router();
 
@@ -117,6 +119,8 @@ adminRouter.post(
 adminRouter.get("/section/chapter/test", authorizeAdmin, fetchChapterTest);
 adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
+adminRouter.delete("/question", authorizeAdmin, deleteQuestion);
+adminRouter.patch("/question", authorizeAdmin, updateQuestion);
 adminRouter.post("/student", authorizeAdmin, addStudent);
 adminRouter.get(
   "/student/section/list",
