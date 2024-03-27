@@ -13,6 +13,8 @@ const generateSectionTestResult = async (req, res) => {
     if (!answers) throw Error("All required fields must be filled");
     if (typeof answers === "string")
       throw Error("The field 'answers' must be an array, not a string");
+
+    // Get the test questions from the database
     const getCorrectAnswerCommand = new QueryCommand({
       TableName: process.env.QUESTION_TABLE,
       IndexName: "SectionIndex",
@@ -32,7 +34,28 @@ const generateSectionTestResult = async (req, res) => {
       a.questionID.localeCompare(b.questionID)
     );
 
+    // Check if the student already passed the test
+    // If yes, do not allow the student to retake the exam
+    const isPassedCommand = new QueryCommand({
+      TableName: process.env.RESULT_TABLE,
+      IndexName: "SectionIndex",
+      KeyConditionExpression: "sectionID = :sectionIDValue",
+      FilterExpression:
+        "studentUserName = :studentUserNameValue AND drivingSchoolID = :drivingSchoolIDValue AND isPassed = :isPassedValue",
+      ExpressionAttributeValues: {
+        ":sectionIDValue": sectionID,
+        ":drivingSchoolIDValue": drivingSchoolID,
+        ":studentUserNameValue": studentUserName,
+        ":isPassedValue": true
+      }
+    });
+
+    const { Items: passedResult } = await dynamoClient.send(isPassedCommand);
+    if (passedResult.length > 0)
+      throw Error("The test has already been passed by the student");
+
     const numberOfCorrects = generateTestScore(sortedTest, answers);
+    const scorePercentage = numberOfCorrects / test.length;
 
     const resultID = ulid();
     const putResultCommand = new PutCommand({
@@ -44,36 +67,44 @@ const generateSectionTestResult = async (req, res) => {
         sectionID,
         score: numberOfCorrects,
         numberOfQuestions: test.length,
-        answers
+        answers,
+        scorePercentage: scorePercentage * 100,
+        isPassed: scorePercentage >= 0.75
       },
       ConditionExpression: "attribute_not_exists(resultID)"
     });
 
     await dynamoClient.send(putResultCommand);
 
-    const isCourseCompletedCommand = new UpdateCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID,
-        studentUserName
-      },
-      UpdateExpression:
-        "SET isCourseCompleted = :isCourseCompletedValue, completionDate = :completionDateValue",
-      ExpressionAttributeValues: {
-        ":isCourseCompletedValue": true,
-        ":completionDateValue": Date()
-      },
-      ConditionExpression:
-        "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
-    });
+    // Mark the course progress of the student as completed
+    // if the student passed the section test
+    if (scorePercentage >= 0.75) {
+      const isCourseCompletedCommand = new UpdateCommand({
+        TableName: process.env.STUDENT_TABLE,
+        Key: {
+          drivingSchoolID,
+          studentUserName
+        },
+        UpdateExpression:
+          "SET isCourseCompleted = :isCourseCompletedValue, completionDate = :completionDateValue",
+        ExpressionAttributeValues: {
+          ":isCourseCompletedValue": true,
+          ":completionDateValue": Date()
+        },
+        ConditionExpression:
+          "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
+      });
 
-    await dynamoClient.send(isCourseCompletedCommand);
+      await dynamoClient.send(isCourseCompletedCommand);
+    }
 
     res.status(200).json({
       resultID,
       sectionID,
       numberOfQuestions: test.length,
-      score: numberOfCorrects
+      score: numberOfCorrects,
+      scorePercentage: scorePercentage * 100,
+      isPassed: scorePercentage >= 0.75
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

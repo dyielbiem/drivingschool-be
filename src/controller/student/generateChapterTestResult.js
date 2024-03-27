@@ -15,6 +15,7 @@ const generateChapterTestResult = async (req, res) => {
     if (typeof answers === "string")
       throw Error("The field 'answers' must be an array, not a string");
 
+    // Get the test questions from the database
     const getCorrectAnswerCommand = new QueryCommand({
       TableName: process.env.QUESTION_TABLE,
       IndexName: "ChapterIndex",
@@ -34,7 +35,29 @@ const generateChapterTestResult = async (req, res) => {
       a.questionID.localeCompare(b.questionID)
     );
 
+    // Check if the student already passed the test
+    // If yes, do not allow the student to retake the exam
+    const isPassedCommand = new QueryCommand({
+      TableName: process.env.RESULT_TABLE,
+      IndexName: "ChapterIndex",
+      KeyConditionExpression: "chapterID = :chapterIDValue",
+      FilterExpression:
+        "studentUserName = :studentUserNameValue AND drivingSchoolID = :drivingSchoolIDValue AND isPassed = :isPassedValue",
+      ExpressionAttributeValues: {
+        ":chapterIDValue": chapterID,
+        ":drivingSchoolIDValue": drivingSchoolID,
+        ":studentUserNameValue": studentUserName,
+        ":isPassedValue": true
+      }
+    });
+
+    const { Items: passedResult } = await dynamoClient.send(isPassedCommand);
+    if (passedResult.length > 0)
+      throw Error("The test has already been passed by the student");
+
+    // Insert the test result into database
     const numberOfCorrects = generateTestScore(sortedTest, answers);
+    const scorePercentage = numberOfCorrects / test.length;
 
     const resultID = ulid();
     const putResultCommand = new PutCommand({
@@ -46,13 +69,16 @@ const generateChapterTestResult = async (req, res) => {
         chapterID,
         score: numberOfCorrects,
         numberOfQuestions: test.length,
-        answers
+        answers,
+        scorePercentage: scorePercentage * 100,
+        isPassed: scorePercentage >= 0.75
       },
       ConditionExpression: "attribute_not_exists(resultID)"
     });
 
     await dynamoClient.send(putResultCommand);
 
+    // Update the progress of the student
     const studentProgressCommand = new UpdateCommand({
       TableName: process.env.STUDENT_TABLE,
       Key: {
@@ -73,7 +99,9 @@ const generateChapterTestResult = async (req, res) => {
       resultID,
       chapterID,
       numberOfQuestions: test.length,
-      score: numberOfCorrects
+      score: numberOfCorrects,
+      scorePercentage: scorePercentage * 100,
+      isPassed: scorePercentage >= 0.75
     });
   } catch (error) {
     if (error.message === "The conditional request failed")
