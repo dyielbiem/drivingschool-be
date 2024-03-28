@@ -46,6 +46,8 @@ import generateCourseImageSignedURL from "../controller/admin/generateCourseImag
 import validateRefreshToken from "../controller/admin/validateRefreshToken.js";
 import deleteQuestion from "../controller/admin/deleteQuestion.js";
 import updateQuestion from "../controller/admin/updateQuestion.js";
+import deleteStudent from "../controller/admin/deleteStudent.js";
+import updateStudent from "../controller/admin/updateStudent.js";
 
 const adminRouter = Router();
 
@@ -127,6 +129,8 @@ adminRouter.get(
   authorizeAdmin,
   fetchAllStudentSections
 );
+adminRouter.patch("/student", authorizeAdmin, updateStudent);
+adminRouter.delete("/student", authorizeAdmin, deleteStudent);
 adminRouter.patch("/student/status", authorizeAdmin, updateStudentStatus);
 adminRouter.get("/student/all", authorizeAdmin, fetchAllStudentsPerSection);
 adminRouter.post("/coupon", authorizeAdmin, createCoupon);

@@ -21,7 +21,7 @@ const updateQuestion = async (req, res) => {
     if (otherChoices.includes(correctAnswer))
       throw Error("Correct answer must not be listed in other choices");
 
-    const deleteCommand = new UpdateCommand({
+    const updateCommand = new UpdateCommand({
       TableName: process.env.QUESTION_TABLE,
       Key: {
         questionID
@@ -36,9 +36,9 @@ const updateQuestion = async (req, res) => {
       ConditionExpression: "attribute_exists(questionID)"
     });
 
-    const deleteResponse = await dynamoClient.send(deleteCommand);
+    const updateResponse = await dynamoClient.send(updateCommand);
 
-    res.status(200).json(deleteResponse);
+    res.status(200).json(updateResponse);
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res.status(400).json({ error: "Question does not exist" });
