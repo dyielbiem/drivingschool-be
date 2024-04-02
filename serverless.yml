@@ -2,18 +2,18 @@ service: driving-school-backend
 frameworkVersion: "3"
 
 custom:
-  drivingSchoolTable: "DrivingSchoolAccount"
-  superAdminTable: "DrivingSchoolSuperAdmin"
-  adminTable: "DrivingSchoolAdmin"
-  studentTable: "DrivingSchoolStudent"
-  courseTable: "DrivingSchoolCourse"
-  sectionTable: "DrivingSchoolSection"
-  chapterTable: "DrivingSchoolChapter"
-  subChapterTable: "DrivingSchoolSubChapter"
-  questionTable: "DrivingSchoolQuestion"
-  resultTable: "DrivingSchoolResult"
-  couponTable: "DrivingSchoolCoupon"
-  imagesBucket: "driving-school-backend-images"
+  drivingSchoolTable: "${sls:stage}-driving-school-account"
+  superAdminTable: "${sls:stage}-driving-school-super-admin"
+  adminTable: "${sls:stage}-driving-school-admin"
+  studentTable: "${sls:stage}-driving-school-student"
+  courseTable: "${sls:stage}-driving-school-course"
+  sectionTable: "${sls:stage}-driving-school-section"
+  chapterTable: "${sls:stage}-driving-school-chapter"
+  subChapterTable: "${sls:stage}-driving-school-sub-chapter"
+  questionTable: "${sls:stage}-driving-school-question"
+  resultTable: "${sls:stage}-driving-school-result"
+  couponTable: "${sls:stage}-driving-school-coupon"
+  imagesBucket: "${sls:stage}-driving-school-backend-images"
   s3:
     host: localhost
     directory: src/s3_local
