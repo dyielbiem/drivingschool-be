@@ -20,6 +20,7 @@ custom:
     port: 8001
   serverless-offline:
     httpPort: 5000
+    noTimeout: true
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
@@ -202,11 +203,13 @@ provider:
     REFRESH_JWT_SECRET: ${env:REFRESH_JWT_SECRET}
     CRYPTO_SECRET: ${env:CRYPTO_SECRET}
     CRYPTO_IV: ${env:CRYPTO_IV}
+    EMAIL_USER: ${env:EMAIL_USER}
+    EMAIL_APP_PASSWORD: ${env:EMAIL_APP_PASSWORD}
 
 functions:
   api:
     handler: src/app.handler
-    timeout: 20
+    timeout: 29
     events:
       - httpApi: "*"
 

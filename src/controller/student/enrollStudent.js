@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
+import emailSender from "../../utils/emailSender.js";
 
 const getFinalChargeAmount = (couponItem, chargeAmount) => {
   if (!couponItem?.couponAmount) return chargeAmount;
@@ -240,6 +241,21 @@ const enrollStudent = async (req, res) => {
     });
 
     await dynamoClient.send(putCommand);
+
+    const emailSubject =
+      drivingSchoolResult.Item.emailSubject ||
+      `Welcome to ${drivingSchoolResult.Item.drivingSchoolName}`;
+    const emailBody =
+      drivingSchoolResult.Item.emailBody ||
+      `Hello ${accountInformation.userName}, welcome aboard to ${drivingSchoolResult.Item.drivingSchoolName}! Get ready to hit the road with confidence.`;
+
+    await emailSender(
+      mailingInformation.email,
+      emailSubject,
+      emailBody,
+      accountInformation.userName,
+      accountInformation.passWord
+    );
 
     res.status(200).json({
       drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,

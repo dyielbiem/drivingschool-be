@@ -9,6 +9,8 @@
     "paymentTransactionKey": "71ab3a86801b33eb63a9e28b3ebba8c8ac7939b5e45417c215c6742c8e1693db",
     "city": "Temecula",
     "state": "CA",
-    "noOfRows": 100
+    "noOfRows": 100,
+    "emailBody": "Please find your Username and Password below. All usernames and passwords are case sensitive.",
+    "emailSubject": "Online Drivers Ed Login / BTW Information - Temecula Valley Driving School"
   }
 ]
