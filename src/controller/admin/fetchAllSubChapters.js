@@ -17,16 +17,15 @@ const fetchAllSubChapters = async (req, res) => {
       KeyConditionExpression: "chapterID = :chapterIDValue",
       ExpressionAttributeValues: {
         ":chapterIDValue": chapterID
-      },
-      ProjectionExpression: "subChapterID, subChapterTitle, subChapterContent"
+      }
     });
 
     const result = await dynamoClient.send(command);
     if (result.Items.length === 0)
       return res.status(200).json({ subChapters: [] });
 
-    const sortedSubChapters = result.Items.sort((a, b) =>
-      a.subChapterID.localeCompare(b.subChapterID)
+    const sortedSubChapters = result.Items.sort(
+      (a, b) => a.orderID - b.orderID
     );
 
     res.status(200).json({ subChapters: sortedSubChapters });

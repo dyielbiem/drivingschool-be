@@ -17,7 +17,8 @@ const fetchAllSubChapters = async (req, res) => {
       ExpressionAttributeValues: {
         ":chapterIDValue": chapterID
       },
-      ProjectionExpression: "subChapterID, subChapterTitle, subChapterContent"
+      ProjectionExpression:
+        "subChapterID, subChapterTitle, subChapterContent, orderID"
     });
 
     const { Items: subChapters } = await dynamoClient.send(command);
@@ -25,9 +26,7 @@ const fetchAllSubChapters = async (req, res) => {
     if (subChapters.length === 0)
       return res.status(200).json({ subChapters: [] });
 
-    const sortedSubChapters = subChapters.sort((a, b) =>
-      a.subChapterID.localeCompare(b.subChapterID)
-    );
+    const sortedSubChapters = subChapters.sort((a, b) => a.orderID - b.orderID);
 
     res.status(200).json({ subChapters: sortedSubChapters });
   } catch (error) {

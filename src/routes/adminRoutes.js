@@ -48,6 +48,7 @@ import deleteQuestion from "../controller/admin/deleteQuestion.js";
 import updateQuestion from "../controller/admin/updateQuestion.js";
 import deleteStudent from "../controller/admin/deleteStudent.js";
 import updateStudent from "../controller/admin/updateStudent.js";
+import updateSubChaptersOrder from "../controller/admin/updateSubChaptersOrder.js";
 
 const adminRouter = Router();
 
@@ -112,6 +113,11 @@ adminRouter.get(
   "/section/chapter/subchapter/list",
   authorizeAdmin,
   fetchAllSubChapters
+);
+adminRouter.patch(
+  "/section/chapter/subchapter/list/order",
+  authorizeAdmin,
+  updateSubChaptersOrder
 );
 adminRouter.post(
   "/section/chapter/question",

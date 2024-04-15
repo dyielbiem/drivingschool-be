@@ -1,4 +1,4 @@
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
@@ -19,6 +19,17 @@ const addSubChapter = async (req, res) => {
     if (!chapterID || !subChapterTitle)
       throw Error("All required fields must filled");
 
+    const querySubChaptersCommand = new QueryCommand({
+      TableName: process.env.SUB_CHAPTER_TABLE,
+      IndexName: "ChapterIndex",
+      KeyConditionExpression: "chapterID = :chapterIDValue",
+      ExpressionAttributeValues: {
+        ":chapterIDValue": chapterID
+      }
+    });
+
+    const { Items } = await dynamoClient.send(querySubChaptersCommand);
+
     const subChapterID = ulid();
 
     const command = new PutCommand({
@@ -30,14 +41,20 @@ const addSubChapter = async (req, res) => {
         subChapterContent,
         drivingSchoolID,
         addedBy: adminUserName,
-        dateAdded: Date()
+        dateAdded: Date(),
+        orderID: Items.length
       },
       ConditionExpression: "attribute_not_exists(subChapterID)"
     });
 
     await dynamoClient.send(command);
 
-    res.status(200).json({ subChapterID, subChapterTitle, subChapterContent });
+    res.status(200).json({
+      subChapterID,
+      subChapterTitle,
+      subChapterContent,
+      orderID: Items.length
+    });
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res
