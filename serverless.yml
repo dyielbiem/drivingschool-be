@@ -20,7 +20,7 @@ custom:
     port: 8001
   serverless-offline:
     httpPort: 5000
-    noTimeout: true
+    noPrependStageInUrl: true
   serverless-dynamodb:
     start:
       optimizeDbBeforeStartup: false
@@ -205,11 +205,13 @@ provider:
     CRYPTO_IV: ${env:CRYPTO_IV}
     EMAIL_USER: ${env:EMAIL_USER}
     EMAIL_APP_PASSWORD: ${env:EMAIL_APP_PASSWORD}
+    STAGE: ${sls:stage}
 
 functions:
   api:
+    name: ${sls:stage}-driving-school-backend-api
     handler: src/app.handler
-    timeout: 29
+    timeout: 300
     events:
       - httpApi: "*"
 

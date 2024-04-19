@@ -1,12 +1,6 @@
 import nodemailer from "nodemailer";
 
-const emailSender = (
-  emailReceiver,
-  emailSubject,
-  emailBody,
-  username,
-  password
-) => {
+const emailSender = (emailReceiver, emailSubject, emailBody) => {
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     host: "smtp.gmail.com",
@@ -22,10 +16,7 @@ const emailSender = (
     from: process.env.EMAIL_USER,
     to: emailReceiver,
     subject: emailSubject,
-    html: `<p>${emailBody}</p>
-    <p><strong>Account Details </strong><br/> 
-    <strong>Username: </strong>${username}<br/>
-    <strong>Password: </strong> ${password} <br/></p>`
+    html: emailBody
   };
 
   return new Promise((resolve) => {

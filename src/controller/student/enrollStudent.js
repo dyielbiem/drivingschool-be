@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
-import emailSender from "../../utils/emailSender.js";
+import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
 
 const getFinalChargeAmount = (couponItem, chargeAmount) => {
   if (!couponItem?.couponAmount) return chargeAmount;
@@ -249,13 +249,20 @@ const enrollStudent = async (req, res) => {
       drivingSchoolResult.Item.emailBody ||
       `Hello ${accountInformation.userName}, welcome aboard to ${drivingSchoolResult.Item.drivingSchoolName}! Get ready to hit the road with confidence.`;
 
-    await emailSender(
-      mailingInformation.email,
-      emailSubject,
-      emailBody,
-      accountInformation.userName,
-      accountInformation.passWord
-    );
+    const invokeFunctionArgs = {
+      invokePath: "/api/student/send-email",
+      headers: {
+        "x-api-key": process.env.API_KEY
+      },
+      method: "POST",
+      body: {
+        emailReceiver: mailingInformation.email,
+        emailSubject: emailSubject,
+        emailBody: emailBody
+      }
+    };
+
+    await invokeFunction(invokeFunctionArgs);
 
     res.status(200).json({
       drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,

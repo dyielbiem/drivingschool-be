@@ -14,6 +14,7 @@ import generateChapterTestResult from "../controller/student/generateChapterTest
 import obtainAccessToken from "../controller/student/obtainAccessToken.js";
 import redeemCoupon from "../controller/student/redeemCoupon.js";
 import checkStudentUserName from "../controller/student/checkStudentUserName.js";
+import sendEmail from "../controller/student/sendEmail.js";
 
 const studentRouter = Router();
 
@@ -24,6 +25,7 @@ const studentRouter = Router();
 studentRouter.get("/enroll/courses", authenticateAPIKey, getAllOfferedCourses);
 studentRouter.get("/access-token", obtainAccessToken);
 studentRouter.get("/username", authenticateAPIKey, checkStudentUserName);
+studentRouter.post("/send-email", authenticateAPIKey, sendEmail);
 studentRouter.post("/enroll", authenticateAPIKey, enrollStudent);
 studentRouter.post("/login", authenticateAPIKey, loginStudent);
 studentRouter.post("/coupon", authenticateAPIKey, redeemCoupon);
