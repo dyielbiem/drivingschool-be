@@ -15,6 +15,7 @@ import obtainAccessToken from "../controller/student/obtainAccessToken.js";
 import redeemCoupon from "../controller/student/redeemCoupon.js";
 import checkStudentUserName from "../controller/student/checkStudentUserName.js";
 import sendEmail from "../controller/student/sendEmail.js";
+import completeSection from "../controller/student/completeSection.js";
 
 const studentRouter = Router();
 
@@ -48,5 +49,6 @@ studentRouter.post(
   authorizeStudent,
   generateChapterTestResult
 );
+studentRouter.get("/section/completion", authorizeStudent, completeSection);
 
 export default studentRouter;

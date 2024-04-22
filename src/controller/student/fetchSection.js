@@ -54,7 +54,23 @@ const fetchSection = async (req, res) => {
 
     sectionTestResults.sort((a, b) => b.resultID.localeCompare(a.resultID));
 
-    res.status(200).json({ ...section, testResult: sectionTestResults[0] });
+    const getStudent = new GetCommand({
+      TableName: process.env.STUDENT_TABLE,
+      Key: {
+        drivingSchoolID,
+        studentUserName
+      },
+      ProjectionExpression: "isCourseCompleted"
+    });
+
+    const { Item: student } = await dynamoClient.send(getStudent);
+    if (!student) throw Error("Student does not exist");
+
+    res.status(200).json({
+      ...section,
+      testResult: sectionTestResults[0],
+      isCourseCompleted: student.isCourseCompleted
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

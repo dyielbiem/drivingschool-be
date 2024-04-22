@@ -1,4 +1,4 @@
-import { QueryCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import generateTestScore from "../../utils/generateTestScore.js";
@@ -34,26 +34,6 @@ const generateSectionTestResult = async (req, res) => {
       a.questionID.localeCompare(b.questionID)
     );
 
-    // Check if the student already passed the test
-    // If yes, do not allow the student to retake the exam
-    const isPassedCommand = new QueryCommand({
-      TableName: process.env.RESULT_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionIDValue",
-      FilterExpression:
-        "studentUserName = :studentUserNameValue AND drivingSchoolID = :drivingSchoolIDValue AND isPassed = :isPassedValue",
-      ExpressionAttributeValues: {
-        ":sectionIDValue": sectionID,
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":studentUserNameValue": studentUserName,
-        ":isPassedValue": true
-      }
-    });
-
-    const { Items: passedResult } = await dynamoClient.send(isPassedCommand);
-    if (passedResult.length > 0)
-      throw Error("The test has already been passed by the student");
-
     const numberOfCorrects = generateTestScore(sortedTest, answers);
     const scorePercentage = numberOfCorrects / test.length;
 
@@ -75,28 +55,6 @@ const generateSectionTestResult = async (req, res) => {
     });
 
     await dynamoClient.send(putResultCommand);
-
-    // Mark the course progress of the student as completed
-    // if the student passed the section test
-    if (scorePercentage >= 0.75) {
-      const isCourseCompletedCommand = new UpdateCommand({
-        TableName: process.env.STUDENT_TABLE,
-        Key: {
-          drivingSchoolID,
-          studentUserName
-        },
-        UpdateExpression:
-          "SET isCourseCompleted = :isCourseCompletedValue, completionDate = :completionDateValue",
-        ExpressionAttributeValues: {
-          ":isCourseCompletedValue": true,
-          ":completionDateValue": Date()
-        },
-        ConditionExpression:
-          "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
-      });
-
-      await dynamoClient.send(isCourseCompletedCommand);
-    }
 
     res.status(200).json({
       resultID,
