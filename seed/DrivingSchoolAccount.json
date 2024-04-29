@@ -10,6 +10,7 @@
     "city": "Temecula",
     "state": "CA",
     "noOfRows": 100,
+    "email": "john@webact.com",
     "emailBody": "Please find your Username and Password below. All usernames and passwords are case sensitive.",
     "emailSubject": "Online Drivers Ed Login / BTW Information - Temecula Valley Driving School"
   }

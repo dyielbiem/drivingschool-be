@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import authorizeAdmin from "../middleware/authorizeAdmin.js";
 import loginAdmin from "../controller/admin/loginAdmin.js";
@@ -49,6 +50,17 @@ import updateQuestion from "../controller/admin/updateQuestion.js";
 import deleteStudent from "../controller/admin/deleteStudent.js";
 import updateStudent from "../controller/admin/updateStudent.js";
 import updateSubChaptersOrder from "../controller/admin/updateSubChaptersOrder.js";
+import sendEmail from "../controller/admin/sendEmail.js";
+import getResetPasswordCode from "../controller/admin/getResetPasswordCode.js";
+import verifyResetPasswordCode from "../controller/admin/verifyResetPasswordCode.js";
+import resetPassword from "../controller/admin/resetPassword.js";
+
+const establishedRequestLimiter = () =>
+  rateLimit({
+    windowMs: 2 * 60 * 1000,
+    max: 5,
+    message: "You can request send a request again after 2 minutes"
+  });
 
 const adminRouter = Router();
 
@@ -57,6 +69,7 @@ const adminRouter = Router();
 ------- /api/admin/*
 */
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
+adminRouter.post("/send-email", authenticateAPIKey, sendEmail);
 adminRouter.get("/access-token", obtainAccessToken);
 adminRouter.get("/refresh-token/validate", validateRefreshToken);
 adminRouter.get(
@@ -148,5 +161,18 @@ adminRouter.get("/setting/site", authorizeAdmin, fetchSiteSettings);
 adminRouter.patch("/setting/site", authorizeAdmin, updateSiteSettings);
 adminRouter.get("/setting/email", authorizeAdmin, fetchEmailContent);
 adminRouter.patch("/setting/email", authorizeAdmin, updateEmailContent);
+adminRouter.get(
+  "/reset-password/code",
+  establishedRequestLimiter(),
+  authenticateAPIKey,
+  getResetPasswordCode
+);
+adminRouter.post(
+  "/reset-password/code",
+  establishedRequestLimiter(),
+  authenticateAPIKey,
+  verifyResetPasswordCode
+);
+adminRouter.patch("/reset-password", authenticateAPIKey, resetPassword);
 
 export default adminRouter;
