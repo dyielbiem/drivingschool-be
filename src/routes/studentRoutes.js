@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import authorizeStudent from "../middleware/authorizeStudent.js";
 import getAllOfferedCourses from "../controller/student/getAllOfferedCourses.js";
@@ -16,6 +17,16 @@ import redeemCoupon from "../controller/student/redeemCoupon.js";
 import checkStudentUserName from "../controller/student/checkStudentUserName.js";
 import sendEmail from "../controller/student/sendEmail.js";
 import completeSection from "../controller/student/completeSection.js";
+import getResetPasswordCode from "../controller/student/getResetPasswordCode.js";
+import verifyResetPasswordCode from "../controller/student/verifyResetPasswordCode.js";
+import resetPassword from "../controller/student/resetPassword.js";
+
+const establishedRequestLimiter = () =>
+  rateLimit({
+    windowMs: 2 * 60 * 1000,
+    max: 5,
+    message: "You can request send a request again after 2 minutes"
+  });
 
 const studentRouter = Router();
 
@@ -50,5 +61,23 @@ studentRouter.post(
   generateChapterTestResult
 );
 studentRouter.get("/section/completion", authorizeStudent, completeSection);
+studentRouter.get(
+  "/reset-password/code",
+  establishedRequestLimiter(),
+  authenticateAPIKey,
+  getResetPasswordCode
+);
+studentRouter.post(
+  "/reset-password/code",
+  establishedRequestLimiter(),
+  authenticateAPIKey,
+  verifyResetPasswordCode
+);
+studentRouter.patch(
+  "/reset-password",
+  establishedRequestLimiter(),
+  authenticateAPIKey,
+  resetPassword
+);
 
 export default studentRouter;
