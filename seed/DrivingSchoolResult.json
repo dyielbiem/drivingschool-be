@@ -1,15 +1,18 @@
 [
   {
-    "score": "2",
+    "score": 2,
+    "isPassed": true,
     "resultID": "01HRYR9TFVJFC4QFKXQZ60CT6P",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "studentUserName": "New1",
     "chapterID": "01HJKAJNXV0SN8PF2PVTGMZ6JZ",
     "answers": ["option1", "option2"],
-    "numberOfQuestions": "2"
+    "numberOfQuestions": "2",
+    "scorePercentage": 100,
+    "dateAnswered": "Tue Apr 30 2024 22:10:32 GMT+0800 (Singapore Standard Time)"
   },
   {
-    "score": "0",
+    "score": 0,
     "resultID": "01HRYR85JCTM6V9SXTKZK3979K",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "studentUserName": "New1",
@@ -18,30 +21,48 @@
     "numberOfQuestions": "2"
   },
   {
-    "score": "3",
+    "score": 3,
+    "isPassed": true,
     "resultID": "01HRYRNFYQ44A3B9H074NHD2Q6",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "studentUserName": "New1",
     "chapterID": "01HJKAJXVF5WG9N2CZT9CRD34R",
     "answers": ["option3", "option4", "option4"],
-    "numberOfQuestions": "3"
+    "numberOfQuestions": "3",
+    "scorePercentage": 100,
+    "dateAnswered": "Tue Apr 30 2024 22:11:06 GMT+0800 (Singapore Standard Time)"
   },
   {
-    "score": "2",
-    "resultID": "01HRYVDHVGC4QKNXG6VKKX224A",
+    "score": 2,
+    "isPassed": true,
+    "resultID": "01HWQNJ2GBH5EST3DG3XYHVAVS",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "studentUserName": "New1",
+    "scorePercentage": 100,
     "answers": ["option4", "option4"],
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
-    "numberOfQuestions": "2"
+    "numberOfQuestions": 2,
+    "dateAnswered": "Tue Apr 30 2024 22:11:55 GMT+0800 (Singapore Standard Time)"
   },
   {
-    "score": "1",
+    "score": 1,
     "resultID": "01HRYVDETS2J2MV5E421QGBWM3",
     "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
     "studentUserName": "New1",
     "answers": ["option1", "option4"],
     "sectionID": "01HJK78MP2242YZA25HWHKYM0C",
     "numberOfQuestions": "2"
+  },
+  {
+    "score": 1,
+    "isPassed": true,
+    "resultID": "01HWQNHEZEA5B68J0E12T2N1AY",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "studentUserName": "New1",
+    "chapterID": "01HJKAKDXADRQ29AFX50WS3N3R",
+    "scorePercentage": 100,
+    "answers": ["option4"],
+    "numberOfQuestions": 1,
+    "dateAnswered": "Tue Apr 30 2024 22:11:35 GMT+0800 (Singapore Standard Time)"
   }
 ]

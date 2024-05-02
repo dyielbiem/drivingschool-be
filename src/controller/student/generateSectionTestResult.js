@@ -49,7 +49,8 @@ const generateSectionTestResult = async (req, res) => {
         numberOfQuestions: test.length,
         answers,
         scorePercentage: scorePercentage * 100,
-        isPassed: scorePercentage >= 0.75
+        isPassed: scorePercentage >= 0.75,
+        dateAnswered: Date()
       },
       ConditionExpression: "attribute_not_exists(resultID)"
     });
