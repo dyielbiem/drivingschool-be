@@ -245,9 +245,22 @@ const enrollStudent = async (req, res) => {
     const emailSubject =
       drivingSchoolResult.Item.emailSubject ||
       `Welcome to ${drivingSchoolResult.Item.drivingSchoolName}`;
-    const emailBody =
+    let emailBody =
       drivingSchoolResult.Item.emailBody ||
       `Hello ${accountInformation.userName}, welcome aboard to ${drivingSchoolResult.Item.drivingSchoolName}! Get ready to hit the road with confidence.`;
+
+    const userNameTemplatePattern = /\{ username \}/g;
+    const passWordTemplatePattern = /\{ password \}/g;
+
+    emailBody = emailBody.replace(
+      userNameTemplatePattern,
+      accountInformation.userName
+    );
+
+    emailBody = emailBody.replace(
+      passWordTemplatePattern,
+      accountInformation.passWord
+    );
 
     const invokeFunctionArgs = {
       invokePath: "/api/student/send-email",
