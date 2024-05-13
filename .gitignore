@@ -1,6 +1,7 @@
 node_modules
 .serverless
 .env
+.env.*
 testingFile.js
 shared-local-instance.db
 src/s3_local/
