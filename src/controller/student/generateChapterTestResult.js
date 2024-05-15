@@ -1,7 +1,27 @@
-import { QueryCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  QueryCommand,
+  PutCommand,
+  UpdateCommand,
+  GetCommand
+} from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import generateTestScore from "../../utils/generateTestScore.js";
+
+const determineStudentProgress = (currentProgress, newProgress) => {
+  if (!Array.isArray(currentProgress)) return [newProgress];
+
+  const newProgressExists = currentProgress.find(
+    (item) => item === newProgress
+  );
+
+  if (newProgressExists) return currentProgress;
+
+  const updatedProgress = [...currentProgress, newProgress];
+  updatedProgress.sort((a, b) => a.localeCompare(b));
+
+  return updatedProgress;
+};
 
 /*
 ---- Controller to generate the chapter test result
@@ -14,6 +34,18 @@ const generateChapterTestResult = async (req, res) => {
       throw Error("All required fields must be filled");
     if (typeof answers === "string")
       throw Error("The field 'answers' must be an array, not a string");
+
+    // Check if student exists
+    const getStudentCommand = new GetCommand({
+      TableName: process.env.STUDENT_TABLE,
+      Key: {
+        drivingSchoolID,
+        studentUserName
+      }
+    });
+
+    const { Item: student } = await dynamoClient.send(getStudentCommand);
+    if (!student) throw Error("Student does not exist");
 
     // Get the test questions from the database
     const getCorrectAnswerCommand = new QueryCommand({
@@ -60,15 +92,30 @@ const generateChapterTestResult = async (req, res) => {
     await dynamoClient.send(putResultCommand);
 
     // Update the progress of the student
+    const studentProgress = determineStudentProgress(
+      student.progress,
+      chapterID
+    );
+
+    if (studentProgress.length === student.progress?.length)
+      return res.status(200).json({
+        resultID,
+        chapterID,
+        numberOfQuestions: test.length,
+        score: numberOfCorrects,
+        scorePercentage: scorePercentage * 100,
+        isPassed: scorePercentage >= 0.75
+      });
+
     const studentProgressCommand = new UpdateCommand({
       TableName: process.env.STUDENT_TABLE,
       Key: {
         drivingSchoolID,
         studentUserName
       },
-      UpdateExpression: "SET progressID = :progressIDValue",
+      UpdateExpression: "SET progress = :progress",
       ExpressionAttributeValues: {
-        ":progressIDValue": chapterID
+        ":progress": studentProgress
       },
       ConditionExpression:
         "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"

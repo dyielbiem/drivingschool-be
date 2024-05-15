@@ -25,6 +25,7 @@
     "import/extensions": "off",
     "consistent-return": "off",
     "object-shorthand": "off",
+    "no-nested-ternary": "off",
     "camelcase": "error",
     "no-unused-vars": "warn",
     "no-undef": "error"

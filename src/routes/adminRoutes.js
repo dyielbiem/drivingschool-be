@@ -54,6 +54,8 @@ import sendEmail from "../controller/admin/sendEmail.js";
 import getResetPasswordCode from "../controller/admin/getResetPasswordCode.js";
 import verifyResetPasswordCode from "../controller/admin/verifyResetPasswordCode.js";
 import resetPassword from "../controller/admin/resetPassword.js";
+import fetchStudentResults from "../controller/admin/fetchStudentResults.js";
+import fetchStudentCompletions from "../controller/admin/fetchStudentCompletions.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -152,6 +154,16 @@ adminRouter.patch("/student", authorizeAdmin, updateStudent);
 adminRouter.delete("/student", authorizeAdmin, deleteStudent);
 adminRouter.patch("/student/status", authorizeAdmin, updateStudentStatus);
 adminRouter.get("/student/all", authorizeAdmin, fetchAllStudentsPerSection);
+adminRouter.get(
+  "/student/test/result/list",
+  authorizeAdmin,
+  fetchStudentResults
+);
+adminRouter.get(
+  "/student/completion/list",
+  authorizeAdmin,
+  fetchStudentCompletions
+);
 adminRouter.post("/coupon", authorizeAdmin, createCoupon);
 adminRouter.delete("/coupon", authorizeAdmin, deleteCoupon);
 adminRouter.patch("/coupon", authorizeAdmin, updateCoupon);
