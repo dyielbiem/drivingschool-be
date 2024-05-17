@@ -56,6 +56,7 @@ import verifyResetPasswordCode from "../controller/admin/verifyResetPasswordCode
 import resetPassword from "../controller/admin/resetPassword.js";
 import fetchStudentResults from "../controller/admin/fetchStudentResults.js";
 import fetchStudentCompletions from "../controller/admin/fetchStudentCompletions.js";
+import updatePassword from "../controller/admin/updatePassword.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -173,6 +174,7 @@ adminRouter.get("/setting/site", authorizeAdmin, fetchSiteSettings);
 adminRouter.patch("/setting/site", authorizeAdmin, updateSiteSettings);
 adminRouter.get("/setting/email", authorizeAdmin, fetchEmailContent);
 adminRouter.patch("/setting/email", authorizeAdmin, updateEmailContent);
+adminRouter.patch("/password", authorizeAdmin, updatePassword);
 adminRouter.get(
   "/reset-password/code",
   establishedRequestLimiter(),
