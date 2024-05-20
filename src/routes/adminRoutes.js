@@ -3,6 +3,8 @@ import rateLimit from "express-rate-limit";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import authorizeAdmin from "../middleware/authorizeAdmin.js";
 import loginAdmin from "../controller/admin/loginAdmin.js";
+import fetchAdmin from "../controller/admin/fetchAdmin.js";
+import addAdmin from "../controller/admin/addAdmin.js";
 import addCourse from "../controller/admin/addCourse.js";
 import addSection from "../controller/admin/addSection.js";
 import fetchAllCourses from "../controller/admin/fetchAllCourses.js";
@@ -71,6 +73,8 @@ const adminRouter = Router();
 ------- Router for admin
 ------- /api/admin/*
 */
+adminRouter.post("", authorizeAdmin, addAdmin);
+adminRouter.get("", authorizeAdmin, fetchAdmin);
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
 adminRouter.post("/send-email", authenticateAPIKey, sendEmail);
 adminRouter.get("/access-token", obtainAccessToken);
