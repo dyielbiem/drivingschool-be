@@ -18,7 +18,8 @@ const fetchAllChapters = async (req, res) => {
       ExpressionAttributeValues: {
         ":sectionIDValue": sectionID
       },
-      ProjectionExpression: "chapterID, chapterTitle, chapterContent"
+      ProjectionExpression:
+        "chapterID, chapterTitle, chapterContent, noOfQuestionsToShow"
     });
 
     const result = await dynamoClient.send(command);

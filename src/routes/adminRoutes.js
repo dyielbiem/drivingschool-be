@@ -59,6 +59,8 @@ import resetPassword from "../controller/admin/resetPassword.js";
 import fetchStudentResults from "../controller/admin/fetchStudentResults.js";
 import fetchStudentCompletions from "../controller/admin/fetchStudentCompletions.js";
 import updatePassword from "../controller/admin/updatePassword.js";
+import updateShownChapterQCount from "../controller/admin/updateShownChapterQCount.js";
+import updateShownSectionQCount from "../controller/admin/updateShownSectionQCount.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -192,5 +194,15 @@ adminRouter.post(
   verifyResetPasswordCode
 );
 adminRouter.patch("/reset-password", authenticateAPIKey, resetPassword);
+adminRouter.patch(
+  "/chapter/question/shown-count",
+  authorizeAdmin,
+  updateShownChapterQCount
+);
+adminRouter.patch(
+  "/section/question/shown-count",
+  authorizeAdmin,
+  updateShownSectionQCount
+);
 
 export default adminRouter;

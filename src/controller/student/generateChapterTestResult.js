@@ -6,7 +6,6 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
-import generateTestScore from "../../utils/generateTestScore.js";
 
 const determineStudentProgress = (currentProgress, newProgress) => {
   if (!Array.isArray(currentProgress)) return [newProgress];
@@ -34,6 +33,49 @@ const generateChapterTestResult = async (req, res) => {
       throw Error("All required fields must be filled");
     if (typeof answers === "string")
       throw Error("The field 'answers' must be an array, not a string");
+    if (answers.length === 0) throw Error("Answers must not be an empty array");
+
+    // Check if chapter exists
+    const getChapterCmd = new GetCommand({
+      TableName: process.env.CHAPTER_TABLE,
+      Key: {
+        chapterID
+      }
+    });
+
+    const { Item: chapter } = await dynamoClient.send(getChapterCmd);
+    if (!chapter) throw Error("Chapter does not exist");
+
+    // Get the test questions from the database
+    const queryQuestionsCmd = new QueryCommand({
+      TableName: process.env.QUESTION_TABLE,
+      IndexName: "ChapterIndex",
+      KeyConditionExpression: "chapterID = :chapterIDValue",
+      ExpressionAttributeValues: {
+        ":chapterIDValue": chapterID
+      },
+      ProjectionExpression: "questionID, correctAnswer"
+    });
+
+    const { Items: test } = await dynamoClient.send(queryQuestionsCmd);
+    if (test.length === 0) throw Error("Chapter has no test");
+
+    // Check if the length of provided answers is valid
+    const invalidAnswersLength = {
+      conditionOne:
+        (!chapter.noOfQuestionsToShow ||
+          chapter.noOfQuestionsToShow > test.length) &&
+        answers.length !== test.length,
+      conditionTwo:
+        chapter.noOfQuestionsToShow &&
+        chapter.noOfQuestionsToShow <= test.length &&
+        chapter.noOfQuestionsToShow !== answers.length
+    };
+
+    if (invalidAnswersLength.conditionOne || invalidAnswersLength.conditionTwo)
+      throw Error(
+        "The provided answers does not match the length of the chapter questions"
+      );
 
     // Check if student exists
     const getStudentCommand = new GetCommand({
@@ -47,30 +89,30 @@ const generateChapterTestResult = async (req, res) => {
     const { Item: student } = await dynamoClient.send(getStudentCommand);
     if (!student) throw Error("Student does not exist");
 
-    // Get the test questions from the database
-    const getCorrectAnswerCommand = new QueryCommand({
-      TableName: process.env.QUESTION_TABLE,
-      IndexName: "ChapterIndex",
-      KeyConditionExpression: "chapterID = :chapterIDValue",
-      ExpressionAttributeValues: {
-        ":chapterIDValue": chapterID
-      },
-      ProjectionExpression: "questionID, correctAnswer"
+    // Calculate the correct answer of the student
+    let noOfCorrectAnswers = 0;
+    answers.forEach((answer) => {
+      if (!answer.questionID)
+        throw Error("The answer is present, but the Question ID is missing");
+
+      if (!answer.answer)
+        throw Error("The Question ID is present, but the answer is missing");
+
+      const question = test.find(
+        (item) => item.questionID === answer.questionID
+      );
+
+      if (!question)
+        throw Error(
+          "One of the answers does not have a corresponding question"
+        );
+
+      if (answer.answer === question.correctAnswer) noOfCorrectAnswers += 1;
     });
 
-    const { Items: test } = await dynamoClient.send(getCorrectAnswerCommand);
-    if (test.length === 0) throw Error("Chapter test does not exist");
-    if (test.length !== answers.length)
-      throw Error("The number of answers do not match the number of questions");
-
-    const sortedTest = test.sort((a, b) =>
-      a.questionID.localeCompare(b.questionID)
-    );
+    const scorePercentage = noOfCorrectAnswers / answers.length;
 
     // Insert the test result into database
-    const numberOfCorrects = generateTestScore(sortedTest, answers);
-    const scorePercentage = numberOfCorrects / test.length;
-
     const resultID = ulid();
     const putResultCommand = new PutCommand({
       TableName: process.env.RESULT_TABLE,
@@ -79,8 +121,8 @@ const generateChapterTestResult = async (req, res) => {
         drivingSchoolID,
         studentUserName,
         chapterID,
-        score: numberOfCorrects,
-        numberOfQuestions: test.length,
+        score: noOfCorrectAnswers,
+        numberOfQuestions: answers.length,
         answers,
         scorePercentage: scorePercentage * 100,
         isPassed: scorePercentage >= 0.75,
@@ -101,8 +143,8 @@ const generateChapterTestResult = async (req, res) => {
       return res.status(200).json({
         resultID,
         chapterID,
-        numberOfQuestions: test.length,
-        score: numberOfCorrects,
+        numberOfQuestions: answers.length,
+        score: noOfCorrectAnswers,
         scorePercentage: scorePercentage * 100,
         isPassed: scorePercentage >= 0.75
       });
@@ -126,8 +168,8 @@ const generateChapterTestResult = async (req, res) => {
     res.status(200).json({
       resultID,
       chapterID,
-      numberOfQuestions: test.length,
-      score: numberOfCorrects,
+      numberOfQuestions: answers.length,
+      score: noOfCorrectAnswers,
       scorePercentage: scorePercentage * 100,
       isPassed: scorePercentage >= 0.75
     });

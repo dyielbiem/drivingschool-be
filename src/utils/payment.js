@@ -23,6 +23,7 @@ const payment = (
 ) => {
   const { APIContracts } = authorizenet;
   const { APIControllers } = authorizenet;
+  // const SDKConstants = authorizenet.Constants;
 
   const decryptedPaymentLogInKey = decrypt(
     drivingSchoolCredentials.paymentLogInKey
@@ -117,6 +118,7 @@ const payment = (
   const transactionController = new APIControllers.CreateTransactionController(
     createRequest.getJSON()
   );
+  // transactionController.setEnvironment(SDKConstants.endpoint.production);
 
   return new Promise((resolve) => {
     transactionController.execute(() => {
