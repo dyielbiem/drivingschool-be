@@ -195,7 +195,7 @@ adminRouter.post(
 );
 adminRouter.patch("/reset-password", authenticateAPIKey, resetPassword);
 adminRouter.patch(
-  "/chapter/question/shown-count",
+  "/section/chapter/question/shown-count",
   authorizeAdmin,
   updateShownChapterQCount
 );

@@ -4,7 +4,7 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 /*
 ---- Controller to update the number of chapter question 
 ---- that needed to be answered by the students
----- /api/admin/chapter/question/shown-count
+---- /api/admin/section/chapter/question/shown-count
 */
 const updateShownChapterQCount = async (req, res) => {
   try {
