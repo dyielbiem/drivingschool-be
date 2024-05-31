@@ -3,6 +3,8 @@ import rateLimit from "express-rate-limit";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import authorizeAdmin from "../middleware/authorizeAdmin.js";
 import loginAdmin from "../controller/admin/loginAdmin.js";
+import fetchAdmin from "../controller/admin/fetchAdmin.js";
+import addAdmin from "../controller/admin/addAdmin.js";
 import addCourse from "../controller/admin/addCourse.js";
 import addSection from "../controller/admin/addSection.js";
 import fetchAllCourses from "../controller/admin/fetchAllCourses.js";
@@ -57,6 +59,9 @@ import resetPassword from "../controller/admin/resetPassword.js";
 import fetchStudentResults from "../controller/admin/fetchStudentResults.js";
 import fetchStudentCompletions from "../controller/admin/fetchStudentCompletions.js";
 import updatePassword from "../controller/admin/updatePassword.js";
+import updateShownChapterQCount from "../controller/admin/updateShownChapterQCount.js";
+import updateShownSectionQCount from "../controller/admin/updateShownSectionQCount.js";
+import generateChapterImageSignedURL from "../controller/admin/generateChapterImageSignedURL.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -71,6 +76,8 @@ const adminRouter = Router();
 ------- Router for admin
 ------- /api/admin/*
 */
+adminRouter.post("", authorizeAdmin, addAdmin);
+adminRouter.get("", authorizeAdmin, fetchAdmin);
 adminRouter.post("/login", authenticateAPIKey, loginAdmin);
 adminRouter.post("/send-email", authenticateAPIKey, sendEmail);
 adminRouter.get("/access-token", obtainAccessToken);
@@ -86,6 +93,11 @@ adminRouter.get(
   "/s3/presigned-url/course/put",
   authorizeAdmin,
   generateCourseImageSignedURL
+);
+adminRouter.get(
+  "/s3/presigned-url/chapter/put",
+  authorizeAdmin,
+  generateChapterImageSignedURL
 );
 adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
 adminRouter.patch("/course", authorizeAdmin, updateCourse);
@@ -188,5 +200,15 @@ adminRouter.post(
   verifyResetPasswordCode
 );
 adminRouter.patch("/reset-password", authenticateAPIKey, resetPassword);
+adminRouter.patch(
+  "/section/chapter/question/shown-count",
+  authorizeAdmin,
+  updateShownChapterQCount
+);
+adminRouter.patch(
+  "/section/question/shown-count",
+  authorizeAdmin,
+  updateShownSectionQCount
+);
 
 export default adminRouter;

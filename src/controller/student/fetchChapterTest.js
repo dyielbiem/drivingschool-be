@@ -1,4 +1,4 @@
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -10,7 +10,17 @@ const fetchChapterTest = async (req, res) => {
     const { chapterID } = req.query;
     if (!chapterID) throw Error("Chapter ID must be provided");
 
-    const command = new QueryCommand({
+    const getChapterCmd = new GetCommand({
+      TableName: process.env.CHAPTER_TABLE,
+      Key: {
+        chapterID
+      }
+    });
+
+    const { Item: chapter } = await dynamoClient.send(getChapterCmd);
+    if (!chapter) throw Error("Chapter does not exist");
+
+    const queryQuestionsCmd = new QueryCommand({
       TableName: process.env.QUESTION_TABLE,
       IndexName: "ChapterIndex",
       KeyConditionExpression: "chapterID = :chapterIDValue",
@@ -20,27 +30,33 @@ const fetchChapterTest = async (req, res) => {
       ProjectionExpression: "questionID, question, otherChoices, correctAnswer"
     });
 
-    const result = await dynamoClient.send(command);
-    if (result.Items.length === 0) return res.status(200).json({ test: [] });
+    const { Items: test } = await dynamoClient.send(queryQuestionsCmd);
+    if (test.length === 0) return res.status(200).json({ test: [] });
 
-    const test = result.Items.sort((a, b) =>
-      a.questionID.localeCompare(b.questionID)
-    );
+    test
+      .sort(() => Math.random() - 0.5)
+      .forEach((question) => {
+        const choices = [...question.otherChoices, question.correctAnswer].sort(
+          () => Math.random() - 0.5
+        );
 
-    test.forEach((question) => {
-      const choices = [...question.otherChoices, question.correctAnswer].sort(
-        () => Math.random() - 0.5
-      );
-
-      Object.assign(question, {
-        ...question,
-        choices,
-        otherChoices: undefined,
-        correctAnswer: undefined
+        Object.assign(question, {
+          ...question,
+          choices,
+          otherChoices: undefined,
+          correctAnswer: undefined
+        });
       });
-    });
 
-    res.status(200).json({ test });
+    if (
+      !chapter.noOfQuestionsToShow ||
+      chapter.noOfQuestionsToShow >= test.length
+    )
+      return res.status(200).json({ test });
+
+    const randomTestQuestions = test.slice(0, chapter.noOfQuestionsToShow);
+
+    res.status(200).json({ test: randomTestQuestions });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

@@ -1,4 +1,4 @@
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -10,7 +10,17 @@ const fetchSectionTest = async (req, res) => {
     const { sectionID } = req.query;
     if (!sectionID) throw Error("Section ID must be provided");
 
-    const command = new QueryCommand({
+    const getSectionCmd = new GetCommand({
+      TableName: process.env.SECTION_TABLE,
+      Key: {
+        sectionID
+      }
+    });
+
+    const { Item: section } = await dynamoClient.send(getSectionCmd);
+    if (!section) throw Error("Section does not exist");
+
+    const queryQuestionsCmd = new QueryCommand({
       TableName: process.env.QUESTION_TABLE,
       IndexName: "SectionIndex",
       KeyConditionExpression: "sectionID = :sectionIDValue",
@@ -19,12 +29,13 @@ const fetchSectionTest = async (req, res) => {
       }
     });
 
-    const result = await dynamoClient.send(command);
-    if (result.Items.length === 0) return res.status(200).json({ test: [] });
+    const { Items: test } = await dynamoClient.send(queryQuestionsCmd);
+    if (test.length === 0)
+      return res
+        .status(200)
+        .json({ noOfQuestionsToShow: section.noOfQuestionsToShow, test: [] });
 
-    const test = result.Items.sort((a, b) =>
-      a.questionID.localeCompare(b.questionID)
-    );
+    test.sort((a, b) => a.questionID.localeCompare(b.questionID));
 
     test.forEach((question) => {
       const choices = [...question.otherChoices, question.correctAnswer].sort(
@@ -38,7 +49,9 @@ const fetchSectionTest = async (req, res) => {
       });
     });
 
-    res.status(200).json({ test });
+    res
+      .status(200)
+      .json({ noOfQuestionsToShow: section.noOfQuestionsToShow, test });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);

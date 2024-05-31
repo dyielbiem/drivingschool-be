@@ -16,7 +16,8 @@ const fetchAllSections = async (req, res) => {
       ExpressionAttributeValues: {
         ":drivingSchoolIDValue": drivingSchoolID
       },
-      ProjectionExpression: "sectionID, sectionTitle, isActive"
+      ProjectionExpression:
+        "sectionID, sectionTitle, isActive, noOfQuestionsToShow"
     });
 
     const result = await dynamoClient.send(command);
