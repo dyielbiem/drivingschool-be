@@ -61,6 +61,7 @@ import fetchStudentCompletions from "../controller/admin/fetchStudentCompletions
 import updatePassword from "../controller/admin/updatePassword.js";
 import updateShownChapterQCount from "../controller/admin/updateShownChapterQCount.js";
 import updateShownSectionQCount from "../controller/admin/updateShownSectionQCount.js";
+import generateChapterImageSignedURL from "../controller/admin/generateChapterImageSignedURL.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -92,6 +93,11 @@ adminRouter.get(
   "/s3/presigned-url/course/put",
   authorizeAdmin,
   generateCourseImageSignedURL
+);
+adminRouter.get(
+  "/s3/presigned-url/chapter/put",
+  authorizeAdmin,
+  generateChapterImageSignedURL
 );
 adminRouter.get("/course/list", authorizeAdmin, fetchAllCourses);
 adminRouter.patch("/course", authorizeAdmin, updateCourse);

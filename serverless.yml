@@ -469,6 +469,11 @@ resources:
           IgnorePublicAcls: false
           BlockPublicPolicy: false
           RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins: ["*"]
+              AllowedMethods: ["GET", "HEAD"]
+              AllowedHeaders: ["*"]
     ImagesBucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
