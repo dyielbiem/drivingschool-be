@@ -1,4 +1,4 @@
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -8,7 +8,19 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 const fetchAllSubChapters = async (req, res) => {
   try {
     const { chapterID } = req.query;
+    const { drivingSchoolID, studentUserName } = req.body;
     if (!chapterID) throw Error("Chapter ID must be provided");
+
+    const getStudentCmd = new GetCommand({
+      TableName: process.env.STUDENT_TABLE,
+      Key: {
+        studentUserName,
+        drivingSchoolID
+      }
+    });
+
+    const { Item: student } = await dynamoClient.send(getStudentCmd);
+    if (!student) throw Error("Student does not exist");
 
     const command = new QueryCommand({
       TableName: process.env.SUB_CHAPTER_TABLE,
@@ -27,6 +39,14 @@ const fetchAllSubChapters = async (req, res) => {
       return res.status(200).json({ subChapters: [] });
 
     const sortedSubChapters = subChapters.sort((a, b) => a.orderID - b.orderID);
+
+    sortedSubChapters.forEach((currentSubChapter) => {
+      const { viewedSubChapter } = student;
+      const isViewed =
+        viewedSubChapter?.includes(currentSubChapter.subChapterID) || false;
+
+      Object.assign(currentSubChapter, { ...currentSubChapter, isViewed });
+    });
 
     res.status(200).json({ subChapters: sortedSubChapters });
   } catch (error) {
