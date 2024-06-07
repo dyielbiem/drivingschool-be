@@ -46,7 +46,7 @@ const updateProgress = async (req, res) => {
     const { Item: student } = await dynamoClient.send(getStudentCmd);
     if (!student) throw Error("Student does not exist");
 
-    const { viewedSubChapter, viewedChapter } = student;
+    const { viewedSubChapter, completedChapters } = student;
 
     // Check if the sub-chapter is already viewed
     if (viewedSubChapter?.includes(subChapterID))
@@ -65,16 +65,33 @@ const updateProgress = async (req, res) => {
       updatedViewedSubChapter.includes(item.subChapterID)
     );
 
-    // If all sub-chapters siblings are viewed,
+    // If all sub-chapters siblings are viewed, and chapter has no test,
     // update the update progress expression and attributes
     if (allSubChapterViewed) {
-      const updatedViewedChapter = [
-        ...(viewedChapter || []),
-        subChapter.chapterID
-      ];
+      const queryChapterQuestionsCmd = new QueryCommand({
+        TableName: process.env.QUESTION_TABLE,
+        IndexName: "ChapterIndex",
+        KeyConditionExpression: "chapterID = :chapterID",
+        ExpressionAttributeValues: {
+          ":chapterID": subChapter.chapterID
+        },
+        Limit: 1
+      });
 
-      updateProgressExpression += ", viewedChapter = :viewedChapter";
-      updateProgressAttributes[":viewedChapter"] = updatedViewedChapter;
+      const { Items: chapterQuestions } = await dynamoClient.send(
+        queryChapterQuestionsCmd
+      );
+
+      if (chapterQuestions.length === 0) {
+        const updatedCompletedChapters = [
+          ...(completedChapters || []),
+          subChapter.chapterID
+        ];
+
+        updateProgressExpression += ", completedChapters = :completedChapters";
+        updateProgressAttributes[":completedChapters"] =
+          updatedCompletedChapters;
+      }
     }
 
     // Update the viewed sub-chapters of the student

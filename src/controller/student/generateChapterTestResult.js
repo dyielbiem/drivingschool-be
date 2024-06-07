@@ -7,19 +7,15 @@ import {
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
-const determineStudentProgress = (currentProgress, newProgress) => {
-  if (!Array.isArray(currentProgress)) return [newProgress];
+const updateCompletedChapters = (completedChapters, newChapter) => {
+  if (!Array.isArray(completedChapters)) return [newChapter];
 
-  const newProgressExists = currentProgress.find(
-    (item) => item === newProgress
-  );
+  const isNewChapterAlreadyCompleted = completedChapters.includes(newChapter);
+  if (isNewChapterAlreadyCompleted) return completedChapters;
 
-  if (newProgressExists) return currentProgress;
+  const updatedCompletedChapters = [...completedChapters, newChapter];
 
-  const updatedProgress = [...currentProgress, newProgress];
-  updatedProgress.sort((a, b) => a.localeCompare(b));
-
-  return updatedProgress;
+  return updatedCompletedChapters;
 };
 
 /*
@@ -133,13 +129,18 @@ const generateChapterTestResult = async (req, res) => {
 
     await dynamoClient.send(putResultCommand);
 
-    // Update the progress of the student
-    const studentProgress = determineStudentProgress(
-      student.progress,
+    const { completedChapters } = student;
+
+    // Generate the updated completed chapters of the student
+    const updatedCompletedChapters = updateCompletedChapters(
+      completedChapters,
       chapterID
     );
 
-    if (studentProgress.length === student.progress?.length)
+    if (
+      updatedCompletedChapters.length === completedChapters?.length ||
+      scorePercentage < 0.75
+    )
       return res.status(200).json({
         resultID,
         chapterID,
@@ -149,21 +150,22 @@ const generateChapterTestResult = async (req, res) => {
         isPassed: scorePercentage >= 0.75
       });
 
-    const studentProgressCommand = new UpdateCommand({
+    // Update the completed chapters of the student
+    const updatedCompletedChaptersCmd = new UpdateCommand({
       TableName: process.env.STUDENT_TABLE,
       Key: {
         drivingSchoolID,
         studentUserName
       },
-      UpdateExpression: "SET progress = :progress",
+      UpdateExpression: "SET completedChapters = :completedChapters",
       ExpressionAttributeValues: {
-        ":progress": studentProgress
+        ":completedChapters": updatedCompletedChapters
       },
       ConditionExpression:
         "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
     });
 
-    await dynamoClient.send(studentProgressCommand);
+    await dynamoClient.send(updatedCompletedChaptersCmd);
 
     res.status(200).json({
       resultID,

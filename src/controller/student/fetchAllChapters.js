@@ -59,16 +59,16 @@ const fetchAllChapters = async (req, res) => {
     chapterTestResults.sort((a, b) => b.resultID.localeCompare(a.resultID));
 
     chapters.forEach((currentChapter) => {
-      const { viewedChapter } = student;
-      const isViewed =
-        viewedChapter?.includes(currentChapter.chapterID) || false;
+      const { completedChapters } = student;
+      const isCompleted =
+        completedChapters?.includes(currentChapter.chapterID) || false;
       const testResult = chapterTestResults.find(
         (eachResult) => eachResult.chapterID === currentChapter.chapterID
       );
 
       Object.assign(currentChapter, {
         ...currentChapter,
-        isViewed,
+        isCompleted,
         testResult
       });
     });
