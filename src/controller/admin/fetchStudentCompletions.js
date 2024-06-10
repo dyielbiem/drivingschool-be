@@ -57,38 +57,54 @@ const fetchStudentCompletions = async (req, res) => {
 
     const sectionTestResult = testResults.find((item) => item.sectionID);
 
-    let isLatestCompletionFound = false;
     const completions = chapters.map((chapter) => {
-      if (!student.progress || isLatestCompletionFound)
-        return {
-          ...chapter,
-          progressStatus: sectionTestResult ? "Completed" : "Not completed"
-        };
-
-      if (chapter.chapterID === student.progress.at(-1))
-        isLatestCompletionFound = true;
-
-      const testResult = testResults.find(
+      const isChapterCompleted = student.completedChapters?.find(
         (item) => item.chapterID === chapter.chapterID
       );
 
-      if (!testResult) return { ...chapter, progressStatus: "Completed" };
+      if (!isChapterCompleted)
+        return {
+          chapterID: chapter.chapterID,
+          chapterTitle: chapter.chapterTitle,
+          progressStatus: "Not completed"
+        };
+
+      const latestChapterResult = testResults.find(
+        (item) => item.chapterID === chapter.chapterID
+      );
+
+      if (!latestChapterResult)
+        return {
+          chapterID: chapter.chapterID,
+          chapterTitle: chapter.chapterTitle,
+          progressStatus: "Completed",
+          dateCompleted: isChapterCompleted.dateCompleted
+        };
+
+      const { score, numberOfQuestions, isPassed, dateAnswered } =
+        latestChapterResult;
 
       return {
-        ...chapter,
-        ...testResult,
-        progressStatus: testResult.isPassed ? "Completed" : "Exam not passed"
+        chapterID: chapter.chapterID,
+        chapterTitle: chapter.chapterTitle,
+        progressStatus: isPassed ? "Completed" : "Exam not passed",
+        score,
+        numberOfQuestions,
+        dateCompleted: dateAnswered
       };
     });
 
     completions.push({
-      ...sectionTestResult,
+      score: sectionTestResult?.score,
+      numberOfQuestions: sectionTestResult?.numberOfQuestions,
       sectionID: student.sectionID,
-      progressStatus: sectionTestResult?.isPassed
-        ? "Completed"
-        : sectionTestResult?.answers
-          ? "Exam not passed"
-          : "Not completed"
+      sectionTitle: "Final Test",
+      progressStatus: !sectionTestResult
+        ? "Not completed"
+        : sectionTestResult?.isPassed
+          ? "Completed"
+          : "Exam not passed",
+      dateCompleted: sectionTestResult?.dateAnswered
     });
 
     res.status(200).json({ completions });

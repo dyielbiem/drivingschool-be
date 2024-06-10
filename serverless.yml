@@ -380,6 +380,8 @@ resources:
             AttributeType: S
           - AttributeName: sectionID
             AttributeType: S
+          - AttributeName: drivingSchoolID
+            AttributeType: S
         KeySchema:
           - AttributeName: questionID
             KeyType: HASH
@@ -395,6 +397,12 @@ resources:
           - IndexName: SectionIndex
             KeySchema:
               - AttributeName: sectionID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
