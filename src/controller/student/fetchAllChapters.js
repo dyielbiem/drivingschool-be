@@ -61,7 +61,9 @@ const fetchAllChapters = async (req, res) => {
     chapters.forEach((currentChapter) => {
       const { completedChapters } = student;
       const isCompleted =
-        completedChapters?.includes(currentChapter.chapterID) || false;
+        completedChapters?.some(
+          (item) => item.chapterID === currentChapter.chapterID
+        ) || false;
       const testResult = chapterTestResults.find(
         (eachResult) => eachResult.chapterID === currentChapter.chapterID
       );

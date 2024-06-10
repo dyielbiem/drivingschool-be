@@ -7,13 +7,19 @@ import {
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
-const updateCompletedChapters = (completedChapters, newChapter) => {
-  if (!Array.isArray(completedChapters)) return [newChapter];
+const updateCompletedChapters = (completedChapters, newChapterID) => {
+  if (!Array.isArray(completedChapters))
+    return [{ chapterID: newChapterID, dateCompleted: Date() }];
 
-  const isNewChapterAlreadyCompleted = completedChapters.includes(newChapter);
+  const isNewChapterAlreadyCompleted = completedChapters.some(
+    (item) => newChapterID === item.chapterID
+  );
   if (isNewChapterAlreadyCompleted) return completedChapters;
 
-  const updatedCompletedChapters = [...completedChapters, newChapter];
+  const updatedCompletedChapters = [
+    ...completedChapters,
+    { chapterID: newChapterID, dateCompleted: Date() }
+  ];
 
   return updatedCompletedChapters;
 };

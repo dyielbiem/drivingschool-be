@@ -43,7 +43,9 @@ const fetchAllSubChapters = async (req, res) => {
     sortedSubChapters.forEach((currentSubChapter) => {
       const { viewedSubChapter } = student;
       const isViewed =
-        viewedSubChapter?.includes(currentSubChapter.subChapterID) || false;
+        viewedSubChapter?.some(
+          (item) => item.subChapterID === currentSubChapter.subChapterID
+        ) || false;
 
       Object.assign(currentSubChapter, { ...currentSubChapter, isViewed });
     });

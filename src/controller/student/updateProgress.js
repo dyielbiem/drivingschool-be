@@ -49,10 +49,13 @@ const updateProgress = async (req, res) => {
     const { viewedSubChapter, completedChapters } = student;
 
     // Check if the sub-chapter is already viewed
-    if (viewedSubChapter?.includes(subChapterID))
+    if (viewedSubChapter?.some((item) => item.subChapterID === subChapterID))
       throw Error("Sub-chapter is already viewed");
 
-    const updatedViewedSubChapter = [...(viewedSubChapter || []), subChapterID];
+    const updatedViewedSubChapter = [
+      ...(viewedSubChapter || []),
+      { subChapterID, dateViewed: Date() }
+    ];
 
     // Update progress expression and attributes
     let updateProgressExpression = "SET viewedSubChapter = :viewedSubChapter";
@@ -62,7 +65,9 @@ const updateProgress = async (req, res) => {
 
     // Check if all the sub-chapter siblings are viewed
     const allSubChapterViewed = subChapterList.every((item) =>
-      updatedViewedSubChapter.includes(item.subChapterID)
+      updatedViewedSubChapter.some(
+        (viewedItem) => viewedItem.subChapterID === item.subChapterID
+      )
     );
 
     // If all sub-chapters siblings are viewed, and chapter has no test,
@@ -85,7 +90,7 @@ const updateProgress = async (req, res) => {
       if (chapterQuestions.length === 0) {
         const updatedCompletedChapters = [
           ...(completedChapters || []),
-          subChapter.chapterID
+          { chapterID: subChapter.chapterID, dateCompleted: Date() }
         ];
 
         updateProgressExpression += ", completedChapters = :completedChapters";
