@@ -46,21 +46,21 @@ const updateProgress = async (req, res) => {
     const { Item: student } = await dynamoClient.send(getStudentCmd);
     if (!student) throw Error("Student does not exist");
 
-    const { viewedSubChapter, completedChapters } = student;
+    const { viewedSubChapters, completedChapters } = student;
 
     // Check if the sub-chapter is already viewed
-    if (viewedSubChapter?.some((item) => item.subChapterID === subChapterID))
+    if (viewedSubChapters?.some((item) => item.subChapterID === subChapterID))
       throw Error("Sub-chapter is already viewed");
 
     const updatedViewedSubChapter = [
-      ...(viewedSubChapter || []),
+      ...(viewedSubChapters || []),
       { subChapterID, dateViewed: Date() }
     ];
 
     // Update progress expression and attributes
-    let updateProgressExpression = "SET viewedSubChapter = :viewedSubChapter";
+    let updateProgressExpression = "SET viewedSubChapters = :viewedSubChapters";
     const updateProgressAttributes = {
-      ":viewedSubChapter": updatedViewedSubChapter
+      ":viewedSubChapters": updatedViewedSubChapter
     };
 
     // Check if all the sub-chapter siblings are viewed

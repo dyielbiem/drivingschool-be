@@ -41,9 +41,9 @@ const fetchAllSubChapters = async (req, res) => {
     const sortedSubChapters = subChapters.sort((a, b) => a.orderID - b.orderID);
 
     sortedSubChapters.forEach((currentSubChapter) => {
-      const { viewedSubChapter } = student;
+      const { viewedSubChapters } = student;
       const isViewed =
-        viewedSubChapter?.some(
+        viewedSubChapters?.some(
           (item) => item.subChapterID === currentSubChapter.subChapterID
         ) || false;
 

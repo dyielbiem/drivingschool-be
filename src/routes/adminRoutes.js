@@ -63,6 +63,7 @@ import updatePassword from "../controller/admin/updatePassword.js";
 import updateShownChapterQCount from "../controller/admin/updateShownChapterQCount.js";
 import updateShownSectionQCount from "../controller/admin/updateShownSectionQCount.js";
 import generateChapterImageSignedURL from "../controller/admin/generateChapterImageSignedURL.js";
+import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgress.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -143,6 +144,11 @@ adminRouter.get(
   "/section/chapter/subchapter/list",
   authorizeAdmin,
   fetchAllSubChapters
+);
+adminRouter.get(
+  "/section/chapter/subchapter/progress/list",
+  authorizeAdmin,
+  fetchSubChaptersProgress
 );
 adminRouter.patch(
   "/section/chapter/subchapter/list/order",
