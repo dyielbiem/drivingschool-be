@@ -354,6 +354,8 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
+          - AttributeName: sectionID
+            AttributeType: S
           - AttributeName: subChapterID
             AttributeType: S
           - AttributeName: chapterID
@@ -364,6 +366,12 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.subChapterTable}
         GlobalSecondaryIndexes:
+          - IndexName: SectionIndex
+            KeySchema:
+              - AttributeName: sectionID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
           - IndexName: ChapterIndex
             KeySchema:
               - AttributeName: chapterID
