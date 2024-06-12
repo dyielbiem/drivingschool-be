@@ -1,4 +1,4 @@
-import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
@@ -18,6 +18,16 @@ const addSubChapter = async (req, res) => {
 
     if (!chapterID || !subChapterTitle)
       throw Error("All required fields must filled");
+
+    const getChapterCommand = new GetCommand({
+      TableName: process.env.CHAPTER_TABLE,
+      Key: {
+        chapterID
+      }
+    });
+
+    const { Item: chapter } = await dynamoClient.send(getChapterCommand);
+    if (!chapter) throw Error("Chapter does not exist");
 
     const querySubChaptersCommand = new QueryCommand({
       TableName: process.env.SUB_CHAPTER_TABLE,
@@ -42,7 +52,8 @@ const addSubChapter = async (req, res) => {
         drivingSchoolID,
         addedBy: adminUserName,
         dateAdded: Date(),
-        orderID: Items.length
+        orderID: Items.length,
+        sectionID: chapter.sectionID
       },
       ConditionExpression: "attribute_not_exists(subChapterID)"
     });
