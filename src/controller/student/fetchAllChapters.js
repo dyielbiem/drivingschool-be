@@ -1,4 +1,4 @@
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -10,6 +10,17 @@ const fetchAllChapters = async (req, res) => {
     const { sectionID } = req.query;
     const { drivingSchoolID, studentUserName } = req.body;
     if (!sectionID) throw Error("Section ID must be provided");
+
+    const getStudentCmd = new GetCommand({
+      TableName: process.env.STUDENT_TABLE,
+      Key: {
+        studentUserName,
+        drivingSchoolID
+      }
+    });
+
+    const { Item: student } = await dynamoClient.send(getStudentCmd);
+    if (!student) throw Error("Student does not exist");
 
     const chapterCommand = new QueryCommand({
       TableName: process.env.CHAPTER_TABLE,
@@ -47,14 +58,21 @@ const fetchAllChapters = async (req, res) => {
 
     chapterTestResults.sort((a, b) => b.resultID.localeCompare(a.resultID));
 
-    chapters.forEach((eachChapter) => {
+    chapters.forEach((currentChapter) => {
+      const { completedChapters } = student;
+      const isCompleted =
+        completedChapters?.some(
+          (item) => item.chapterID === currentChapter.chapterID
+        ) || false;
       const testResult = chapterTestResults.find(
-        (eachResult) => eachResult.chapterID === eachChapter.chapterID
+        (eachResult) => eachResult.chapterID === currentChapter.chapterID
       );
 
-      if (!testResult) return;
-
-      Object.assign(eachChapter, { ...eachChapter, testResult });
+      Object.assign(currentChapter, {
+        ...currentChapter,
+        isCompleted,
+        testResult
+      });
     });
 
     res.status(200).json({ chapters });

@@ -7,6 +7,7 @@ import fetchAdmin from "../controller/admin/fetchAdmin.js";
 import addAdmin from "../controller/admin/addAdmin.js";
 import addCourse from "../controller/admin/addCourse.js";
 import addSection from "../controller/admin/addSection.js";
+import activateSection from "../controller/admin/activateSection.js";
 import fetchAllCourses from "../controller/admin/fetchAllCourses.js";
 import fetchSectionByID from "../controller/admin/fetchSectionByID.js";
 import fetchAllSections from "../controller/admin/fetchAllSections.js";
@@ -62,6 +63,7 @@ import updatePassword from "../controller/admin/updatePassword.js";
 import updateShownChapterQCount from "../controller/admin/updateShownChapterQCount.js";
 import updateShownSectionQCount from "../controller/admin/updateShownSectionQCount.js";
 import generateChapterImageSignedURL from "../controller/admin/generateChapterImageSignedURL.js";
+import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgress.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -105,6 +107,7 @@ adminRouter.delete("/course", authorizeAdmin, deleteCourse);
 adminRouter.post("/section", authorizeAdmin, addSection);
 adminRouter.get("/section", authorizeAdmin, fetchSectionByID);
 adminRouter.patch("/section/title", authorizeAdmin, updateSectionTitle);
+adminRouter.patch("/section/activate", authorizeAdmin, activateSection);
 adminRouter.get("/section/list", authorizeAdmin, fetchAllSections);
 adminRouter.post("/section/chapter", authorizeAdmin, addChapter);
 adminRouter.delete("/section/chapter", authorizeAdmin, deleteChapter);
@@ -141,6 +144,11 @@ adminRouter.get(
   "/section/chapter/subchapter/list",
   authorizeAdmin,
   fetchAllSubChapters
+);
+adminRouter.get(
+  "/section/chapter/subchapter/progress/list",
+  authorizeAdmin,
+  fetchSubChaptersProgress
 );
 adminRouter.patch(
   "/section/chapter/subchapter/list/order",

@@ -1,4 +1,4 @@
-import { GetCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -50,9 +50,10 @@ const fetchStudentResults = async (req, res) => {
 
     const { Items: testResults } = await dynamoClient.send(queryResultsCommand);
 
-    const queryQuestionsCommand = new ScanCommand({
+    const queryQuestionsCommand = new QueryCommand({
       TableName: process.env.QUESTION_TABLE,
-      FilterExpression: "drivingSchoolID = :drivingSchoolID",
+      IndexName: "DrivingSchoolIndex",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
       ExpressionAttributeValues: {
         ":drivingSchoolID": drivingSchoolID
       }

@@ -20,6 +20,7 @@ import completeSection from "../controller/student/completeSection.js";
 import getResetPasswordCode from "../controller/student/getResetPasswordCode.js";
 import verifyResetPasswordCode from "../controller/student/verifyResetPasswordCode.js";
 import resetPassword from "../controller/student/resetPassword.js";
+import updateProgress from "../controller/student/updateProgress.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -79,5 +80,6 @@ studentRouter.patch(
   authenticateAPIKey,
   resetPassword
 );
+studentRouter.patch("/progress", authorizeStudent, updateProgress);
 
 export default studentRouter;
