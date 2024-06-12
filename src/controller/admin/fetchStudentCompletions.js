@@ -107,7 +107,24 @@ const fetchStudentCompletions = async (req, res) => {
       dateCompleted: sectionTestResult?.dateAnswered
     });
 
-    res.status(200).json({ completions });
+    const querySubChaptersCommand = new QueryCommand({
+      TableName: process.env.SUB_CHAPTER_TABLE,
+      IndexName: "SectionIndex",
+      KeyConditionExpression: "sectionID = :sectionID",
+      ExpressionAttributeValues: {
+        ":sectionID": student.sectionID
+      }
+    });
+
+    const { Items: subChapters } = await dynamoClient.send(
+      querySubChaptersCommand
+    );
+
+    res.status(200).json({
+      completions,
+      viewedSubChaptersCount: student.viewedSubChapters?.length || 0,
+      totalSubChaptersCount: subChapters.length
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
