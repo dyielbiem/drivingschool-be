@@ -193,9 +193,15 @@ const enrollStudent = async (req, res) => {
     if (respond.messages.resultCode !== "Ok")
       return res.status(400).json({
         error:
-          respond.transactionResponse?.errors[0]?.errorText ||
-          respond.messages?.message[0]?.text ||
+          (respond.transactionResponse?.errors &&
+            respond.transactionResponse.errors[0].errorText) ||
+          (respond.messages?.message && respond.messages?.message[0].text) ||
           "An error occured in payment transaction"
+      });
+
+    if (respond.transactionResponse.responseCode !== "1")
+      return res.status(400).json({
+        error: "The credit card was declined"
       });
 
     // Add the student to database upon the
