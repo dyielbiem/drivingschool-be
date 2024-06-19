@@ -1,25 +1,24 @@
-import {
-  DeleteCommand,
-  QueryCommand,
-  BatchWriteCommand
-} from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 
-const deleteSubChapter = async (subChapters) => {
-  if (subChapters?.length === 0) return;
-  const command = new BatchWriteCommand({
-    RequestItems: {
-      [process.env.SUB_CHAPTER_TABLE]: subChapters.map((subChapter) => ({
-        DeleteRequest: {
-          Key: {
-            subChapterID: subChapter.subChapterID
-          }
-        }
-      }))
-    }
-  });
+const getTransactDeleteParams = (subChapters) => {
+  const transactParams = {
+    TransactItems: []
+  };
 
-  await dynamoClient.send(command);
+  if (subChapters?.length === 0) return transactParams;
+
+  transactParams.TransactItems = subChapters.map((item) => ({
+    Delete: {
+      TableName: process.env.SUB_CHAPTER_TABLE,
+      Key: {
+        subChapterID: item.subChapterID
+      },
+      ConditionExpression: "attribute_exists(subChapterID)"
+    }
+  }));
+
+  return transactParams;
 };
 
 /*
@@ -42,20 +41,26 @@ const deleteChapter = async (req, res) => {
     });
 
     const { Items: subChapters } = await dynamoClient.send(queryCommand);
-    await deleteSubChapter(subChapters);
 
-    const deleteCommand = new DeleteCommand({
-      TableName: process.env.CHAPTER_TABLE,
-      Key: {
-        chapterID
-      },
-      ConditionExpression: "attribute_exists(chapterID)",
-      ReturnValues: "ALL_OLD"
-    });
+    const deleteChapterParams = {
+      Delete: {
+        TableName: process.env.CHAPTER_TABLE,
+        Key: {
+          chapterID
+        },
+        ConditionExpression: "attribute_exists(chapterID)"
+      }
+    };
 
-    const deleteResponse = await dynamoClient.send(deleteCommand);
+    const transactDeleteParams = getTransactDeleteParams(subChapters);
 
-    res.status(200).json(deleteResponse);
+    transactDeleteParams.TransactItems.push(deleteChapterParams);
+
+    const command = new TransactWriteCommand(transactDeleteParams);
+
+    await dynamoClient.send(command);
+
+    res.status(200).json({ message: "Chapter has been deleted" });
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res.status(400).json({ error: "Chapter does not exist" });
