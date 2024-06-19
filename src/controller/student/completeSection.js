@@ -124,9 +124,11 @@ const completeSection = async (req, res) => {
         drivingSchoolID,
         studentUserName
       },
-      UpdateExpression: "SET isCourseCompleted = :isCourseCompleted",
+      UpdateExpression:
+        "SET isCourseCompleted = :isCourseCompleted, courseCompletionDate = :courseCompletionDate",
       ExpressionAttributeValues: {
-        ":isCourseCompleted": true
+        ":isCourseCompleted": true,
+        ":courseCompletionDate": Date()
       },
       ConditionExpression:
         "attribute_exists(studentUserName) AND attribute_exists(drivingSchoolID)"
