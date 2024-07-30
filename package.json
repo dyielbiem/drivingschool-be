@@ -24,7 +24,7 @@
     "ulid": "^2.3.0"
   },
   "scripts": {
-    "dev": "nodemon --exec serverless offline start"
+    "local": "nodemon --exec serverless offline start --stage local"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
