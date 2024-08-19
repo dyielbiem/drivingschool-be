@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import { PutCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
+import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
 
 /*
 ---- Controller to add a student to a course
@@ -105,6 +107,44 @@ const addStudent = async (req, res) => {
     });
 
     await dynamoClient.send(command);
+
+    const drivingSchoolGetCmd = new GetCommand({
+      TableName: process.env.DRIVING_SCHOOL_TABLE,
+      Key: {
+        drivingSchoolID: drivingSchoolID
+      },
+      ProjectionExpression: "emailSubject, emailBody, drivingSchoolName"
+    });
+
+    const { Item: drivingSchool } =
+      await dynamoClient.send(drivingSchoolGetCmd);
+
+    const userNameTemplatePattern = /\{ username \}/g;
+    const passWordTemplatePattern = /\{ password \}/g;
+    const defaulEmailSubject = `Welcome to ${drivingSchool.drivingSchoolName}`;
+    const defaultEmailBody = `Hello ${userName}, welcome aboard to ${drivingSchool.drivingSchoolName}! Get ready to hit the road with confidence.`;
+
+    const emailSubject = drivingSchool.emailSubject || defaulEmailSubject;
+    let emailBody = drivingSchool.emailBody || defaultEmailBody;
+
+    emailBody = emailBody
+      .replace(userNameTemplatePattern, userName)
+      .replace(passWordTemplatePattern, passWord);
+
+    const invokeFunctionArgs = {
+      invokePath: "/api/student/send-email",
+      headers: {
+        "x-api-key": process.env.API_KEY
+      },
+      method: "POST",
+      body: {
+        emailReceiver: email,
+        emailSubject: emailSubject,
+        emailBody: emailBody
+      }
+    };
+
+    await invokeFunction(invokeFunctionArgs);
 
     res.status(200).json({
       drivingSchoolID,
