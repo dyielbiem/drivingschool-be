@@ -1,33 +1,28 @@
-import nodemailer from "nodemailer";
+import { createRequire } from "module";
 
-const emailSender = (emailReceiver, emailSubject, emailBody) => {
-  const transporter = nodemailer.createTransport({
-    service: "Gmail",
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD
-    }
-  });
+const require = createRequire(import.meta.url);
+const emailjs = require("@emailjs/nodejs");
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: emailReceiver,
-    subject: emailSubject,
-    html: emailBody
+const emailSender = async (emailReceiver, emailSubject, emailBody) => {
+  const templateParams = {
+    emailReceiver,
+    emailSubject,
+    emailBody
   };
 
-  return new Promise((resolve) => {
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        resolve(error);
-      } else {
-        resolve(info);
+  try {
+    await emailjs.send(
+      process.env.EMAILJS_SERVICE_ID,
+      process.env.EMAILJS_TEMPLATE_ID,
+      templateParams,
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
-    });
-  });
+    );
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 export default emailSender;
