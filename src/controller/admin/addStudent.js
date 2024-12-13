@@ -18,14 +18,19 @@ const addStudent = async (req, res) => {
       confirmPassWord,
       firstName,
       lastName,
-      company,
+      company = "Not applicable",
       address,
       city,
       state,
       zip,
-      country,
+      country = "United States",
       email,
-      phoneNumber
+      phoneNumber,
+      highSchool,
+      parentFirstName,
+      parentLastName,
+      parentEmail,
+      parentPhoneNumber
     } = req.body;
 
     if (
@@ -100,6 +105,11 @@ const addStudent = async (req, res) => {
         mailingEmail: email,
         mailingPhoneNumber: phoneNumber,
         enrollmentDate: Date(),
+        highSchool,
+        parentFirstName,
+        parentLastName,
+        parentEmail,
+        parentPhoneNumber,
         isActive: true
       },
       ConditionExpression:
@@ -138,7 +148,7 @@ const addStudent = async (req, res) => {
       },
       method: "POST",
       body: {
-        emailReceiver: email,
+        emailReceiver: "john@webact.com",
         emailSubject: emailSubject,
         emailBody: emailBody
       }
@@ -164,6 +174,11 @@ const addStudent = async (req, res) => {
       mailingEmail: email,
       mailingPhoneNumber: phoneNumber,
       enrollmentDate: Date(),
+      highSchool,
+      parentFirstName,
+      parentLastName,
+      parentEmail,
+      parentPhoneNumber,
       isActive: true
     });
   } catch (error) {

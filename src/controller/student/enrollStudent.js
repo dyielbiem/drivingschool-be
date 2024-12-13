@@ -39,7 +39,8 @@ const enrollStudent = async (req, res) => {
     if (
       !accountInformation?.userName ||
       !accountInformation?.passWord ||
-      !accountInformation?.confirmPassWord
+      !accountInformation?.confirmPassWord ||
+      !accountInformation?.birthDate
     )
       throw Error("Account information must be complete");
 
@@ -77,6 +78,9 @@ const enrollStudent = async (req, res) => {
       !cardInformation?.cardExpiration
     )
       throw Error("Card information must be complete");
+
+    if (Number.isNaN(new Date(accountInformation.birthDate).getTime()))
+      throw Error("Birth date must be a valid date string format");
 
     if (!courseID) throw Error("Course ID must be provided");
 
@@ -239,6 +243,7 @@ const enrollStudent = async (req, res) => {
         mailingCountry: mailingInformation.country,
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
+        birthDate: accountInformation.birthDate,
         enrollmentDate: Date(),
         paidAmount: finalChargeAmount,
         isActive: true,
