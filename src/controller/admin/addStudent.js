@@ -148,7 +148,7 @@ const addStudent = async (req, res) => {
       },
       method: "POST",
       body: {
-        emailReceiver: "john@webact.com",
+        emailReceiver: process.env.ADMIN_EMAIL_RECEIVER,
         emailSubject: emailSubject,
         emailBody: emailBody
       }
