@@ -44,6 +44,8 @@ import updateSubChapterTitle from "../controller/admin/updateSubChapterTitle.js"
 import addStudent from "../controller/admin/addStudent.js";
 import fetchSiteSettings from "../controller/admin/fetchSiteSettings.js";
 import updateSiteSettings from "../controller/admin/updateSiteSettings.js";
+import fetchPolicy from "../controller/admin/fetchPolicy.js";
+import updatePolicy from "../controller/admin/updatePolicy.js";
 import fetchEmailContent from "../controller/admin/fetchEmailContent.js";
 import updateEmailContent from "../controller/admin/updateEmailContent.js";
 import generateCourseImageSignedURL from "../controller/admin/generateCourseImageSignedURL.js";
@@ -192,6 +194,8 @@ adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);
 adminRouter.get("/setting/site", authorizeAdmin, fetchSiteSettings);
 adminRouter.patch("/setting/site", authorizeAdmin, updateSiteSettings);
+adminRouter.get("/policy", authorizeAdmin, fetchPolicy);
+adminRouter.patch("/policy", authorizeAdmin, updatePolicy);
 adminRouter.get("/setting/email", authorizeAdmin, fetchEmailContent);
 adminRouter.patch("/setting/email", authorizeAdmin, updateEmailContent);
 adminRouter.patch("/password", authorizeAdmin, updatePassword);
