@@ -47,7 +47,6 @@ const enrollStudent = async (req, res) => {
     if (
       !mailingInformation?.firstName ||
       !mailingInformation?.lastName ||
-      !mailingInformation?.company ||
       !mailingInformation?.address ||
       !mailingInformation?.city ||
       !mailingInformation?.state ||
@@ -61,7 +60,6 @@ const enrollStudent = async (req, res) => {
     if (
       !billingInformation?.firstName ||
       !billingInformation?.lastName ||
-      !billingInformation?.company ||
       !billingInformation?.address ||
       !billingInformation?.city ||
       !billingInformation?.state ||
@@ -225,7 +223,7 @@ const enrollStudent = async (req, res) => {
         accountType: respond.transactionResponse.accountType,
         billingFirstName: billingInformation.firstName,
         billingLastName: billingInformation.lastName,
-        billingCompany: billingInformation.company,
+        billingCompany: billingInformation.company || "Not applicable",
         billingAddress: billingInformation.address,
         billingCity: billingInformation.city,
         billingState: billingInformation.state,
@@ -235,7 +233,7 @@ const enrollStudent = async (req, res) => {
         billingPhoneNumber: billingInformation.phoneNumber,
         mailingFirstName: mailingInformation.firstName,
         mailingLastName: mailingInformation.lastName,
-        mailingCompany: mailingInformation.company,
+        mailingCompany: mailingInformation.company || "Not applicable",
         mailingAddress: mailingInformation.address,
         mailingCity: mailingInformation.city,
         mailingState: mailingInformation.state,
@@ -243,6 +241,7 @@ const enrollStudent = async (req, res) => {
         mailingCountry: mailingInformation.country,
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
+        highSchool: accountInformation.highSchool || "Not applicable",
         birthDate: accountInformation.birthDate,
         enrollmentDate: Date(),
         paidAmount: finalChargeAmount,
