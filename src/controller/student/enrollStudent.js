@@ -6,11 +6,31 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
 
 const getFinalChargeAmount = (couponItem, chargeAmount) => {
-  if (!couponItem?.couponAmount) return chargeAmount;
+  const finalChargeAmount = !couponItem?.couponAmount
+    ? chargeAmount
+    : couponItem?.couponAmount >= chargeAmount
+      ? 0
+      : chargeAmount - couponItem.couponAmount;
 
-  if (couponItem?.couponAmount >= chargeAmount) return 0;
+  return finalChargeAmount;
+};
 
-  return chargeAmount - couponItem.couponAmount;
+const getEmailSubject = (drivingSchool) =>
+  drivingSchool.emailSubject || `Welcome to ${drivingSchool.drivingSchoolName}`;
+
+const getEmailBody = (drivingSchool, accountInformation) => {
+  const { userName, passWord } = accountInformation;
+  const emailBody =
+    drivingSchool.emailBody ||
+    `
+      Hello ${accountInformation.userName}, 
+      welcome aboard to ${drivingSchool.drivingSchoolName}!
+      Get ready to hit the road with confidence.
+    `;
+
+  return emailBody
+    .replace(/\{ username \}/g, userName)
+    .replace(/\{ password \}/g, passWord);
 };
 
 /*
@@ -93,12 +113,11 @@ const enrollStudent = async (req, res) => {
       }
     });
 
-    const drivingSchoolResult = await dynamoClient.send(
+    const { Item: drivingSchool } = await dynamoClient.send(
       drivingSchoolGetCommand
     );
 
-    if (!drivingSchoolResult.Item)
-      throw Error("The driving school does not exist");
+    if (!drivingSchool) throw Error("The driving school does not exist");
 
     // Check if username is available
     const studentGetCommand = new GetCommand({
@@ -167,47 +186,57 @@ const enrollStudent = async (req, res) => {
     }
 
     // Get the final charge amount
-    const finalChargeAmount = parseFloat(
-      getFinalChargeAmount(couponItem, courseResult.coursePrice).toFixed(2)
-    );
-
-    if (finalChargeAmount === 0)
-      throw Error("The coupon code is not applicable for this transaction");
-
     const paymentID = nanoid(20);
     const salt = await bcrypt.genSalt(10);
     const hashedPassWord = await bcrypt.hash(accountInformation.passWord, salt);
-
-    // Create a request to Authorize.net API Gateway
-    // to charge the credit card
-    const respond = await payment(
-      drivingSchoolCredentials,
-      accountInformation,
-      mailingInformation,
-      billingInformation,
-      cardInformation,
-      courseID,
-      courseResult.courseName,
-      finalChargeAmount,
-      paymentID
+    const finalChargeAmount = getFinalChargeAmount(
+      couponItem,
+      courseResult.coursePrice
     );
 
-    if (respond.messages.resultCode !== "Ok")
-      return res.status(400).json({
-        error:
-          (respond.transactionResponse?.errors &&
-            respond.transactionResponse.errors[0].errorText) ||
-          (respond.messages?.message && respond.messages?.message[0].text) ||
-          "An error occured in payment transaction"
-      });
+    let respond = {
+      refId: "",
+      transactionResponse: {
+        transId: "",
+        accountNumber: "",
+        accountType: ""
+      }
+    };
 
-    if (respond.transactionResponse.responseCode !== "1")
-      return res.status(400).json({
-        error: "The credit card was declined"
-      });
+    /* 
+      If final charge amount is more than zero,
+      Create a request to Authorize.net API Gateway
+      to charge the credit card 
+    */
+    if (finalChargeAmount > 0) {
+      respond = await payment(
+        drivingSchoolCredentials,
+        accountInformation,
+        mailingInformation,
+        billingInformation,
+        cardInformation,
+        courseID,
+        courseResult.courseName,
+        finalChargeAmount,
+        paymentID
+      );
 
-    // Add the student to database upon the
-    // successful payment transaction
+      if (respond.messages.resultCode !== "Ok")
+        return res.status(400).json({
+          error:
+            (respond.transactionResponse?.errors &&
+              respond.transactionResponse.errors[0].errorText) ||
+            (respond.messages?.message && respond.messages?.message[0].text) ||
+            "An error occured in payment transaction"
+        });
+
+      if (respond.transactionResponse.responseCode !== "1")
+        return res.status(400).json({
+          error: "The credit card was declined"
+        });
+    }
+
+    // Add the student to database
     const putCommand = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
       Item: {
@@ -252,25 +281,8 @@ const enrollStudent = async (req, res) => {
 
     await dynamoClient.send(putCommand);
 
-    const emailSubject =
-      drivingSchoolResult.Item.emailSubject ||
-      `Welcome to ${drivingSchoolResult.Item.drivingSchoolName}`;
-    let emailBody =
-      drivingSchoolResult.Item.emailBody ||
-      `Hello ${accountInformation.userName}, welcome aboard to ${drivingSchoolResult.Item.drivingSchoolName}! Get ready to hit the road with confidence.`;
-
-    const userNameTemplatePattern = /\{ username \}/g;
-    const passWordTemplatePattern = /\{ password \}/g;
-
-    emailBody = emailBody.replace(
-      userNameTemplatePattern,
-      accountInformation.userName
-    );
-
-    emailBody = emailBody.replace(
-      passWordTemplatePattern,
-      accountInformation.passWord
-    );
+    const emailSubject = getEmailSubject(drivingSchool);
+    const emailBody = getEmailBody(drivingSchool, accountInformation);
 
     const invokeFunctionArgs = {
       invokePath: "/api/student/send-email",
@@ -298,7 +310,12 @@ const enrollStudent = async (req, res) => {
       courseType: courseResult.courseType
     });
   } catch (error) {
-    if (!error.code) return res.status(400).json({ error: error.message });
+    if (!error.code) {
+      console.log("ERROR: ", error.message);
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    console.log("ERROR: ", error.message);
     res.status(400).json(error);
   }
 };
