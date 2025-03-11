@@ -1,9 +1,15 @@
-import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
-import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { nanoid } from "nanoid";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
+
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
+import { getCourse } from "../../utils/dbUtils/course.js";
+import { getActiveSection } from "../../utils/dbUtils/section.js";
+import { getCoupon } from "../../utils/dbUtils/coupon.js";
 
 const getFinalChargeAmount = (couponItem, chargeAmount) => {
   const finalChargeAmount = !couponItem?.couponAmount
@@ -31,6 +37,25 @@ const getEmailBody = (drivingSchool, accountInformation) => {
   return emailBody
     .replace(/\{ username \}/g, userName)
     .replace(/\{ password \}/g, passWord);
+};
+
+const validateCoupon = async (couponCode, drivingSchoolID) => {
+  if (!couponCode) {
+    return [null, true];
+  }
+
+  const { Item: coupon } = await getCoupon(couponCode, drivingSchoolID);
+
+  if (!coupon) {
+    return [coupon, false];
+  }
+
+  const expiryDate = new Date(coupon.toDate);
+  expiryDate.setDate(expiryDate.getDate() + 1);
+
+  const isValid = coupon.isActive && expiryDate > new Date();
+
+  return [coupon, isValid];
 };
 
 /*
@@ -90,13 +115,6 @@ const enrollStudent = async (req, res) => {
     )
       throw Error("Billing information must be complete");
 
-    if (
-      !cardInformation?.cardNumber ||
-      !cardInformation?.cardCode ||
-      !cardInformation?.cardExpiration
-    )
-      throw Error("Card information must be complete");
-
     if (Number.isNaN(new Date(accountInformation.birthDate).getTime()))
       throw Error("Birth date must be a valid date string format");
 
@@ -105,84 +123,36 @@ const enrollStudent = async (req, res) => {
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
 
-    // Check if driving school is existing
-    const drivingSchoolGetCommand = new GetCommand({
-      TableName: process.env.DRIVING_SCHOOL_TABLE,
-      Key: {
-        drivingSchoolID: drivingSchoolCredentials.drivingSchoolID
-      }
-    });
-
-    const { Item: drivingSchool } = await dynamoClient.send(
-      drivingSchoolGetCommand
+    // Validate Driving School ID
+    const { Item: drivingSchool } = await getDrivingSchool(
+      drivingSchoolCredentials.drivingSchoolID
     );
-
     if (!drivingSchool) throw Error("The driving school does not exist");
 
-    // Check if username is available
-    const studentGetCommand = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
-        studentUserName: accountInformation.userName
-      }
-    });
-
-    const studentResult = await dynamoClient.send(studentGetCommand);
-
-    if (studentResult.Item) throw Error("Username is already in use");
+    // Check if student username is available
+    const { Item: student } = await getStudent(
+      drivingSchoolCredentials.drivingSchoolID,
+      accountInformation.userName
+    );
+    if (student) throw Error("Username is already in use");
 
     // Check if course ID is valid
-    const courseCommand = new GetCommand({
-      TableName: process.env.COURSE_TABLE,
-      Key: {
-        courseID: courseID
-      },
-      ProjectionExpression: "courseID, courseType, courseName, coursePrice"
-    });
-
-    const { Item: courseResult } = await dynamoClient.send(courseCommand);
+    const { Item: courseResult } = await getCourse(courseID);
     if (!courseResult) throw Error("Invalid course ID");
 
     // If course is valid, get the active section
-    const sectionCommand = new QueryCommand({
-      TableName: process.env.SECTION_TABLE,
-      IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "isActive  = :isActiveValue",
-      ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolCredentials.drivingSchoolID,
-        ":isActiveValue": true
-      },
-      ProjectionExpression: "sectionID"
-    });
-
-    const { Items: sectionResult } = await dynamoClient.send(sectionCommand);
-    if (sectionResult.length === 0)
-      throw Error("The driving school has no active section");
+    const activeSection = await getActiveSection(
+      drivingSchoolCredentials.drivingSchoolID
+    );
+    if (!activeSection) throw Error("The driving school has no active section");
 
     // Check if the provided coupon is valid
-    let couponItem;
-    if (couponCode) {
-      const couponCommand = new GetCommand({
-        TableName: process.env.COUPON_TABLE,
-        Key: {
-          drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
-          couponCode
-        }
-      });
-
-      const { Item } = await dynamoClient.send(couponCommand);
-
-      if (!Item) throw Error("Invalid coupon code");
-
-      const expiryDate = new Date(Item.toDate);
-      expiryDate.setDate(expiryDate.getDate() + 1);
-
-      if (!Item.isActive || expiryDate < new Date())
-        throw Error("Invalid coupon code");
-
-      couponItem = Item;
+    const [couponItem, isCouponValid] = await validateCoupon(
+      couponCode,
+      drivingSchoolCredentials.drivingSchoolID
+    );
+    if (!isCouponValid) {
+      throw Error("Invalid coupon code");
     }
 
     // Get the final charge amount
@@ -209,6 +179,11 @@ const enrollStudent = async (req, res) => {
       to charge the credit card 
     */
     if (finalChargeAmount > 0) {
+      const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
+      if (!cardNumber || !cardCode || !cardExpiration) {
+        throw Error("Card information must be complete");
+      }
+
       respond = await payment(
         drivingSchoolCredentials,
         accountInformation,
@@ -221,18 +196,20 @@ const enrollStudent = async (req, res) => {
         paymentID
       );
 
-      if (respond.messages.resultCode !== "Ok")
+      const { resultCode, message } = respond.messages || {};
+      const { errors, responseCode } = respond.transactionResponse || {};
+
+      if (resultCode !== "Ok")
         return res.status(400).json({
           error:
-            (respond.transactionResponse?.errors &&
-              respond.transactionResponse.errors[0].errorText) ||
-            (respond.messages?.message && respond.messages?.message[0].text) ||
+            errors?.[0]?.errorText ||
+            message?.[0]?.text ||
             "An error occured in payment transaction"
         });
 
-      if (respond.transactionResponse.responseCode !== "1")
+      if (responseCode !== "1")
         return res.status(400).json({
-          error: "The credit card was declined"
+          error: errors?.[0]?.errorText || "The credit card was declined"
         });
     }
 
@@ -244,7 +221,7 @@ const enrollStudent = async (req, res) => {
         studentUserName: accountInformation.userName,
         passWord: hashedPassWord,
         courseID: courseID,
-        sectionID: sectionResult[0]?.sectionID,
+        sectionID: activeSection.sectionID,
         usedCouponCode: couponCode,
         paymentID: respond.refId,
         transactionID: respond.transactionResponse.transId,
@@ -305,17 +282,17 @@ const enrollStudent = async (req, res) => {
       paymentID: respond.refId,
       transactionID: respond.transactionResponse.transId,
       paidAmount: finalChargeAmount,
-      sectionID: sectionResult[0]?.sectionID,
+      sectionID: activeSection.sectionID,
       message: "The enrollment process was successful",
       courseType: courseResult.courseType
     });
   } catch (error) {
     if (!error.code) {
-      console.log("ERROR: ", error.message);
+      console.log("ERROR: ", error.message); // eslint-disable-line
       res.status(400).json({ error: error.message });
       return;
     }
-    console.log("ERROR: ", error.message);
+    console.log("ERROR: ", error.message); // eslint-disable-line
     res.status(400).json(error);
   }
 };
