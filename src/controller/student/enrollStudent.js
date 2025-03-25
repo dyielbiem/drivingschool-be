@@ -66,10 +66,10 @@ const enrollStudent = async (req, res) => {
   try {
     const {
       drivingSchoolCredentials,
-      accountInformation,
-      mailingInformation,
-      billingInformation,
-      cardInformation,
+      accountInformation = {},
+      mailingInformation = {},
+      billingInformation = {},
+      cardInformation = {},
       courseID,
       couponCode
     } = req.body;
@@ -101,19 +101,6 @@ const enrollStudent = async (req, res) => {
       !mailingInformation?.phoneNumber
     )
       throw Error("Mailing information must be complete");
-
-    if (
-      !billingInformation?.firstName ||
-      !billingInformation?.lastName ||
-      !billingInformation?.address ||
-      !billingInformation?.city ||
-      !billingInformation?.state ||
-      !billingInformation?.zip ||
-      !billingInformation?.country ||
-      !billingInformation?.email ||
-      !billingInformation?.phoneNumber
-    )
-      throw Error("Billing information must be complete");
 
     if (Number.isNaN(new Date(accountInformation.birthDate).getTime()))
       throw Error("Birth date must be a valid date string format");
@@ -180,6 +167,32 @@ const enrollStudent = async (req, res) => {
     */
     if (finalChargeAmount > 0) {
       const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
+      const {
+        firstName,
+        lastName,
+        address,
+        city,
+        state,
+        zip,
+        country,
+        email,
+        phoneNumber
+      } = billingInformation || {};
+
+      if (
+        !firstName ||
+        !lastName ||
+        !address ||
+        !city ||
+        !state ||
+        !zip ||
+        !country ||
+        !email ||
+        !phoneNumber
+      ) {
+        throw Error("Billing information must be complete");
+      }
+
       if (!cardNumber || !cardCode || !cardExpiration) {
         throw Error("Card information must be complete");
       }
@@ -227,16 +240,16 @@ const enrollStudent = async (req, res) => {
         transactionID: respond.transactionResponse.transId,
         accountNumber: respond.transactionResponse.accountNumber,
         accountType: respond.transactionResponse.accountType,
-        billingFirstName: billingInformation.firstName,
-        billingLastName: billingInformation.lastName,
+        billingFirstName: billingInformation.firstName || "",
+        billingLastName: billingInformation.lastName || "",
         billingCompany: billingInformation.company || "Not applicable",
-        billingAddress: billingInformation.address,
-        billingCity: billingInformation.city,
-        billingState: billingInformation.state,
-        billingZip: billingInformation.zip,
-        billingCountry: billingInformation.country,
-        billingEmail: billingInformation.email,
-        billingPhoneNumber: billingInformation.phoneNumber,
+        billingAddress: billingInformation.address || "",
+        billingCity: billingInformation.city || "",
+        billingState: billingInformation.state || "",
+        billingZip: billingInformation.zip || "",
+        billingCountry: billingInformation.country || "",
+        billingEmail: billingInformation.email || "",
+        billingPhoneNumber: billingInformation.phoneNumber || "",
         mailingFirstName: mailingInformation.firstName,
         mailingLastName: mailingInformation.lastName,
         mailingCompany: mailingInformation.company || "Not applicable",
