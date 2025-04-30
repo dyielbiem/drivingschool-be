@@ -25,7 +25,9 @@
     "ulid": "^2.3.0"
   },
   "scripts": {
-    "local": "nodemon --exec serverless offline start --stage local"
+    "local": "nodemon --exec serverless offline start --stage local",
+    "deploy_staging": "npx serverless deploy --stage staging",
+    "deploy_prod": "npx serverless deploy --stage dev"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

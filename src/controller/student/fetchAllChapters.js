@@ -53,29 +53,25 @@ const fetchAllChapters = async (req, res) => {
     const { Items: chapterTestResults } =
       await dynamoClient.send(chapterTestCommand);
 
-    if (chapterTestResults?.length === 0)
-      return res.status(200).json({ chapters });
-
-    chapterTestResults.sort((a, b) => b.resultID.localeCompare(a.resultID));
-
-    chapters.forEach((currentChapter) => {
+    const updatedChapters = chapters.map((currentChapter) => {
       const { completedChapters } = student;
       const isCompleted =
         completedChapters?.some(
           (item) => item.chapterID === currentChapter.chapterID
         ) || false;
-      const testResult = chapterTestResults.find(
-        (eachResult) => eachResult.chapterID === currentChapter.chapterID
-      );
+      const testResult =
+        chapterTestResults?.find(
+          (eachResult) => eachResult.chapterID === currentChapter.chapterID
+        ) || null;
 
-      Object.assign(currentChapter, {
+      return {
         ...currentChapter,
         isCompleted,
         testResult
-      });
+      };
     });
 
-    res.status(200).json({ chapters });
+    res.status(200).json({ chapters: updatedChapters });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
