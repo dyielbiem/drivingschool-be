@@ -1,9 +1,43 @@
+import nodemailer from "nodemailer";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const emailjs = require("@emailjs/nodejs");
 
-const emailSender = async (emailReceiver, emailSubject, emailBody) => {
+const nodeMailer = (emailReceiver, emailSubject, emailBody) => {
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_APP_PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: emailReceiver,
+    subject: emailSubject,
+    replyTo: "john@webact.com",
+    html: emailBody
+  };
+
+  return new Promise((resolve) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.log(error);
+        resolve(error);
+      } else {
+        resolve(info);
+      }
+    });
+  });
+};
+
+const emailJS = async (emailReceiver, emailSubject, emailBody) => {
   const templateParams = {
     emailReceiver,
     emailSubject,
@@ -21,8 +55,10 @@ const emailSender = async (emailReceiver, emailSubject, emailBody) => {
       }
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
   }
 };
 
+const emailSender = process.env.STAGE === "local" ? nodeMailer : emailJS;
 export default emailSender;

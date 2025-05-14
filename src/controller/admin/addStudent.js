@@ -23,14 +23,24 @@ const addStudent = async (req, res) => {
       city,
       state,
       zip,
-      country = "United States",
       email,
       phoneNumber,
       highSchool,
       parentFirstName,
       parentLastName,
       parentEmail,
-      parentPhoneNumber
+      parentPhoneNumber,
+      birthDate = "",
+      billingInformation = {
+        firstName: "",
+        lastName: "",
+        address: "",
+        city: "",
+        state: "",
+        zip: "",
+        email: "",
+        phoneNumber: ""
+      }
     } = req.body;
 
     if (
@@ -45,11 +55,13 @@ const addStudent = async (req, res) => {
       !city ||
       !state ||
       !zip ||
-      !country ||
       !email ||
       !phoneNumber
     )
       throw Error("All required fields must filled");
+
+    if (birthDate && Number.isNaN(+new Date(birthDate)))
+      throw Error("Invalid birth date format");
 
     if (passWord !== confirmPassWord) throw Error("Passwords do not match");
 
@@ -101,9 +113,19 @@ const addStudent = async (req, res) => {
         mailingCity: city,
         mailingState: state,
         mailingZip: zip,
-        mailingCountry: country,
+        mailingCountry: "United States",
         mailingEmail: email,
         mailingPhoneNumber: phoneNumber,
+        billingFirstName: billingInformation.firstName || "",
+        billingLastName: billingInformation.lastName || "",
+        billingAddress: billingInformation.address || "",
+        billingCity: billingInformation.city || "",
+        billingState: billingInformation.state || "",
+        billingZip: billingInformation.zip || "",
+        billingCountry: "United States",
+        billingEmail: billingInformation.email || "",
+        billingPhoneNumber: billingInformation.phoneNumber || "",
+        birthDate,
         enrollmentDate: Date(),
         highSchool,
         parentFirstName,
@@ -170,9 +192,9 @@ const addStudent = async (req, res) => {
       mailingCity: city,
       mailingState: state,
       mailingZip: zip,
-      mailingCountry: country,
       mailingEmail: email,
       mailingPhoneNumber: phoneNumber,
+      birthDate,
       enrollmentDate: Date(),
       highSchool,
       parentFirstName,
