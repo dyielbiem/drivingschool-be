@@ -68,6 +68,7 @@ import updateShownSectionQCount from "../controller/admin/updateShownSectionQCou
 import generateChapterImageSignedURL from "../controller/admin/generateChapterImageSignedURL.js";
 import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgress.js";
 import updateStudentPassword from "../controller/admin/updateStudentPassword.js";
+import fetchStudent from "../controller/admin/fetchStudent.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -169,6 +170,7 @@ adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
 adminRouter.delete("/question", authorizeAdmin, deleteQuestion);
 adminRouter.patch("/question", authorizeAdmin, updateQuestion);
+adminRouter.get("/student", authorizeAdmin, fetchStudent);
 adminRouter.post("/student", authorizeAdmin, addStudent);
 adminRouter.get(
   "/student/section/list",
