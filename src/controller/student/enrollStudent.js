@@ -1,22 +1,22 @@
-import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import { hashPassWord } from "../../utils/index.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getStudent } from "../../utils/dbUtils/student.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
 import { getActiveSection } from "../../utils/dbUtils/section.js";
 import { getCoupon } from "../../utils/dbUtils/coupon.js";
 
-const getFinalChargeAmount = (couponItem, chargeAmount) => {
-  const finalChargeAmount = !couponItem?.couponAmount
+const getFinalChargeAmount = (coupon, chargeAmount) => {
+  const finalChargeAmount = !coupon?.couponAmount
     ? chargeAmount
-    : couponItem?.couponAmount >= chargeAmount
+    : coupon?.couponAmount >= chargeAmount
       ? 0
-      : chargeAmount - couponItem.couponAmount;
+      : chargeAmount - (coupon?.couponAmount || 0);
 
   return finalChargeAmount;
 };
@@ -44,7 +44,10 @@ const validateCoupon = async (couponCode, drivingSchoolID) => {
     return [null, true];
   }
 
-  const { Item: coupon } = await getCoupon(couponCode, drivingSchoolID);
+  const { Item: coupon } = await getCoupon(
+    couponCode?.toLowerCase?.(),
+    drivingSchoolID
+  );
 
   if (!coupon) {
     return [coupon, false];
@@ -109,47 +112,39 @@ const enrollStudent = async (req, res) => {
 
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
+    const hashedPassWord = await hashPassWord(accountInformation.passWord);
 
-    // Validate Driving School ID
-    const { Item: drivingSchool } = await getDrivingSchool(
-      drivingSchoolCredentials.drivingSchoolID
-    );
+    const dbResults = await Promise.all([
+      getDrivingSchool(drivingSchoolCredentials.drivingSchoolID),
+      getStudent(
+        drivingSchoolCredentials.drivingSchoolID,
+        accountInformation.userName
+      ),
+      getCourse(courseID),
+      getActiveSection(drivingSchoolCredentials.drivingSchoolID)
+    ]);
+
+    const [
+      { Item: drivingSchool },
+      { Item: student },
+      { Item: course },
+      activeSection
+    ] = dbResults;
+
     if (!drivingSchool) throw Error("The driving school does not exist");
-
-    // Check if student username is available
-    const { Item: student } = await getStudent(
-      drivingSchoolCredentials.drivingSchoolID,
-      accountInformation.userName
-    );
     if (student) throw Error("Username is already in use");
-
-    // Check if course ID is valid
-    const { Item: courseResult } = await getCourse(courseID);
-    if (!courseResult) throw Error("Invalid course ID");
-
-    // If course is valid, get the active section
-    const activeSection = await getActiveSection(
-      drivingSchoolCredentials.drivingSchoolID
-    );
+    if (!course) throw Error("Invalid course ID");
     if (!activeSection) throw Error("The driving school has no active section");
 
     // Check if the provided coupon is valid
-    const [couponItem, isCouponValid] = await validateCoupon(
+    const [coupon, isCouponValid] = await validateCoupon(
       couponCode,
       drivingSchoolCredentials.drivingSchoolID
     );
-    if (!isCouponValid) {
-      throw Error("Invalid coupon code");
-    }
+    if (!isCouponValid) throw Error("Invalid coupon code");
 
     // Get the final charge amount
-    const paymentID = nanoid(20);
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassWord = await bcrypt.hash(accountInformation.passWord, salt);
-    const finalChargeAmount = getFinalChargeAmount(
-      couponItem,
-      courseResult.coursePrice
-    );
+    const finalChargeAmount = getFinalChargeAmount(coupon, course.coursePrice);
 
     let respond = {
       refId: "",
@@ -167,36 +162,26 @@ const enrollStudent = async (req, res) => {
     */
     if (finalChargeAmount > 0) {
       const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
-      const {
-        firstName,
-        lastName,
-        address,
-        city,
-        state,
-        zip,
-        country,
-        email,
-        phoneNumber
-      } = billingInformation || {};
-
-      if (
-        !firstName ||
-        !lastName ||
-        !address ||
-        !city ||
-        !state ||
-        !zip ||
-        !country ||
-        !email ||
-        !phoneNumber
-      ) {
-        throw Error("Billing information must be complete");
-      }
+      const requiredBillingInfo = [
+        "firstName",
+        "lastName",
+        "address",
+        "city",
+        "state",
+        "zip",
+        "country",
+        "email",
+        "phoneNumber"
+      ];
 
       if (!cardNumber || !cardCode || !cardExpiration) {
         throw Error("Card information must be complete");
       }
 
+      if (requiredBillingInfo.some((field) => !billingInformation?.[field]))
+        throw Error("Billing information must be complete");
+
+      const paymentID = nanoid(20);
       respond = await payment(
         drivingSchoolCredentials,
         accountInformation,
@@ -204,7 +189,7 @@ const enrollStudent = async (req, res) => {
         billingInformation,
         cardInformation,
         courseID,
-        courseResult.courseName,
+        course.courseName,
         finalChargeAmount,
         paymentID
       );
@@ -213,17 +198,14 @@ const enrollStudent = async (req, res) => {
       const { errors, responseCode } = respond.transactionResponse || {};
 
       if (resultCode !== "Ok")
-        return res.status(400).json({
-          error:
-            errors?.[0]?.errorText ||
+        throw Error(
+          errors?.[0]?.errorText ||
             message?.[0]?.text ||
             "An error occured in payment transaction"
-        });
+        );
 
       if (responseCode !== "1")
-        return res.status(400).json({
-          error: errors?.[0]?.errorText || "The credit card was declined"
-        });
+        throw Error(errors?.[0]?.errorText || "The credit card was declined");
     }
 
     // Add the student to database
@@ -235,7 +217,7 @@ const enrollStudent = async (req, res) => {
         passWord: hashedPassWord,
         courseID: courseID,
         sectionID: activeSection.sectionID,
-        usedCouponCode: couponCode,
+        usedCouponCode: coupon?.couponCode || "",
         paymentID: respond.refId,
         transactionID: respond.transactionResponse.transId,
         accountNumber: respond.transactionResponse.accountNumber,
@@ -265,7 +247,7 @@ const enrollStudent = async (req, res) => {
         enrollmentDate: Date(),
         paidAmount: finalChargeAmount,
         isActive: true,
-        courseType: courseResult.courseType
+        courseType: course.courseType
       }
     });
 
@@ -297,7 +279,7 @@ const enrollStudent = async (req, res) => {
       paidAmount: finalChargeAmount,
       sectionID: activeSection.sectionID,
       message: "The enrollment process was successful",
-      courseType: courseResult.courseType
+      courseType: course.courseType
     });
   } catch (error) {
     if (!error.code) {
