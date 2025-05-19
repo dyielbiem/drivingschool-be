@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { parseDate } from "chrono-node";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 import payment from "../../utils/payment.js";
@@ -105,8 +106,8 @@ const enrollStudent = async (req, res) => {
     )
       throw Error("Mailing information must be complete");
 
-    if (Number.isNaN(new Date(accountInformation.birthDate).getTime()))
-      throw Error("Birth date must be a valid date string format");
+    if (!parseDate(accountInformation.birthDate))
+      throw Error("Invalid birth date format");
 
     if (!courseID) throw Error("Course ID must be provided");
 
@@ -234,7 +235,7 @@ const enrollStudent = async (req, res) => {
         billingPhoneNumber: billingInformation.phoneNumber || "",
         mailingFirstName: mailingInformation.firstName,
         mailingLastName: mailingInformation.lastName,
-        mailingCompany: mailingInformation.company || "Not applicable",
+        mailingCompany: mailingInformation.company || "",
         mailingAddress: mailingInformation.address,
         mailingCity: mailingInformation.city,
         mailingState: mailingInformation.state,
@@ -242,7 +243,7 @@ const enrollStudent = async (req, res) => {
         mailingCountry: mailingInformation.country,
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
-        highSchool: accountInformation.highSchool || "Not applicable",
+        highSchool: accountInformation.highSchool || "",
         birthDate: accountInformation.birthDate,
         enrollmentDate: Date(),
         paidAmount: finalChargeAmount,

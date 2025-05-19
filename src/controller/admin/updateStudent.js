@@ -1,4 +1,6 @@
+import { parseDate } from "chrono-node";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -20,7 +22,8 @@ const updateStudent = async (req, res) => {
       mailingCountry,
       mailingEmail,
       mailingPhoneNumber,
-      mailingCompany
+      birthDate,
+      highSchool
     } = req.body;
 
     if (
@@ -37,6 +40,8 @@ const updateStudent = async (req, res) => {
     )
       throw Error("All required field must be filled");
 
+    if (!parseDate(birthDate)) throw Error("Invalide birth date format");
+
     if (typeof isActive !== "boolean")
       throw Error("isActive must be a boolean");
 
@@ -47,7 +52,7 @@ const updateStudent = async (req, res) => {
         studentUserName
       },
       UpdateExpression:
-        "SET isActive = :isActiveValue, mailingFirstName = :mailingFirstNameValue, mailingLastName = :mailingLastNameValue, mailingAddress = :mailingAddressValue, mailingCity = :mailingCityValue, mailingState = :mailingStateValue, mailingZip = :mailingZipValue, mailingCountry = :mailingCountryValue, mailingEmail = :mailingEmailValue, mailingPhoneNumber = :mailingPhoneNumberValue, mailingCompany = :mailingCompanyValue",
+        "SET isActive = :isActiveValue, mailingFirstName = :mailingFirstNameValue, mailingLastName = :mailingLastNameValue, mailingAddress = :mailingAddressValue, mailingCity = :mailingCityValue, mailingState = :mailingStateValue, mailingZip = :mailingZipValue, mailingCountry = :mailingCountryValue, mailingEmail = :mailingEmailValue, mailingPhoneNumber = :mailingPhoneNumberValue, birthDate = :birthDateValue, highSchool = :highSchoolValue",
       ExpressionAttributeValues: {
         ":isActiveValue": isActive,
         ":mailingFirstNameValue": mailingFirstName,
@@ -59,7 +64,8 @@ const updateStudent = async (req, res) => {
         ":mailingCountryValue": mailingCountry,
         ":mailingEmailValue": mailingEmail,
         ":mailingPhoneNumberValue": mailingPhoneNumber,
-        ":mailingCompanyValue": mailingCompany || ""
+        ":birthDateValue": birthDate,
+        ":highSchoolValue": highSchool || ""
       },
       ConditionExpression:
         "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
@@ -78,7 +84,7 @@ const updateStudent = async (req, res) => {
       mailingCountry,
       mailingEmail,
       mailingPhoneNumber,
-      mailingCompany: mailingCompany || ""
+      highSchool: highSchool || ""
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

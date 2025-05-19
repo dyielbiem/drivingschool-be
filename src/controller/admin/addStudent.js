@@ -1,8 +1,9 @@
-import bcrypt from "bcryptjs";
+import { parseDate } from "chrono-node";
 import { PutCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
 import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import { hashPassWord } from "../../utils/index.js";
 
 /*
 ---- Controller to add a student to a course
@@ -18,7 +19,7 @@ const addStudent = async (req, res) => {
       confirmPassWord,
       firstName,
       lastName,
-      company = "Not applicable",
+      company = "",
       address,
       city,
       state,
@@ -50,7 +51,6 @@ const addStudent = async (req, res) => {
       !confirmPassWord ||
       !firstName ||
       !lastName ||
-      !company ||
       !address ||
       !city ||
       !state ||
@@ -60,13 +60,11 @@ const addStudent = async (req, res) => {
     )
       throw Error("All required fields must filled");
 
-    if (birthDate && Number.isNaN(+new Date(birthDate)))
-      throw Error("Invalid birth date format");
+    if (!parseDate(birthDate)) throw Error("Invalid birth date format");
 
     if (passWord !== confirmPassWord) throw Error("Passwords do not match");
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(passWord, salt);
+    const hashedPassword = await hashPassWord(passWord);
 
     // Check if course ID is valid
     const courseCommand = new GetCommand({
