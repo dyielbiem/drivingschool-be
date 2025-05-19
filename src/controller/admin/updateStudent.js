@@ -84,6 +84,7 @@ const updateStudent = async (req, res) => {
       mailingCountry,
       mailingEmail,
       mailingPhoneNumber,
+      birthDate,
       highSchool: highSchool || ""
     });
   } catch (error) {
