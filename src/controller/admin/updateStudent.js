@@ -3,41 +3,55 @@ import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
 
+const requiredFields = [
+  "studentUserName",
+  "mailingFirstName",
+  "mailingLastName",
+  "mailingAddress",
+  "mailingCity",
+  "mailingState",
+  "mailingZip",
+  "mailingCountry",
+  "mailingEmail",
+  "mailingPhoneNumber"
+];
+
+const fieldsToUpdate = [
+  "isActive",
+  "mailingFirstName",
+  "mailingLastName",
+  "mailingAddress",
+  "mailingCity",
+  "mailingState",
+  "mailingZip",
+  "mailingCountry",
+  "mailingEmail",
+  "mailingPhoneNumber",
+  "birthDate",
+  "highSchool",
+  "parentFirstName",
+  "parentLastName",
+  "parentEmail",
+  "parentPhoneNumber",
+  "billingFirstName",
+  "billingLastName",
+  "billingAddress",
+  "billingCity",
+  "billingState",
+  "billingZip",
+  "billingEmail",
+  "billingPhoneNumber"
+];
+
 /*
 ---- Controller to edit an enrolled student
 ---- /api/admin/student (PATCH)
 */
 const updateStudent = async (req, res) => {
   try {
-    const {
-      drivingSchoolID,
-      studentUserName,
-      isActive,
-      mailingFirstName,
-      mailingLastName,
-      mailingAddress,
-      mailingCity,
-      mailingState,
-      mailingZip,
-      mailingCountry,
-      mailingEmail,
-      mailingPhoneNumber,
-      birthDate,
-      highSchool
-    } = req.body;
+    const { drivingSchoolID, studentUserName, isActive, birthDate } = req.body;
 
-    if (
-      !studentUserName ||
-      !mailingFirstName ||
-      !mailingLastName ||
-      !mailingAddress ||
-      !mailingCity ||
-      !mailingState ||
-      !mailingZip ||
-      !mailingCountry ||
-      !mailingEmail ||
-      !mailingPhoneNumber
-    )
+    if (requiredFields.some((field) => !(field in req.body)))
       throw Error("All required field must be filled");
 
     if (!parseDate(birthDate)) throw Error("Invalide birth date format");
@@ -45,48 +59,34 @@ const updateStudent = async (req, res) => {
     if (typeof isActive !== "boolean")
       throw Error("isActive must be a boolean");
 
+    const { expression, expressionValues } = fieldsToUpdate.reduce(
+      (acc, field) => {
+        if (!(field in req.body)) return acc;
+
+        acc.expression.push(`${field} = :${field}`);
+        acc.expressionValues[`:${field}`] = req.body[field];
+        return acc;
+      },
+      { expression: [], expressionValues: {} }
+    );
+
     const updateCommand = new UpdateCommand({
       TableName: process.env.STUDENT_TABLE,
       Key: {
         drivingSchoolID,
         studentUserName
       },
-      UpdateExpression:
-        "SET isActive = :isActiveValue, mailingFirstName = :mailingFirstNameValue, mailingLastName = :mailingLastNameValue, mailingAddress = :mailingAddressValue, mailingCity = :mailingCityValue, mailingState = :mailingStateValue, mailingZip = :mailingZipValue, mailingCountry = :mailingCountryValue, mailingEmail = :mailingEmailValue, mailingPhoneNumber = :mailingPhoneNumberValue, birthDate = :birthDateValue, highSchool = :highSchoolValue",
-      ExpressionAttributeValues: {
-        ":isActiveValue": isActive,
-        ":mailingFirstNameValue": mailingFirstName,
-        ":mailingLastNameValue": mailingLastName,
-        ":mailingAddressValue": mailingAddress,
-        ":mailingCityValue": mailingCity,
-        ":mailingStateValue": mailingState,
-        ":mailingZipValue": mailingZip,
-        ":mailingCountryValue": mailingCountry,
-        ":mailingEmailValue": mailingEmail,
-        ":mailingPhoneNumberValue": mailingPhoneNumber,
-        ":birthDateValue": birthDate,
-        ":highSchoolValue": highSchool || ""
-      },
+      UpdateExpression: `SET ${expression.join(", ")}`,
+      ExpressionAttributeValues: expressionValues,
       ConditionExpression:
-        "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)"
+        "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)",
+      ReturnValues: "ALL_NEW"
     });
 
-    await dynamoClient.send(updateCommand);
+    const { Attributes: student } = await dynamoClient.send(updateCommand);
+    delete student.passWord;
 
-    res.status(200).json({
-      isActive,
-      mailingFirstName,
-      mailingLastName,
-      mailingAddress,
-      mailingCity,
-      mailingState,
-      mailingZip,
-      mailingCountry,
-      mailingEmail,
-      mailingPhoneNumber,
-      birthDate,
-      highSchool: highSchool || ""
-    });
+    res.status(200).json(student);
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res.status(400).json({ error: "Student does not exist" });
