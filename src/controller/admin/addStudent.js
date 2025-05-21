@@ -168,9 +168,10 @@ const addStudent = async (req, res) => {
       },
       method: "POST",
       body: {
-        emailReceiver: process.env.ADMIN_EMAIL_RECEIVER,
+        emailReceiver: email,
         emailSubject: emailSubject,
-        emailBody: emailBody
+        emailBody: emailBody,
+        emailBCC: process.env.ADMIN_EMAIL_RECEIVER
       }
     };
 

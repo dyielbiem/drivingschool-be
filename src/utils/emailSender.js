@@ -4,7 +4,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const emailjs = require("@emailjs/nodejs");
 
-const nodeMailer = (emailReceiver, emailSubject, emailBody) => {
+const nodeMailer = (emailReceiver, emailSubject, emailBody, emailBCC) => {
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     host: "smtp.gmail.com",
@@ -19,6 +19,7 @@ const nodeMailer = (emailReceiver, emailSubject, emailBody) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: emailReceiver,
+    bcc: emailBCC || "",
     subject: emailSubject,
     replyTo: "john@webact.com",
     html: emailBody
@@ -37,11 +38,12 @@ const nodeMailer = (emailReceiver, emailSubject, emailBody) => {
   });
 };
 
-const emailJS = async (emailReceiver, emailSubject, emailBody) => {
+const emailJS = async (emailReceiver, emailSubject, emailBody, emailBCC) => {
   const templateParams = {
     emailReceiver,
     emailSubject,
-    emailBody
+    emailBody,
+    emailBCC: emailBCC || ""
   };
 
   try {

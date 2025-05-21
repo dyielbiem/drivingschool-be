@@ -266,7 +266,8 @@ const enrollStudent = async (req, res) => {
       body: {
         emailReceiver: mailingInformation.email,
         emailSubject: emailSubject,
-        emailBody: emailBody
+        emailBody: emailBody,
+        emailBCC: process.env.ADMIN_EMAIL_RECEIVER
       }
     };
 
