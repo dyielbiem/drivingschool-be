@@ -22,9 +22,10 @@ const fetchStudent = async (req, res) => {
 
     delete student.passWord;
 
-    return res
-      .status(200)
-      .json({ ...student, courseName: course.courseName || "" });
+    return res.status(200).json({
+      ...student,
+      courseName: course?.courseName || "[This is a deleted course]"
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
