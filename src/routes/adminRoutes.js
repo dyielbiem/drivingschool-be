@@ -69,6 +69,7 @@ import generateChapterImageSignedURL from "../controller/admin/generateChapterIm
 import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgress.js";
 import updateStudentPassword from "../controller/admin/updateStudentPassword.js";
 import fetchStudent from "../controller/admin/fetchStudent.js";
+import emailStudentAccountInfo from "../controller/admin/emailStudentAccountInfo.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -228,5 +229,10 @@ adminRouter.patch(
   updateShownSectionQCount
 );
 adminRouter.patch("/student/password", authorizeAdmin, updateStudentPassword);
+adminRouter.get(
+  "/student/account/email",
+  authorizeAdmin,
+  emailStudentAccountInfo
+);
 
 export default adminRouter;

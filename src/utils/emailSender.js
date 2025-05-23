@@ -62,5 +62,5 @@ const emailJS = async (emailReceiver, emailSubject, emailBody, emailBCC) => {
   }
 };
 
-const emailSender = process.env.STAGE === "local" ? nodeMailer : emailJS;
+const emailSender = process.env.STAGE !== "dev" ? nodeMailer : emailJS;
 export default emailSender;
