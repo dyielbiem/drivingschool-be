@@ -1,8 +1,13 @@
+import dayjs from "dayjs";
 import { parseDate } from "chrono-node";
-import { PutCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
-import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
+import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
+import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { getCourse } from "../../utils/dbUtils/course.js";
+import { getActiveSection } from "../../utils/dbUtils/section.js";
 import { hashPassWord } from "../../utils/index.js";
 
 /*
@@ -60,50 +65,32 @@ const addStudent = async (req, res) => {
     )
       throw Error("All required fields must filled");
 
-    if (!parseDate(birthDate)) throw Error("Invalid birth date format");
+    const parsedBirthDate = parseDate(birthDate);
+    if (!parsedBirthDate) throw Error("Invalid birth date format");
 
     if (passWord !== confirmPassWord) throw Error("Passwords do not match");
 
-    const hashedPassword = await hashPassWord(passWord);
-
     // Check if course ID is valid
-    const courseCommand = new GetCommand({
-      TableName: process.env.COURSE_TABLE,
-      Key: {
-        courseID: courseID
-      },
-      ProjectionExpression: "courseID, courseType, courseName, coursePrice"
-    });
-
-    const { Item: courseResult } = await dynamoClient.send(courseCommand);
-    if (!courseResult) throw Error("Invalid course ID");
+    const { Item: course } = await getCourse(courseID);
+    if (!course) throw Error("Invalid course ID");
 
     // If course is valid, get the active section
-    const sectionCommand = new QueryCommand({
-      TableName: process.env.SECTION_TABLE,
-      IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "isActive  = :isActiveValue",
-      ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":isActiveValue": true
-      },
-      ProjectionExpression: "sectionID"
-    });
+    const activeSection = await getActiveSection(drivingSchoolID);
+    if (!activeSection) throw Error("The driving school has no active section");
 
-    const { Items: sectionResult } = await dynamoClient.send(sectionCommand);
-    if (sectionResult.length === 0)
-      throw Error("The driving school has no active section");
+    const hashedPassWord = await hashPassWord(passWord);
+    const enrollmentDate = new Date();
+    const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
 
     const command = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
       Item: {
         drivingSchoolID,
         studentUserName: userName,
-        passWord: hashedPassword,
+        passWord: hashedPassWord,
         courseID,
-        courseType: courseResult.courseType,
-        sectionID: sectionResult[0]?.sectionID,
+        courseType: course.courseType,
+        sectionID: activeSection.sectionID,
         mailingFirstName: firstName,
         mailingLastName: lastName,
         mailingCompany: company,
@@ -123,8 +110,8 @@ const addStudent = async (req, res) => {
         billingCountry: "United States",
         billingEmail: billingInformation.email || "",
         billingPhoneNumber: billingInformation.phoneNumber || "",
-        birthDate,
-        enrollmentDate: Date(),
+        birthDate: strBirthDate,
+        enrollmentDate: enrollmentDate.toString(),
         highSchool,
         parentFirstName,
         parentLastName,
@@ -138,52 +125,51 @@ const addStudent = async (req, res) => {
 
     await dynamoClient.send(command);
 
-    const drivingSchoolGetCmd = new GetCommand({
-      TableName: process.env.DRIVING_SCHOOL_TABLE,
-      Key: {
-        drivingSchoolID: drivingSchoolID
-      },
-      ProjectionExpression: "emailSubject, emailBody, drivingSchoolName"
-    });
+    const { Item: drivingSchool } = await getDrivingSchool(drivingSchoolID);
 
-    const { Item: drivingSchool } =
-      await dynamoClient.send(drivingSchoolGetCmd);
+    const emailRequests = [
+      sendStudentWelcomeEmail(
+        email,
+        drivingSchool.emailSubject,
+        `${drivingSchool.emailBody || ""}`
+          .replace("{ username }", userName)
+          .replace("{ password }", passWord)
+      ),
+      emailAdminAboutNewStudent([
+        { label: "First Name", value: firstName },
+        { label: "Last Name", value: lastName },
+        {
+          label: "Date of Birth",
+          value: strBirthDate
+        },
+        { label: "Address", value: address },
+        { label: "City", value: city },
+        { label: "State", value: state },
+        { label: "Zip Code", value: zip },
+        { label: "Phone Number", value: phoneNumber },
+        { label: "Email Address", value: email },
+        {
+          label: "Start Date",
+          value: dayjs(enrollmentDate).format("MM-DD-YYYY")
+        },
+        { label: "Username", value: userName },
+        { label: "Password", value: passWord },
+        { label: "Course", value: course.courseName },
+        { label: "Course Price", value: course.coursePrice },
+        { label: "Coupon Code", value: "" },
+        { label: "Coupon Price", value: "" },
+        { label: "School", value: highSchool || "" }
+      ])
+    ];
 
-    const userNameTemplatePattern = /\{ username \}/g;
-    const passWordTemplatePattern = /\{ password \}/g;
-    const defaulEmailSubject = `Welcome to ${drivingSchool.drivingSchoolName}`;
-    const defaultEmailBody = `Hello ${userName}, welcome aboard to ${drivingSchool.drivingSchoolName}! Get ready to hit the road with confidence.`;
-
-    const emailSubject = drivingSchool.emailSubject || defaulEmailSubject;
-    let emailBody = drivingSchool.emailBody || defaultEmailBody;
-
-    emailBody = emailBody
-      .replace(userNameTemplatePattern, userName)
-      .replace(passWordTemplatePattern, passWord);
-
-    const invokeFunctionArgs = {
-      invokePath: "/api/student/send-email",
-      headers: {
-        "x-api-key": process.env.API_KEY
-      },
-      method: "POST",
-      body: {
-        emailReceiver: email,
-        emailSubject: emailSubject,
-        emailBody: emailBody,
-        emailBCC: process.env.ADMIN_EMAIL_RECEIVER
-      }
-    };
-
-    await invokeFunction(invokeFunctionArgs);
+    await Promise.all(emailRequests);
 
     res.status(200).json({
       drivingSchoolID,
       studentUserName: userName,
-      passWord: hashedPassword,
       courseID,
-      courseType: courseResult.courseType,
-      sectionID: sectionResult[0]?.sectionID,
+      courseType: course.courseType,
+      sectionID: activeSection.sectionID,
       mailingFirstName: firstName,
       mailingLastName: lastName,
       mailingCompany: company,
@@ -193,8 +179,8 @@ const addStudent = async (req, res) => {
       mailingZip: zip,
       mailingEmail: email,
       mailingPhoneNumber: phoneNumber,
-      birthDate,
-      enrollmentDate: Date(),
+      birthDate: strBirthDate,
+      enrollmentDate: enrollmentDate.toString(),
       highSchool,
       parentFirstName,
       parentLastName,

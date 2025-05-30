@@ -17,5 +17,5 @@ export const getActiveSection = async (drivingSchoolID) => {
 
   const { Items: sections } = await dynamoClient.send(sectionCommand);
 
-  return sections[0] || null;
+  return sections?.[0] || null;
 };

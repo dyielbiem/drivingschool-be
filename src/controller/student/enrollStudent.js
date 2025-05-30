@@ -1,10 +1,12 @@
+import dayjs from "dayjs";
 import { nanoid } from "nanoid";
 import { parseDate } from "chrono-node";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
-import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
+import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
 import { hashPassWord } from "../../utils/index.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getStudent } from "../../utils/dbUtils/student.js";
@@ -20,24 +22,6 @@ const getFinalChargeAmount = (coupon, chargeAmount) => {
       : chargeAmount - (coupon?.couponAmount || 0);
 
   return finalChargeAmount;
-};
-
-const getEmailSubject = (drivingSchool) =>
-  drivingSchool.emailSubject || `Welcome to ${drivingSchool.drivingSchoolName}`;
-
-const getEmailBody = (drivingSchool, accountInformation) => {
-  const { userName, passWord } = accountInformation;
-  const emailBody =
-    drivingSchool.emailBody ||
-    `
-      Hello ${accountInformation.userName}, 
-      welcome aboard to ${drivingSchool.drivingSchoolName}!
-      Get ready to hit the road with confidence.
-    `;
-
-  return emailBody
-    .replace(/\{ username \}/g, userName)
-    .replace(/\{ password \}/g, passWord);
 };
 
 const validateCoupon = async (couponCode, drivingSchoolID) => {
@@ -106,14 +90,13 @@ const enrollStudent = async (req, res) => {
     )
       throw Error("Mailing information must be complete");
 
-    if (!parseDate(accountInformation.birthDate))
-      throw Error("Invalid birth date format");
+    const parsedBirthDate = parseDate(accountInformation.birthDate);
+    if (!parsedBirthDate) throw Error("Invalid birth date format");
 
     if (!courseID) throw Error("Course ID must be provided");
 
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
-    const hashedPassWord = await hashPassWord(accountInformation.passWord);
 
     const dbResults = await Promise.all([
       getDrivingSchool(drivingSchoolCredentials.drivingSchoolID),
@@ -209,6 +192,10 @@ const enrollStudent = async (req, res) => {
         throw Error(errors?.[0]?.errorText || "The credit card was declined");
     }
 
+    const hashedPassWord = await hashPassWord(accountInformation.passWord);
+    const enrollmentDate = new Date();
+    const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
+
     // Add the student to database
     const putCommand = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
@@ -244,8 +231,8 @@ const enrollStudent = async (req, res) => {
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
         highSchool: accountInformation.highSchool || "",
-        birthDate: accountInformation.birthDate,
-        enrollmentDate: Date(),
+        birthDate: strBirthDate,
+        enrollmentDate: enrollmentDate.toString(),
         paidAmount: finalChargeAmount,
         isActive: true,
         courseType: course.courseType
@@ -254,24 +241,39 @@ const enrollStudent = async (req, res) => {
 
     await dynamoClient.send(putCommand);
 
-    const emailSubject = getEmailSubject(drivingSchool);
-    const emailBody = getEmailBody(drivingSchool, accountInformation);
+    const emailRequests = [
+      sendStudentWelcomeEmail(
+        mailingInformation.email,
+        drivingSchool.emailSubject,
+        `${drivingSchool.emailBody || ""}`
+          .replace("{ username }", accountInformation.userName)
+          .replace("{ password }", accountInformation.passWord)
+      ),
+      emailAdminAboutNewStudent([
+        { label: "First Name", value: mailingInformation.firstName },
+        { label: "Last Name", value: mailingInformation.lastName },
+        { label: "Date of Birth", value: strBirthDate },
+        { label: "Address", value: mailingInformation.address },
+        { label: "City", value: mailingInformation.city },
+        { label: "State", value: mailingInformation.state },
+        { label: "Zip Code", value: mailingInformation.zip },
+        { label: "Phone Number", value: mailingInformation.phoneNumber },
+        { label: "Email Address", value: mailingInformation.email },
+        {
+          label: "Start Date",
+          value: dayjs(enrollmentDate).format("MM-DD-YYYY")
+        },
+        { label: "Username", value: accountInformation.userName },
+        { label: "Password", value: accountInformation.passWord },
+        { label: "Course", value: course.courseName },
+        { label: "Course Price", value: course.coursePrice },
+        { label: "Coupon Code", value: coupon?.couponCode || "" },
+        { label: "Coupon Price", value: coupon?.couponAmount || "" },
+        { label: "School", value: accountInformation.highSchool || "" }
+      ])
+    ];
 
-    const invokeFunctionArgs = {
-      invokePath: "/api/student/send-email",
-      headers: {
-        "x-api-key": process.env.API_KEY
-      },
-      method: "POST",
-      body: {
-        emailReceiver: mailingInformation.email,
-        emailSubject: emailSubject,
-        emailBody: emailBody,
-        emailBCC: process.env.ADMIN_EMAIL_RECEIVER
-      }
-    };
-
-    await invokeFunction(invokeFunctionArgs);
+    await Promise.all(emailRequests);
 
     res.status(200).json({
       drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
