@@ -1,8 +1,8 @@
-import bcrypt from "bcryptjs";
+import passwordGenerator from "generate-password";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
-// import { encrypt } from "../../utils/crypto.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
+import { hashPassWord } from "../../utils/index.js";
 
 /*
 ---- Controller to update the password of a student
@@ -10,18 +10,16 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const updateStudentPassword = async (req, res) => {
   try {
-    const { drivingSchoolID, studentUserName, newPassWord, confirmPassWord } =
-      req.body;
+    const { drivingSchoolID, studentUserName } = req.body;
 
-    if (!studentUserName || !newPassWord || !confirmPassWord)
-      throw Error("All required fields must be provided");
+    if (!studentUserName) throw Error("Student username is required");
 
-    if (newPassWord !== confirmPassWord) throw Error("Passwords do not match");
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassWord = await bcrypt.hash(newPassWord, salt);
-
-    // const encryptedPassWord = encrypt(newPassWord);
+    const passWord = passwordGenerator.generate({
+      length: 16,
+      numbers: true,
+      symbols: true
+    });
+    const hashedPassWord = await hashPassWord(passWord);
 
     const command = new UpdateCommand({
       TableName: process.env.STUDENT_TABLE,
@@ -30,10 +28,8 @@ const updateStudentPassword = async (req, res) => {
         studentUserName
       },
       UpdateExpression: "SET passWord = :passWord",
-      // "SET passWord = :passWord, encryptedPassWord = :encryptedPassWord",
       ExpressionAttributeValues: {
         ":passWord": hashedPassWord
-        // ":encryptedPassWord": encryptedPassWord
       },
       ConditionExpression:
         "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)",
@@ -43,7 +39,7 @@ const updateStudentPassword = async (req, res) => {
     await dynamoClient.send(command);
 
     return res.status(200).json({
-      message: "Student password has been updated"
+      newPassword: passWord
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

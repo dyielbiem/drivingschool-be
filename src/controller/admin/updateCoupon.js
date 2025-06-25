@@ -1,4 +1,7 @@
+import dayjs from "dayjs";
+import { parseDate } from "chrono-node";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -7,13 +10,48 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const updateCoupon = async (req, res) => {
   try {
-    const { drivingSchoolID, couponCode, couponAmount, isActive } = req.body;
-    if (!couponCode || !couponAmount || isActive === undefined)
-      throw Error("All required fields must be provided");
-    if (typeof couponAmount !== "number")
-      throw Error("Coupon amount must be a number");
-    if (typeof isActive !== "boolean")
-      throw Error("isActive must be a boolean");
+    const { drivingSchoolID, couponCode } = req.body;
+    if (!couponCode) throw Error("couponCode is required");
+
+    const editableFields = [
+      { key: "couponAmount", type: "number" },
+      { key: "fromDate", type: "date" },
+      { key: "toDate", type: "date" },
+      { key: "isActive", type: "boolean" }
+    ];
+
+    const { expression, expressionValues } = editableFields.reduce(
+      (acc, field) => {
+        const { key, type } = field;
+        if (!(key in req.body)) return acc;
+        if (
+          type === "date"
+            ? !parseDate(req.body[key])
+            : typeof req.body[key] !== type
+        )
+          throw Error(`${key} must be a ${type}`);
+
+        acc.expression.push(`${key} = :${key}`);
+        acc.expressionValues[`:${key}`] =
+          type !== "date"
+            ? req.body[key]
+            : dayjs(parseDate(req.body[key])).format("MM-DD-YYYY");
+        return acc;
+      },
+      { expression: [], expressionValues: {} }
+    );
+
+    if ("fromDate" in req.body && !("toDate" in req.body))
+      throw Error("toDate is required");
+    if ("toDate" in req.body && !("fromDate" in req.body))
+      throw Error("fromDate is required");
+    if ("fromDate" in req.body && "toDate" in req.body) {
+      const parsedFromDate = dayjs(parseDate(req.body.fromDate));
+      const parsedToDate = dayjs(parseDate(req.body.toDate));
+
+      if (parsedToDate.isBefore(parsedFromDate))
+        throw Error("toDate must be same or later than fromDate");
+    }
 
     const command = new UpdateCommand({
       TableName: process.env.COUPON_TABLE,
@@ -21,12 +59,8 @@ const updateCoupon = async (req, res) => {
         couponCode,
         drivingSchoolID
       },
-      UpdateExpression:
-        "SET couponAmount = :couponAmountValue, isActive = :isActiveValue",
-      ExpressionAttributeValues: {
-        ":couponAmountValue": couponAmount,
-        ":isActiveValue": isActive
-      },
+      UpdateExpression: `SET ${expression.join(", ")}`,
+      ExpressionAttributeValues: expressionValues,
       ConditionExpression:
         "attribute_exists(couponCode) AND attribute_exists(drivingSchoolID)",
       ReturnValues: "ALL_NEW"
