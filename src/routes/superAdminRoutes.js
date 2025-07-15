@@ -3,6 +3,7 @@ import authorizeSuperAdmin from "../middleware/authorizeSuperAdmin.js";
 import signUpSuperAdmin from "../controller/superAdmin/signUpSuperAdmin.js";
 import createDrivingSchool from "../controller/superAdmin/createDrivingSchool.js";
 import loginSuperAdmin from "../controller/superAdmin/logInSuperAdmin.js";
+import resetAdminPassword from "../controller/superAdmin/resetAdminPassword.js";
 import deleteAdmin from "../controller/superAdmin/deleteAdmin.js";
 import fetchAllSuperAdmins from "../controller/superAdmin/fetchAllSuperAdmins.js";
 import fetchAllAdmins from "../controller/superAdmin/fetchAllAdmins.js";
@@ -27,6 +28,11 @@ superAdminRouter.post(
   createDrivingSchool
 );
 superAdminRouter.delete("/admin", authorizeSuperAdmin, deleteAdmin);
+superAdminRouter.patch(
+  "/admin/password",
+  authorizeSuperAdmin,
+  resetAdminPassword
+);
 superAdminRouter.get("/fetch-admins", authorizeSuperAdmin, fetchAllAdmins);
 
 export default superAdminRouter;
