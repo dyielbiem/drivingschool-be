@@ -13,6 +13,7 @@ custom:
   questionTable: "${sls:stage}-driving-school-question"
   resultTable: "${sls:stage}-driving-school-result"
   couponTable: "${sls:stage}-driving-school-coupon"
+  affiliationTable: "${sls:stage}-driving-school-affiliation"
   imagesBucket: "${sls:stage}-driving-school-backend-images"
   s3:
     host: localhost
@@ -27,7 +28,6 @@ custom:
       migrate: true
       port: 8000
       dbPath: "./"
-      inMemory: false
       shareDb: true
       seed: true
     seed:
@@ -175,6 +175,16 @@ provider:
             - Fn::GetAtt: [CouponTable, Arn]
         - Effect: Allow
           Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [AffiliationTable, Arn]
+        - Effect: Allow
+          Action:
             - s3:GetObject
             - s3:PutObject
             - s3:DeleteObject
@@ -195,6 +205,7 @@ provider:
     QUESTION_TABLE: ${self:custom.questionTable}
     RESULT_TABLE: ${self:custom.resultTable}
     COUPON_TABLE: ${self:custom.couponTable}
+    AFFILIATION_TABLE: ${self:custom.affiliationTable}
     IMAGES_BUCKET: ${self:custom.imagesBucket}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
@@ -482,6 +493,26 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+    AffiliationTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: affiliationID
+            AttributeType: S
+          - AttributeName: affiliationCode
+            AttributeType: S
+        KeySchema:
+          - AttributeName: affiliationID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.affiliationTable}
+        GlobalSecondaryIndexes:
+          - IndexName: AffiliationCodeIndex
+            KeySchema:
+              - AttributeName: affiliationCode
+                KeyType: HASH
+            Projection:
+              ProjectionType: KEYS_ONLY
     ImagesBucket:
       Type: AWS::S3::Bucket
       Properties:

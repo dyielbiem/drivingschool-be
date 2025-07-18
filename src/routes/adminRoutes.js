@@ -70,6 +70,7 @@ import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgre
 import updateStudentPassword from "../controller/admin/updateStudentPassword.js";
 import fetchStudent from "../controller/admin/fetchStudent.js";
 import emailStudentAccountInfo from "../controller/admin/emailStudentAccountInfo.js";
+import addAffiliation from "../controller/admin/addAffiliation.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -234,5 +235,6 @@ adminRouter.get(
   authorizeAdmin,
   emailStudentAccountInfo
 );
+adminRouter.post("/affiliation", authorizeAdmin, addAffiliation);
 
 export default adminRouter;
