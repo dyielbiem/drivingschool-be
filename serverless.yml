@@ -501,6 +501,8 @@ resources:
             AttributeType: S
           - AttributeName: affiliationCode
             AttributeType: S
+          - AttributeName: drivingSchoolID
+            AttributeType: S
         KeySchema:
           - AttributeName: affiliationID
             KeyType: HASH
@@ -509,10 +511,18 @@ resources:
         GlobalSecondaryIndexes:
           - IndexName: AffiliationCodeIndex
             KeySchema:
-              - AttributeName: affiliationCode
+              - AttributeName: drivingSchoolID
                 KeyType: HASH
+              - AttributeName: affiliationCode
+                KeyType: RANGE
             Projection:
               ProjectionType: KEYS_ONLY
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
     ImagesBucket:
       Type: AWS::S3::Bucket
       Properties:

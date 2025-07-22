@@ -14,16 +14,35 @@ export const putAffiliation = async (affiliationData) => {
   return results;
 };
 
-export const isAffiliationCodeAvailable = async (affiliationCode) => {
+export const isAffiliationCodeAvailable = async (
+  drivingSchoolID,
+  affiliationCode
+) => {
   const command = new QueryCommand({
     TableName: process.env.AFFILIATION_TABLE,
     IndexName: "AffiliationCodeIndex",
-    KeyConditionExpression: "affiliationCode = :affiliationCode",
+    KeyConditionExpression:
+      "drivingSchoolID = :drivingSchoolID AND affiliationCode = :affiliationCode",
     ExpressionAttributeValues: {
+      ":drivingSchoolID": drivingSchoolID,
       ":affiliationCode": affiliationCode
     }
   });
 
   const { Items = [] } = await dynamoClient.send(command);
   return Items.length === 0;
+};
+
+export const getAffiliationList = async (drivingSchoolID) => {
+  const command = new QueryCommand({
+    TableName: process.env.AFFILIATION_TABLE,
+    IndexName: "DrivingSchoolIndex",
+    KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
+    ExpressionAttributeValues: {
+      ":drivingSchoolID": drivingSchoolID
+    }
+  });
+
+  const { Items = [] } = await dynamoClient.send(command);
+  return Items;
 };
