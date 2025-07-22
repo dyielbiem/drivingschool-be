@@ -26,7 +26,7 @@ const addAffiliation = async (req, res) => {
       affiliationCode,
       drivingSchoolID,
       addedBy: adminUserName,
-      dateAdded: Date()
+      dateAdded: new Date().toISOString()
     };
 
     await putAffiliation(affiliationData);
