@@ -1,5 +1,6 @@
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
+import { getSectionChapters } from "../../utils/dbUtils/chapter.js";
+import { getStudentResults } from "../../utils/dbUtils/result.js";
 
 /*
 ---- Controller to fetch the chapters of a section
@@ -11,61 +12,41 @@ const fetchAllChapters = async (req, res) => {
     const { drivingSchoolID, studentUserName } = req.body;
     if (!sectionID) throw Error("Section ID must be provided");
 
-    const getStudentCmd = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        studentUserName,
-        drivingSchoolID
-      }
-    });
-
-    const { Item: student } = await dynamoClient.send(getStudentCmd);
+    const { Item: student } = await getStudent(
+      drivingSchoolID,
+      studentUserName
+    );
     if (!student) throw Error("Student does not exist");
 
-    const chapterCommand = new QueryCommand({
-      TableName: process.env.CHAPTER_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionIDValue",
-      ExpressionAttributeValues: {
-        ":sectionIDValue": sectionID
-      },
-      ProjectionExpression: "chapterID, chapterTitle, chapterContent"
-    });
+    const [{ Items: sectionChapters = [] }, { Items: studentResults = [] }] =
+      await Promise.all([
+        getSectionChapters(sectionID, {
+          ProjectionExpression: "chapterID, chapterTitle, chapterContent"
+        }),
+        getStudentResults(drivingSchoolID, studentUserName, {
+          FilterExpression: "attribute_exists(chapterID)"
+        })
+      ]);
 
-    const { Items: chapters } = await dynamoClient.send(chapterCommand);
+    if (sectionChapters.length === 0)
+      return res.status(200).json({ chapters: [] });
 
-    if (chapters.length === 0) return res.status(200).json({ chapters: [] });
+    sectionChapters.sort((a, b) => a.chapterID.localeCompare(b.chapterID));
+    studentResults.sort((a, b) => b.resultID.localeCompare(a.resultID));
 
-    chapters.sort((a, b) => a.chapterID.localeCompare(b.chapterID));
-
-    const chapterTestCommand = new QueryCommand({
-      TableName: process.env.RESULT_TABLE,
-      IndexName: "StudentIndex",
-      KeyConditionExpression:
-        "drivingSchoolID = :drivingSchoolIDValue AND studentUserName = :studentUserNameValue",
-      FilterExpression: "attribute_exists(chapterID)",
-      ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":studentUserNameValue": studentUserName
-      }
-    });
-
-    const { Items: chapterTestResults } =
-      await dynamoClient.send(chapterTestCommand);
-
-    const updatedChapters = chapters.map((currentChapter) => {
-      const { completedChapters } = student;
-      const isCompleted =
-        completedChapters?.some(
-          (item) => item.chapterID === currentChapter.chapterID
-        ) || false;
+    const { completedChapters = [] } = student;
+    const updatedChapters = sectionChapters.map(({ chapterID, ...attrs }) => {
+      const isCompleted = completedChapters.some(
+        (c) => c.chapterID === chapterID
+      );
       const testResult =
-        chapterTestResults?.find(
-          (eachResult) => eachResult.chapterID === currentChapter.chapterID
-        ) || null;
+        studentResults.find((r) => r.chapterID === chapterID && r.isPassed) ||
+        studentResults.find((r) => r.chapterID === chapterID) ||
+        null;
 
       return {
-        ...currentChapter,
+        chapterID,
+        ...attrs,
         isCompleted,
         testResult
       };
