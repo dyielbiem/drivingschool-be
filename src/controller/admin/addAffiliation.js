@@ -17,8 +17,12 @@ const addAffiliation = async (req, res) => {
     if (!affiliationName || !affiliationCode)
       throw Error("All required fields must filled");
 
-    if (!(await isAffiliationCodeAvailable(drivingSchoolID, affiliationCode)))
-      throw Error("Affiliation code is already taken");
+    const { isAvailable } = await isAffiliationCodeAvailable(
+      drivingSchoolID,
+      affiliationCode
+    );
+
+    if (!isAvailable) throw Error("Affiliation code is already taken");
 
     const affiliationData = {
       affiliationID: ulid(),
