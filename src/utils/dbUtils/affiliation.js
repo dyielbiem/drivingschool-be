@@ -33,11 +33,32 @@ export const isAffiliationCodeAvailable = async (
     ExpressionAttributeValues: {
       ":drivingSchoolID": drivingSchoolID,
       ":affiliationCode": affiliationCode
-    }
+    },
+    Limit: 1
   });
 
   const { Items = [] } = await dynamoClient.send(command);
   return { isAvailable: Items.length === 0, existingAffiliation: Items[0] };
+};
+
+export const getAffiliationByCode = async (
+  drivingSchoolID,
+  affiliationCode
+) => {
+  const command = new QueryCommand({
+    TableName,
+    IndexName: "AffiliationCodeIndex",
+    KeyConditionExpression:
+      "drivingSchoolID = :drivingSchoolID AND affiliationCode = :affiliationCode",
+    ExpressionAttributeValues: {
+      ":drivingSchoolID": drivingSchoolID,
+      ":affiliationCode": affiliationCode
+    },
+    Limit: 1
+  });
+
+  const { Items = [] } = await dynamoClient.send(command);
+  return Items[0];
 };
 
 export const getAffiliationList = async (drivingSchoolID) => {

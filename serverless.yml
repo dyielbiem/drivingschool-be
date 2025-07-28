@@ -55,6 +55,8 @@ custom:
             sources: [./seed/DrivingSchoolResult.json]
           - table: ${self:custom.couponTable}
             sources: [./seed/DrivingSchoolCoupon.json]
+          - table: ${self:custom.affiliationTable}
+            sources: [./seed/DrivingSchoolAffiliation.json]
 
 provider:
   name: aws
@@ -293,6 +295,8 @@ resources:
             AttributeType: S
           - AttributeName: studentUserName
             AttributeType: S
+          - AttributeName: affiliationID
+            AttributeType: S
         KeySchema:
           - AttributeName: drivingSchoolID
             KeyType: HASH
@@ -307,6 +311,20 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+          - IndexName: AffiliationIDIndex
+            KeySchema:
+              - AttributeName: affiliationID
+                KeyType: HASH
+            Projection:
+              ProjectionType: INCLUDE
+              NonKeyAttributes:
+                - mailingFirstName
+                - mailingLastName
+                - courseID
+                - enrollmentDate
+                - affiliationCode
+                - paidAmount
+                - usedCouponCode
     CourseTable:
       Type: AWS::DynamoDB::Table
       Properties:

@@ -13,9 +13,12 @@ const fetchAllBillingInfo = async (req, res) => {
       TableName: process.env.STUDENT_TABLE,
       IndexName: "DrivingSchoolIndex",
       KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "attribute_exists(transactionID)",
+      FilterExpression:
+        "attribute_exists(transactionID) AND transactionID <> :empty AND transactionID <> :null",
       ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID
+        ":drivingSchoolIDValue": drivingSchoolID,
+        ":empty": "",
+        ":null": null
       },
       ProjectionExpression:
         "studentUserName, transactionID, paymentID, billingFirstName, billingLastName, usedCouponCode, accountNumber, paidAmount, enrollmentDate"

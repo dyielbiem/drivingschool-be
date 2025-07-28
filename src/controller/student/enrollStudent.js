@@ -7,44 +7,18 @@ import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
+import { requiredBillingInfo } from "../../constants/index.js";
 import { hashPassWord } from "../../utils/index.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getStudent } from "../../utils/dbUtils/student.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
 import { getActiveSection } from "../../utils/dbUtils/section.js";
-import { getCoupon } from "../../utils/dbUtils/coupon.js";
-
-const getFinalChargeAmount = (coupon, chargeAmount) => {
-  const finalChargeAmount = !coupon?.couponAmount
-    ? chargeAmount
-    : coupon?.couponAmount >= chargeAmount
-      ? 0
-      : chargeAmount - (coupon?.couponAmount || 0);
-
-  return finalChargeAmount;
-};
-
-const validateCoupon = async (couponCode, drivingSchoolID) => {
-  if (!couponCode) {
-    return [null, true];
-  }
-
-  const { Item: coupon } = await getCoupon(
-    couponCode?.toLowerCase?.(),
-    drivingSchoolID
-  );
-
-  if (!coupon) {
-    return [coupon, false];
-  }
-
-  const expiryDate = new Date(coupon.toDate);
-  expiryDate.setDate(expiryDate.getDate() + 1);
-
-  const isValid = coupon.isActive && expiryDate > new Date();
-
-  return [coupon, isValid];
-};
+import { getAffiliationByCode } from "../../utils/dbUtils/affiliation.js";
+import {
+  getFinalChargeAmount,
+  validateCoupon,
+  handleAuthorizeResponse
+} from "../../utils/enrollment.js";
 
 /*
 ---- Controller to enroll a student
@@ -59,7 +33,8 @@ const enrollStudent = async (req, res) => {
       billingInformation = {},
       cardInformation = {},
       courseID,
-      couponCode
+      couponCode,
+      affiliationCode
     } = req.body;
 
     if (
@@ -98,7 +73,21 @@ const enrollStudent = async (req, res) => {
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
 
-    const dbResults = await Promise.all([
+    let affiliation = {};
+    if (affiliationCode) {
+      affiliation = await getAffiliationByCode(
+        drivingSchoolCredentials.drivingSchoolID,
+        affiliationCode
+      );
+      if (!affiliation) throw Error("Invalid affiliation code");
+    }
+
+    const [
+      { Item: drivingSchool },
+      { Item: student },
+      { Item: course },
+      activeSection
+    ] = await Promise.all([
       getDrivingSchool(drivingSchoolCredentials.drivingSchoolID),
       getStudent(
         drivingSchoolCredentials.drivingSchoolID,
@@ -107,13 +96,6 @@ const enrollStudent = async (req, res) => {
       getCourse(courseID),
       getActiveSection(drivingSchoolCredentials.drivingSchoolID)
     ]);
-
-    const [
-      { Item: drivingSchool },
-      { Item: student },
-      { Item: course },
-      activeSection
-    ] = dbResults;
 
     if (!drivingSchool) throw Error("The driving school does not exist");
     if (student) throw Error("Username is already in use");
@@ -130,7 +112,7 @@ const enrollStudent = async (req, res) => {
     // Get the final charge amount
     const finalChargeAmount = getFinalChargeAmount(coupon, course.coursePrice);
 
-    let respond = {
+    let response = {
       refId: "",
       transactionResponse: {
         transId: "",
@@ -146,17 +128,6 @@ const enrollStudent = async (req, res) => {
     */
     if (finalChargeAmount > 0) {
       const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
-      const requiredBillingInfo = [
-        "firstName",
-        "lastName",
-        "address",
-        "city",
-        "state",
-        "zip",
-        "country",
-        "email",
-        "phoneNumber"
-      ];
 
       if (!cardNumber || !cardCode || !cardExpiration) {
         throw Error("Card information must be complete");
@@ -166,7 +137,7 @@ const enrollStudent = async (req, res) => {
         throw Error("Billing information must be complete");
 
       const paymentID = nanoid(20);
-      respond = await payment(
+      response = await payment(
         drivingSchoolCredentials,
         accountInformation,
         mailingInformation,
@@ -178,18 +149,8 @@ const enrollStudent = async (req, res) => {
         paymentID
       );
 
-      const { resultCode, message } = respond.messages || {};
-      const { errors, responseCode } = respond.transactionResponse || {};
-
-      if (resultCode !== "Ok")
-        throw Error(
-          errors?.[0]?.errorText ||
-            message?.[0]?.text ||
-            "An error occured in payment transaction"
-        );
-
-      if (responseCode !== "1")
-        throw Error(errors?.[0]?.errorText || "The credit card was declined");
+      const { ok, errorMessage } = handleAuthorizeResponse(response);
+      if (!ok) throw Error(errorMessage);
     }
 
     const hashedPassWord = await hashPassWord(accountInformation.passWord);
@@ -206,10 +167,10 @@ const enrollStudent = async (req, res) => {
         courseID: courseID,
         sectionID: activeSection.sectionID,
         usedCouponCode: coupon?.couponCode || "",
-        paymentID: respond.refId,
-        transactionID: respond.transactionResponse.transId,
-        accountNumber: respond.transactionResponse.accountNumber,
-        accountType: respond.transactionResponse.accountType,
+        paymentID: response.refId,
+        transactionID: response.transactionResponse.transId,
+        accountNumber: response.transactionResponse.accountNumber,
+        accountType: response.transactionResponse.accountType,
         billingFirstName: billingInformation.firstName || "",
         billingLastName: billingInformation.lastName || "",
         billingCompany: billingInformation.company || "Not applicable",
@@ -235,7 +196,9 @@ const enrollStudent = async (req, res) => {
         enrollmentDate: enrollmentDate.toString(),
         paidAmount: finalChargeAmount,
         isActive: true,
-        courseType: course.courseType
+        courseType: course.courseType,
+        affiliationID: affiliation.affiliationID || "",
+        affiliationCode: affiliation.affiliationCode || ""
       }
     });
 
@@ -278,8 +241,8 @@ const enrollStudent = async (req, res) => {
     res.status(200).json({
       drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
       userName: accountInformation.userName,
-      paymentID: respond.refId,
-      transactionID: respond.transactionResponse.transId,
+      paymentID: response.refId,
+      transactionID: response.transactionResponse.transId,
       paidAmount: finalChargeAmount,
       sectionID: activeSection.sectionID,
       message: "The enrollment process was successful",

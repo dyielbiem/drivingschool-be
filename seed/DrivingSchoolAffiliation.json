@@ -1,0 +1,18 @@
+[
+  {
+    "affiliationID": "01K1901A48VEP5Z5R0V37V17B0",
+    "affiliationName": "Test Affiliation 2",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "admin",
+    "dateAdded": "2025-07-28T17:07:11.624Z",
+    "affiliationCode": "test_affiliation_2"
+  },
+  {
+    "affiliationID": "01K190134DSZJP24J079M2DRSG",
+    "affiliationName": "Test Affiliation 1",
+    "drivingSchoolID": "qlQJMqqbf0-k1KpAWj-Gv",
+    "addedBy": "admin",
+    "dateAdded": "2025-07-28T17:07:04.473Z",
+    "affiliationCode": "test_affiliation_1"
+  }
+]

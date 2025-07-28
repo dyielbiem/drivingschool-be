@@ -74,6 +74,7 @@ import addAffiliation from "../controller/admin/addAffiliation.js";
 import updateAffiliation from "../controller/admin/updateAffiliation.js";
 import deleteAffiliation from "../controller/admin/deleteAffiliation.js";
 import fetchAllAffiliations from "../controller/admin/fetchAllAffiliations.js";
+import fetchAffiliationStudents from "../controller/admin/fetchAffiliationStudents.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -242,5 +243,10 @@ adminRouter.post("/affiliation", authorizeAdmin, addAffiliation);
 adminRouter.patch("/affiliation", authorizeAdmin, updateAffiliation);
 adminRouter.delete("/affiliation", authorizeAdmin, deleteAffiliation);
 adminRouter.get("/affiliation/list", authorizeAdmin, fetchAllAffiliations);
+adminRouter.get(
+  "/affiliation/student/list",
+  authorizeAdmin,
+  fetchAffiliationStudents
+);
 
 export default adminRouter;
