@@ -73,7 +73,7 @@ const enrollStudent = async (req, res) => {
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
 
-    let affiliation = {};
+    let affiliation = null;
     if (affiliationCode) {
       affiliation = await getAffiliationByCode(
         drivingSchoolCredentials.drivingSchoolID,
@@ -156,6 +156,12 @@ const enrollStudent = async (req, res) => {
     const hashedPassWord = await hashPassWord(accountInformation.passWord);
     const enrollmentDate = new Date();
     const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
+    const affiliationAttr = affiliation
+      ? {
+          affiliationID: affiliation.affiliationID,
+          affiliationCode: affiliation.affiliationCode
+        }
+      : {};
 
     // Add the student to database
     const putCommand = new PutCommand({
@@ -197,8 +203,7 @@ const enrollStudent = async (req, res) => {
         paidAmount: finalChargeAmount,
         isActive: true,
         courseType: course.courseType,
-        affiliationID: affiliation.affiliationID || "",
-        affiliationCode: affiliation.affiliationCode || ""
+        ...affiliationAttr
       }
     });
 
