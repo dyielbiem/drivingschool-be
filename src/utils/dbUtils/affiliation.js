@@ -1,4 +1,5 @@
 import {
+  GetCommand,
   PutCommand,
   QueryCommand,
   UpdateCommand,
@@ -8,6 +9,18 @@ import {
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 const TableName = process.env.AFFILIATION_TABLE;
+
+export const getAffiliationByID = async (affiliationID) => {
+  const command = new GetCommand({
+    TableName,
+    Key: {
+      affiliationID
+    }
+  });
+
+  const { Item } = await dynamoClient.send(command);
+  return Item;
+};
 
 export const putAffiliation = async (affiliationData) => {
   const command = new PutCommand({
