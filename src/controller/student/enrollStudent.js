@@ -65,6 +65,9 @@ const enrollStudent = async (req, res) => {
     )
       throw Error("Mailing information must be complete");
 
+    if (accountInformation.userName.includes(" "))
+      throw Error("Username must not include spaces");
+
     const parsedBirthDate = parseDate(accountInformation.birthDate);
     if (!parsedBirthDate) throw Error("Invalid birth date format");
 
