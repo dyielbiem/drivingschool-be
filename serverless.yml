@@ -320,11 +320,13 @@ resources:
               NonKeyAttributes:
                 - mailingFirstName
                 - mailingLastName
+                - mailingEmail
                 - courseID
                 - enrollmentDate
                 - affiliationCode
                 - paidAmount
                 - usedCouponCode
+                - isActive
     CourseTable:
       Type: AWS::DynamoDB::Table
       Properties:
