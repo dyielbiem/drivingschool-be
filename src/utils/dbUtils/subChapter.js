@@ -1,4 +1,4 @@
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
 
@@ -9,6 +9,18 @@ export const getSectionSubChapters = async (sectionID) => {
     KeyConditionExpression: "sectionID = :sectionID",
     ExpressionAttributeValues: {
       ":sectionID": sectionID
+    }
+  });
+
+  const result = await dynamoClient.send(command);
+  return result;
+};
+
+export const getSubChapter = async (subChapterID) => {
+  const command = new GetCommand({
+    TableName: process.env.SUB_CHAPTER_TABLE,
+    Key: {
+      subChapterID
     }
   });
 

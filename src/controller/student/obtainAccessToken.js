@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { generateAccessToken } from "../../utils/generateToken.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
 
 /*
 ---- Controller to obtain new access token for student
@@ -22,11 +23,21 @@ const obtainAccessToken = async (req, res) => {
     if (!studentUserName || !drivingSchoolID)
       throw new Error("Invalid refresh token");
 
+    const { Item: student } = await getStudent(
+      drivingSchoolID,
+      studentUserName
+    );
+    if (!student) throw new Error("Student does not exist");
+
+    const jwtPayload = {
+      studentUserName,
+      drivingSchoolID,
+      courseID: student.courseID,
+      sectionID: student.sectionID
+    };
+
     const accessToken = generateAccessToken(
-      {
-        studentUserName,
-        drivingSchoolID
-      },
+      jwtPayload,
       process.env.STUDENT_JWT_SECRET
     );
 

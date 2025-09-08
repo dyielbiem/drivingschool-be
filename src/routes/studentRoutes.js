@@ -8,6 +8,7 @@ import loginStudent from "../controller/student/loginStudent.js";
 import fetchSection from "../controller/student/fetchSection.js";
 import fetchAllChapters from "../controller/student/fetchAllChapters.js";
 import fetchAllSubChapters from "../controller/student/fetchAllSubChapters.js";
+import fetchSubChapter from "../controller/student/fetchSubChapter.js";
 import fetchSectionTest from "../controller/student/fetchSectionTest.js";
 import fetchChapterTest from "../controller/student/fetchChapterTest.js";
 import generateSectionTestResult from "../controller/student/generateSectionTestResult.js";
@@ -48,6 +49,11 @@ studentRouter.get(
   "/section/chapter/subchapter/list",
   authorizeStudent,
   fetchAllSubChapters
+);
+studentRouter.get(
+  "/section/chapter/subchapter",
+  authorizeStudent,
+  fetchSubChapter
 );
 studentRouter.get("/section/test", authorizeStudent, fetchSectionTest);
 studentRouter.get("/section/chapter/test", authorizeStudent, fetchChapterTest);
