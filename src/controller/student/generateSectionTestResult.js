@@ -1,6 +1,8 @@
 import { QueryCommand, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
+import { updateStudentItem } from "../../utils/dbUtils/student.js";
 
 /*
 ---- Controller to generate the section test result
@@ -92,6 +94,7 @@ const generateSectionTestResult = async (req, res) => {
     const scorePercentage = noOfCorrectAnswers / answers.length;
 
     const resultID = ulid();
+    const isPassed = scorePercentage >= 0.75;
     const putResultCommand = new PutCommand({
       TableName: process.env.RESULT_TABLE,
       Item: {
@@ -103,7 +106,7 @@ const generateSectionTestResult = async (req, res) => {
         numberOfQuestions: answers.length,
         answers,
         scorePercentage: scorePercentage * 100,
-        isPassed: scorePercentage >= 0.75,
+        isPassed,
         dateAnswered: Date()
       },
       ConditionExpression: "attribute_not_exists(resultID)"
@@ -111,13 +114,20 @@ const generateSectionTestResult = async (req, res) => {
 
     await dynamoClient.send(putResultCommand);
 
+    if (isPassed) {
+      await updateStudentItem(drivingSchoolID, studentUserName, {
+        ":completionDate": Date(),
+        ":isCourseCompleted": true
+      });
+    }
+
     res.status(200).json({
       resultID,
       sectionID,
       numberOfQuestions: answers.length,
       score: noOfCorrectAnswers,
       scorePercentage: scorePercentage * 100,
-      isPassed: scorePercentage >= 0.75
+      isPassed
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

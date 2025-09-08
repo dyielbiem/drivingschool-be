@@ -17,7 +17,7 @@ import obtainAccessToken from "../controller/student/obtainAccessToken.js";
 import redeemCoupon from "../controller/student/redeemCoupon.js";
 import checkStudentUserName from "../controller/student/checkStudentUserName.js";
 import sendEmail from "../controller/student/sendEmail.js";
-import completeSection from "../controller/student/completeSection.js";
+// import completeSection from "../controller/student/completeSection.js";
 import getResetPasswordCode from "../controller/student/getResetPasswordCode.js";
 import verifyResetPasswordCode from "../controller/student/verifyResetPasswordCode.js";
 import resetPassword from "../controller/student/resetPassword.js";
@@ -67,7 +67,7 @@ studentRouter.post(
   authorizeStudent,
   generateChapterTestResult
 );
-studentRouter.get("/section/completion", authorizeStudent, completeSection);
+// studentRouter.get("/section/completion", authorizeStudent, completeSection);
 studentRouter.get(
   "/reset-password/code",
   establishedRequestLimiter(),
