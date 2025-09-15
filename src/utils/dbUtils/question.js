@@ -19,3 +19,18 @@ export const getDrivingSchoolQuestions = async (
   const result = await dynamoClient.send(command);
   return result;
 };
+
+export const getSectionQuestions = async (sectionID, otherArgs = {}) => {
+  const command = new QueryCommand({
+    TableName: process.env.QUESTION_TABLE,
+    IndexName: "SectionIndex",
+    KeyConditionExpression: "sectionID = :sectionID",
+    ExpressionAttributeValues: {
+      ":sectionID": sectionID
+    },
+    ...otherArgs
+  });
+
+  const result = await dynamoClient.send(command);
+  return result;
+};

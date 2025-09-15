@@ -1,8 +1,55 @@
-import { QueryCommand, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
-import { updateStudentItem } from "../../utils/dbUtils/student.js";
+import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { getSection } from "../../utils/dbUtils/section.js";
+import { getStudent, updateStudentItem } from "../../utils/dbUtils/student.js";
+import { getStudentResultPerChapterAndSection } from "../../utils/dbUtils/result.js";
+import { getSectionQuestions } from "../../utils/dbUtils/question.js";
+
+const generateCompletionEmailBody = (studentUserName, results) =>
+  `
+    <div style="max-width: 600px;">
+      <p style="margin-bottom: 16px; font-size:16px;">
+        Hello Admin,
+      </p>
+      <p style="margin-bottom: 12px; font-size:16px;">
+        This is to inform you that student <strong>${studentUserName}</strong>
+        has successfully completed the online course. The test scores are listed below.
+      </p>
+      <div>
+        <strong style="margin: 0px; display: inline; font-size: 16px;">
+          Chapters
+        </strong>
+        <strong style="margin: 0px; float: right; display: inline; font-size: 16px;">
+          Score
+        </strong>
+      </div>
+      ${results
+        .map((r) => {
+          const {
+            chapterTitle,
+            sectionTitle,
+            hasTest,
+            score,
+            numberOfQuestions
+          } = r;
+          return `
+            <div>
+              <p style="margin: 0px; display: inline; font-size: 14px;">
+                ${chapterTitle || sectionTitle}
+              </p>
+              <p style="margin: 0px; float: right; display: inline; font-size: 14px;">
+                ${hasTest ? `${score || 0}/${numberOfQuestions || 0}` : "N/A"}
+              </p>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
 
 /*
 ---- Controller to generate the section test result
@@ -16,59 +63,28 @@ const generateSectionTestResult = async (req, res) => {
       throw Error("The field 'answers' must be an array, not a string");
     if (answers.length === 0) throw Error("Answers must not be an empty array");
 
-    // Check if section exists
-    const getSectionCmd = new GetCommand({
-      TableName: process.env.SECTION_TABLE,
-      Key: {
-        sectionID
-      }
-    });
+    const [{ Item: section }, { Items: test }, { Item: student }] =
+      await Promise.all([
+        getSection(sectionID),
+        getSectionQuestions(sectionID),
+        getStudent(drivingSchoolID, studentUserName)
+      ]);
 
-    const { Item: section } = await dynamoClient.send(getSectionCmd);
     if (!section) throw Error("Section does not exist");
-
-    // Get the test questions from the database
-    const queryQuestionsCmd = new QueryCommand({
-      TableName: process.env.QUESTION_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionIDValue",
-      ExpressionAttributeValues: {
-        ":sectionIDValue": sectionID
-      },
-      ProjectionExpression: "questionID, correctAnswer"
-    });
-
-    const { Items: test } = await dynamoClient.send(queryQuestionsCmd);
     if (test.length === 0) throw Error("Section has no test");
+    if (!student) throw Error("Student does not exist");
 
     // Check if the length of provided answers is valid
-    const invalidAnswersLength = {
-      conditionOne:
-        (!section.noOfQuestionsToShow ||
-          section.noOfQuestionsToShow > test.length) &&
-        answers.length !== test.length,
-      conditionTwo:
-        section.noOfQuestionsToShow &&
-        section.noOfQuestionsToShow <= test.length &&
-        section.noOfQuestionsToShow !== answers.length
-    };
+    const { noOfQuestionsToShow } = section;
+    const hasAnswersLengthError =
+      !noOfQuestionsToShow || noOfQuestionsToShow > test.length
+        ? answers.length !== test.length
+        : noOfQuestionsToShow !== answers.length;
 
-    if (invalidAnswersLength.conditionOne || invalidAnswersLength.conditionTwo)
+    if (hasAnswersLengthError)
       throw Error(
         "The provided answers does not match the length of the section questions"
       );
-
-    // Check if student exists
-    const getStudentCommand = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID,
-        studentUserName
-      }
-    });
-
-    const { Item: student } = await dynamoClient.send(getStudentCommand);
-    if (!student) throw Error("Student does not exist");
 
     // Calculate the correct answer of the student
     let noOfCorrectAnswers = 0;
@@ -115,10 +131,31 @@ const generateSectionTestResult = async (req, res) => {
     await dynamoClient.send(putResultCommand);
 
     if (isPassed) {
-      await updateStudentItem(drivingSchoolID, studentUserName, {
-        ":completionDate": Date(),
-        ":isCourseCompleted": true
-      });
+      const [{ Item: drivingSchool }, results] = await Promise.all([
+        getDrivingSchool(drivingSchoolID),
+        getStudentResultPerChapterAndSection(drivingSchoolID, studentUserName)
+      ]);
+
+      const emailArgs = {
+        invokePath: "/api/student/send-email",
+        headers: {
+          "x-api-key": process.env.API_KEY
+        },
+        method: "POST",
+        body: {
+          emailReceiver: drivingSchool.email,
+          emailSubject: "Student Course Completion",
+          emailBody: generateCompletionEmailBody(studentUserName, results)
+        }
+      };
+
+      await Promise.all([
+        invokeFunction(emailArgs),
+        updateStudentItem(drivingSchoolID, studentUserName, {
+          ":completionDate": Date(),
+          ":isCourseCompleted": true
+        })
+      ]);
     }
 
     res.status(200).json({
