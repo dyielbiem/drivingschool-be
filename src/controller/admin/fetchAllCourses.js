@@ -12,9 +12,11 @@ const fetchAllCourses = async (req, res) => {
     const command = new QueryCommand({
       TableName: process.env.COURSE_TABLE,
       IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
+      FilterExpression: "isDeleted <> :isDeleted",
       ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID
+        ":drivingSchoolID": drivingSchoolID,
+        ":isDeleted": true
       }
     });
 
