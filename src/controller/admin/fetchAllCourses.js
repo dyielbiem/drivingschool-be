@@ -13,9 +13,10 @@ const fetchAllCourses = async (req, res) => {
       TableName: process.env.COURSE_TABLE,
       IndexName: "DrivingSchoolIndex",
       KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
-      FilterExpression: "isDeleted <> :isDeleted",
+      FilterExpression: "isActive = :isActive AND isDeleted <> :isDeleted",
       ExpressionAttributeValues: {
         ":drivingSchoolID": drivingSchoolID,
+        ":isActive": true,
         ":isDeleted": true
       }
     });

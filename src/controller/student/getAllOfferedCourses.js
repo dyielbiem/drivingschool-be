@@ -28,11 +28,12 @@ const getAllOfferedCourses = async (req, res) => {
     const coursesCommand = new QueryCommand({
       TableName: process.env.COURSE_TABLE,
       IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "isActive = :isActiveValue",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
+      FilterExpression: "isActive = :isActive AND isDeleted <> :isDeleted",
       ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":isActiveValue": true
+        ":drivingSchoolID": drivingSchoolID,
+        ":isActive": true,
+        ":isDeleted": true
       },
       ProjectionExpression:
         "courseName, coursePrice, courseDesc, courseID, courseType, dateAdded"
