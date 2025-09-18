@@ -6,3 +6,19 @@ export const hashPassWord = async (passWord) => {
 
   return hashedPassWord;
 };
+
+export const paginate = (items, page = 1, pageSize = 50) => {
+  const totalCount = items.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const startIdx = (page - 1) * pageSize;
+  const endIdx = page * pageSize;
+
+  return {
+    page,
+    pageSize,
+    totalCount,
+    totalPages,
+    hasNext: page < totalPages,
+    data: items.slice(startIdx, endIdx)
+  };
+};

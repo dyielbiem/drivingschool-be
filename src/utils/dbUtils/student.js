@@ -56,3 +56,35 @@ export const updateStudentItem = async (
   const { Attributes = {} } = await dynamoClient.send(command);
   return Attributes;
 };
+
+export const getAllStudentsInSection = async (drivingSchoolID, sectionID) => {
+  const items = [];
+  let lastEvaluatedKey = null;
+
+  do {
+    const params = {
+      TableName,
+      IndexName: "DrivingSchoolIndex",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
+      FilterExpression: "sectionID = :sectionID",
+      ExpressionAttributeValues: {
+        ":drivingSchoolID": drivingSchoolID,
+        ":sectionID": sectionID
+      },
+      Limit: 100
+    };
+
+    if (lastEvaluatedKey) {
+      params.ExclusiveStartKey = lastEvaluatedKey;
+    }
+
+    const command = new QueryCommand(params);
+
+    // eslint-disable-next-line no-await-in-loop
+    const { Items = [], LastEvaluatedKey } = await dynamoClient.send(command);
+    items.push(...Items);
+    lastEvaluatedKey = LastEvaluatedKey || null;
+  } while (lastEvaluatedKey);
+
+  return items;
+};
