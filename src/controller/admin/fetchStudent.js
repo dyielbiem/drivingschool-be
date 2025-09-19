@@ -20,10 +20,10 @@ const fetchStudent = async (req, res) => {
 
     const { Item: course } = await getCourse(student.courseID);
 
-    delete student.passWord;
-
     return res.status(200).json({
       ...student,
+      passWord: undefined,
+      encryptedPassWord: undefined,
       courseName: course?.courseName || "[This is a deleted course]"
     });
   } catch (error) {

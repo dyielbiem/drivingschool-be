@@ -20,9 +20,14 @@ const fetchAllStudentsPerSection = async (req, res) => {
 
     if (students.length === 0) return res.status(200).json({ allStudents: [] });
 
-    const sortedStudent = students.sort(
-      (a, b) => new Date(a.enrollmentDate) - new Date(b.enrollmentDate)
-    );
+    const sortedStudent = students
+      .map((item) => ({
+        ...item,
+        parsedEnrollmentDate: new Date(item.enrollmentDate),
+        passWord: undefined,
+        encryptedPassWord: undefined
+      }))
+      .sort((a, b) => a.parsedEnrollmentDate - b.parsedEnrollmentDate);
 
     const {
       data: allStudents,

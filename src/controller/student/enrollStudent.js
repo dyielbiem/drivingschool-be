@@ -9,6 +9,7 @@ import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
 import { requiredBillingInfo } from "../../constants/index.js";
 import { hashPassWord } from "../../utils/index.js";
+import { encrypt } from "../../utils/crypto.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getStudent } from "../../utils/dbUtils/student.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
@@ -157,6 +158,7 @@ const enrollStudent = async (req, res) => {
     }
 
     const hashedPassWord = await hashPassWord(accountInformation.passWord);
+    const encryptedPassWord = encrypt(accountInformation.passWord);
     const enrollmentDate = new Date();
     const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
     const affiliationAttr = affiliation
@@ -173,6 +175,7 @@ const enrollStudent = async (req, res) => {
         drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
         studentUserName: accountInformation.userName,
         passWord: hashedPassWord,
+        encryptedPassWord,
         courseID: courseID,
         sectionID: activeSection.sectionID,
         usedCouponCode: coupon?.couponCode || "",

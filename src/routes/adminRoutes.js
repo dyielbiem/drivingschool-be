@@ -69,6 +69,7 @@ import generateChapterImageSignedURL from "../controller/admin/generateChapterIm
 import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgress.js";
 import updateStudentPassword from "../controller/admin/updateStudentPassword.js";
 import fetchStudent from "../controller/admin/fetchStudent.js";
+import fetchStudentPassword from "../controller/admin/fetchStudentPassword.js";
 import emailStudentAccountInfo from "../controller/admin/emailStudentAccountInfo.js";
 import addAffiliation from "../controller/admin/addAffiliation.js";
 import fetchAffiliation from "../controller/admin/fetchAffiliation.js";
@@ -179,6 +180,7 @@ adminRouter.delete("/question", authorizeAdmin, deleteQuestion);
 adminRouter.patch("/question", authorizeAdmin, updateQuestion);
 adminRouter.get("/student", authorizeAdmin, fetchStudent);
 adminRouter.post("/student", authorizeAdmin, addStudent);
+adminRouter.get("/student/password", authorizeAdmin, fetchStudentPassword);
 adminRouter.get(
   "/student/section/list",
   authorizeAdmin,

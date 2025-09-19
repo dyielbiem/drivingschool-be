@@ -1,7 +1,6 @@
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import bcrypt from "bcryptjs";
-import dynamoClient from "../../db_connection/dbCLient.js";
-import { decrypt } from "../../utils/crypto.js";
+import { hashPassWord } from "../../utils/index.js";
+import { encrypt, decrypt } from "../../utils/crypto.js";
+import { updateStudentItem } from "../../utils/dbUtils/student.js";
 
 /*
 ---- Controller to reset password
@@ -32,24 +31,13 @@ const resetPassword = async (req, res) => {
     if (new Date() > new Date(resetExpiration))
       throw Error("Reset password token has expired");
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassWord = await bcrypt.hash(passWord, salt);
+    const hashedPassWord = await hashPassWord(passWord);
+    const encryptedPassWord = encrypt(passWord);
 
-    const command = new UpdateCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID,
-        studentUserName
-      },
-      UpdateExpression: "SET passWord = :hashedPassWord",
-      ExpressionAttributeValues: {
-        ":hashedPassWord": hashedPassWord
-      },
-      ConditionExpression:
-        "attribute_exists(studentUserName) and attribute_exists(drivingSchoolID)"
+    await updateStudentItem(drivingSchoolID, studentUserName, {
+      ":passWord": hashedPassWord,
+      ":encryptedPassWord": encryptedPassWord
     });
-
-    await dynamoClient.send(command);
 
     res.status(200).json({ message: "Password has been reset" });
   } catch (error) {

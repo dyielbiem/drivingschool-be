@@ -1,8 +1,7 @@
 import passwordGenerator from "generate-password";
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
-
-import dynamoClient from "../../db_connection/dbCLient.js";
 import { hashPassWord } from "../../utils/index.js";
+import { encrypt } from "../../utils/crypto.js";
+import { updateStudentItem } from "../../utils/dbUtils/student.js";
 
 /*
 ---- Controller to update the password of a student
@@ -19,27 +18,17 @@ const updateStudentPassword = async (req, res) => {
       numbers: true,
       symbols: true
     });
-    const hashedPassWord = await hashPassWord(passWord);
 
-    const command = new UpdateCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID,
-        studentUserName
-      },
-      UpdateExpression: "SET passWord = :passWord",
-      ExpressionAttributeValues: {
-        ":passWord": hashedPassWord
-      },
-      ConditionExpression:
-        "attribute_exists(drivingSchoolID) AND attribute_exists(studentUserName)",
-      ReturnValues: "ALL_NEW"
+    const hashedPassWord = await hashPassWord(passWord);
+    const encryptedPassWord = encrypt(passWord);
+
+    await updateStudentItem(drivingSchoolID, studentUserName, {
+      ":passWord": hashedPassWord,
+      ":encryptedPassWord": encryptedPassWord
     });
 
-    await dynamoClient.send(command);
-
     return res.status(200).json({
-      newPassword: passWord
+      newPassWord: passWord
     });
   } catch (error) {
     if (error.message === "The conditional request failed")
