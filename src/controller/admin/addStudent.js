@@ -5,10 +5,11 @@ import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import dynamoClient from "../../db_connection/dbCLient.js";
 import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
+import { encrypt } from "../../utils/crypto.js";
+import { hashPassWord } from "../../utils/index.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
 import { getActiveSection } from "../../utils/dbUtils/section.js";
-import { hashPassWord } from "../../utils/index.js";
 
 /*
 ---- Controller to add a student to a course
@@ -79,6 +80,7 @@ const addStudent = async (req, res) => {
     if (!activeSection) throw Error("The driving school has no active section");
 
     const hashedPassWord = await hashPassWord(passWord);
+    const encryptedPassWord = encrypt(passWord);
     const enrollmentDate = new Date();
     const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
 
@@ -88,6 +90,7 @@ const addStudent = async (req, res) => {
         drivingSchoolID,
         studentUserName: userName,
         passWord: hashedPassWord,
+        encryptedPassWord,
         courseID,
         courseType: course.courseType,
         sectionID: activeSection.sectionID,
