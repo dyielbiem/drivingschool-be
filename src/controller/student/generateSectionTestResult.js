@@ -42,7 +42,11 @@ const generateCompletionEmailBody = (studentUserName, results) =>
                 ${chapterTitle || sectionTitle}
               </p>
               <p style="margin: 0px; float: right; display: inline; font-size: 14px;">
-                ${hasTest ? `${score || 0}/${numberOfQuestions || 0}` : "N/A"}
+                ${
+                  hasTest
+                    ? `${((score || 1) / (numberOfQuestions || 1)) * 100}%`
+                    : "N/A"
+                }
               </p>
             </div>
           `;
