@@ -27,7 +27,11 @@ const establishedRequestLimiter = () =>
   rateLimit({
     windowMs: 2 * 60 * 1000,
     max: 5,
-    message: "You can request send a request again after 2 minutes"
+    handler: (_, res) => {
+      res.status(429).json({
+        error: "You can send a request again after 2 minutes"
+      });
+    }
   });
 
 const studentRouter = Router();
