@@ -9,16 +9,21 @@ import { getStudent, updateStudentItem } from "../../utils/dbUtils/student.js";
 import { getStudentResultPerChapterAndSection } from "../../utils/dbUtils/result.js";
 import { getSectionQuestions } from "../../utils/dbUtils/question.js";
 
-const generateCompletionEmailBody = (studentUserName, results) =>
-  `
+const generateCompletionEmailBody = (
+  studentUserName,
+  results,
+  forAdmin = true
+) => {
+  const salutation = forAdmin ? "Hello Admin," : `Hello ${studentUserName},`;
+  const openingParagraph = forAdmin
+    ? `This is to inform you that student <strong>${studentUserName}</strong>
+        has successfully completed the online course. The test scores are listed below.`
+    : "This is to inform you that you have successfully completed your online course. Your test scores are listed below.";
+
+  return `
     <div style="max-width: 600px;">
-      <p style="margin-bottom: 16px; font-size:16px;">
-        Hello Admin,
-      </p>
-      <p style="margin-bottom: 12px; font-size:16px;">
-        This is to inform you that student <strong>${studentUserName}</strong>
-        has successfully completed the online course. The test scores are listed below.
-      </p>
+      <p style="margin-bottom: 16px; font-size:16px;">${salutation}</p>
+      <p style="margin-bottom: 12px; font-size:16px;">${openingParagraph}</p>
       <div>
         <strong style="margin: 0px; display: inline; font-size: 16px;">
           Chapters
@@ -54,6 +59,7 @@ const generateCompletionEmailBody = (studentUserName, results) =>
         .join("")}
     </div>
   `;
+};
 
 /*
 ---- Controller to generate the section test result
@@ -140,7 +146,7 @@ const generateSectionTestResult = async (req, res) => {
         getStudentResultPerChapterAndSection(drivingSchoolID, studentUserName)
       ]);
 
-      const emailArgs = {
+      const adminEmailArgs = {
         invokePath: "/api/student/send-email",
         headers: {
           "x-api-key": process.env.API_KEY
@@ -153,8 +159,26 @@ const generateSectionTestResult = async (req, res) => {
         }
       };
 
+      const studentEmailArgs = {
+        invokePath: "/api/student/send-email",
+        headers: {
+          "x-api-key": process.env.API_KEY
+        },
+        method: "POST",
+        body: {
+          emailReceiver: student.mailingEmail,
+          emailSubject: "Driving School Course Completion",
+          emailBody: generateCompletionEmailBody(
+            studentUserName,
+            results,
+            false
+          )
+        }
+      };
+
       await Promise.all([
-        invokeFunction(emailArgs),
+        invokeFunction(adminEmailArgs),
+        invokeFunction(studentEmailArgs),
         updateStudentItem(drivingSchoolID, studentUserName, {
           ":completionDate": Date(),
           ":isCourseCompleted": true
