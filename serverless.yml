@@ -233,6 +233,9 @@ functions:
     timeout: 300
     events:
       - httpApi: "*"
+  addChapterOrderCmd:
+    name: ${sls:stage}-add-chapter-order-cmd
+    handler: src/command/addChapterOrder.handler
 
 resources:
   Resources:

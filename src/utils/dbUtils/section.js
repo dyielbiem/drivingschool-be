@@ -1,8 +1,18 @@
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 const TableName = process.env.SECTION_TABLE;
+
+export const getAllSection = async (otherArgs = {}) => {
+  const command = new ScanCommand({
+    TableName,
+    ...otherArgs
+  });
+
+  const result = await dynamoClient.send(command);
+  return result;
+};
 
 export const getSection = async (sectionID) => {
   const command = new GetCommand({
