@@ -31,8 +31,8 @@
     "local": "nodemon --exec serverless offline start --stage local",
     "deploy_staging": "npx serverless deploy --stage staging",
     "deploy_prod": "npx serverless deploy --stage dev",
-    "local_cmd": "npx serverless invoke local -f",
-    "cmd": "npx serverless invoke --log -f"
+    "cmd": "npx serverless invoke local -f",
+    "local_cmd": "set IS_OFFLINE=true && npx serverless invoke local -f"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

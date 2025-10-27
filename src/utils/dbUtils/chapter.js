@@ -17,8 +17,8 @@ export const getSectionChapters = async (sectionID, otherArgs = {}) => {
   return result;
 };
 
-export const updateChapterOrder = async (set) => {
-  const TransactItems = set.slice(0, 25).map((item, idx) => {
+export const updateChapterOrder = async (chapters) => {
+  const TransactItems = chapters.slice(0, 25).map((item, idx) => {
     const { chapterID } = item;
 
     return {

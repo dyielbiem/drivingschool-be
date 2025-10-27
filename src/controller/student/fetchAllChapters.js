@@ -21,7 +21,8 @@ const fetchAllChapters = async (req, res) => {
     const [{ Items: sectionChapters = [] }, { Items: studentResults = [] }] =
       await Promise.all([
         getSectionChapters(sectionID, {
-          ProjectionExpression: "chapterID, chapterTitle, chapterContent"
+          ProjectionExpression:
+            "chapterID, chapterTitle, chapterContent, noOfQuestionsToShow, chapterOrder"
         }),
         getStudentResults(drivingSchoolID, studentUserName, {
           FilterExpression: "attribute_exists(chapterID)"
@@ -31,7 +32,9 @@ const fetchAllChapters = async (req, res) => {
     if (sectionChapters.length === 0)
       return res.status(200).json({ chapters: [] });
 
-    sectionChapters.sort((a, b) => a.chapterID.localeCompare(b.chapterID));
+    sectionChapters.sort(
+      (a, b) => (a.chapterOrder || 0) - (b.chapterOrder || 0)
+    );
     studentResults.sort((a, b) => b.resultID.localeCompare(a.resultID));
 
     const { completedChapters = [] } = student;
