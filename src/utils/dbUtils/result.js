@@ -43,8 +43,8 @@ export const getStudentResultPerChapterAndSection = async (
   const [{ Items: chapters }, { Items: results }, { Items: questions }] =
     await Promise.all(dbPromises);
 
-  const sortedChapters = chapters.sort((a, b) =>
-    a.chapterID.localeCompare(b.chapterID)
+  const sortedChapters = chapters.sort(
+    (a, b) => (a.chapterOrder || 0) - (b.chapterOrder || 0)
   );
   const sortedResults = results.sort((a, b) => {
     if (a.sectionID && !b.sectionID) return 1;
