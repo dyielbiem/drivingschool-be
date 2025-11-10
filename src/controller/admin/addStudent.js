@@ -138,31 +138,34 @@ const addStudent = async (req, res) => {
           .replace("{ username }", userName)
           .replace("{ password }", passWord)
       ),
-      emailAdminAboutNewStudent([
-        { label: "First Name", value: firstName },
-        { label: "Last Name", value: lastName },
-        {
-          label: "Date of Birth",
-          value: strBirthDate
-        },
-        { label: "Address", value: address },
-        { label: "City", value: city },
-        { label: "State", value: state },
-        { label: "Zip Code", value: zip },
-        { label: "Phone Number", value: phoneNumber },
-        { label: "Email Address", value: email },
-        {
-          label: "Start Date",
-          value: dayjs(enrollmentDate).format("MM-DD-YYYY")
-        },
-        { label: "Username", value: userName },
-        { label: "Password", value: passWord },
-        { label: "Course", value: course.courseName },
-        { label: "Course Price", value: course.coursePrice },
-        { label: "Coupon Code", value: "" },
-        { label: "Coupon Price", value: "" },
-        { label: "School", value: highSchool || "" }
-      ])
+      emailAdminAboutNewStudent(
+        [
+          { label: "First Name", value: firstName },
+          { label: "Last Name", value: lastName },
+          {
+            label: "Date of Birth",
+            value: strBirthDate
+          },
+          { label: "Address", value: address },
+          { label: "City", value: city },
+          { label: "State", value: state },
+          { label: "Zip Code", value: zip },
+          { label: "Phone Number", value: phoneNumber },
+          { label: "Email Address", value: email },
+          {
+            label: "Start Date",
+            value: dayjs(enrollmentDate).format("MM-DD-YYYY")
+          },
+          { label: "Username", value: userName },
+          { label: "Password", value: passWord },
+          { label: "Course", value: course.courseName },
+          { label: "Course Price", value: course.coursePrice },
+          { label: "Coupon Code", value: "" },
+          { label: "Coupon Price", value: "" },
+          { label: "School", value: highSchool || "" }
+        ],
+        drivingSchool.email
+      )
     ];
 
     await Promise.all(emailRequests);

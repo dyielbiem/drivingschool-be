@@ -20,7 +20,7 @@ const getEmailBody = (fields) => {
   return emailBody;
 };
 
-export default async (fields) => {
+export default async (fields, emailReceiver) => {
   const requestConfig = {
     invokePath: "/api/student/send-email",
     headers: {
@@ -28,7 +28,7 @@ export default async (fields) => {
     },
     method: "POST",
     body: {
-      emailReceiver: process.env.ADMIN_EMAIL_RECEIVER,
+      emailReceiver: emailReceiver || process.env.ADMIN_EMAIL_RECEIVER,
       emailSubject: "New Student Enrollment",
       emailBody: getEmailBody(fields)
     }

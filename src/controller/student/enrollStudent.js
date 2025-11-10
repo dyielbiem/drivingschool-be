@@ -223,28 +223,31 @@ const enrollStudent = async (req, res) => {
           .replace("{ username }", accountInformation.userName)
           .replace("{ password }", accountInformation.passWord)
       ),
-      emailAdminAboutNewStudent([
-        { label: "First Name", value: mailingInformation.firstName },
-        { label: "Last Name", value: mailingInformation.lastName },
-        { label: "Date of Birth", value: strBirthDate },
-        { label: "Address", value: mailingInformation.address },
-        { label: "City", value: mailingInformation.city },
-        { label: "State", value: mailingInformation.state },
-        { label: "Zip Code", value: mailingInformation.zip },
-        { label: "Phone Number", value: mailingInformation.phoneNumber },
-        { label: "Email Address", value: mailingInformation.email },
-        {
-          label: "Start Date",
-          value: dayjs(enrollmentDate).format("MM-DD-YYYY")
-        },
-        { label: "Username", value: accountInformation.userName },
-        { label: "Password", value: accountInformation.passWord },
-        { label: "Course", value: course.courseName },
-        { label: "Course Price", value: course.coursePrice },
-        { label: "Coupon Code", value: coupon?.couponCode || "" },
-        { label: "Coupon Price", value: coupon?.couponAmount || "" },
-        { label: "School", value: accountInformation.highSchool || "" }
-      ])
+      emailAdminAboutNewStudent(
+        [
+          { label: "First Name", value: mailingInformation.firstName },
+          { label: "Last Name", value: mailingInformation.lastName },
+          { label: "Date of Birth", value: strBirthDate },
+          { label: "Address", value: mailingInformation.address },
+          { label: "City", value: mailingInformation.city },
+          { label: "State", value: mailingInformation.state },
+          { label: "Zip Code", value: mailingInformation.zip },
+          { label: "Phone Number", value: mailingInformation.phoneNumber },
+          { label: "Email Address", value: mailingInformation.email },
+          {
+            label: "Start Date",
+            value: dayjs(enrollmentDate).format("MM-DD-YYYY")
+          },
+          { label: "Username", value: accountInformation.userName },
+          { label: "Password", value: accountInformation.passWord },
+          { label: "Course", value: course.courseName },
+          { label: "Course Price", value: course.coursePrice },
+          { label: "Coupon Code", value: coupon?.couponCode || "" },
+          { label: "Coupon Price", value: coupon?.couponAmount || "" },
+          { label: "School", value: accountInformation.highSchool || "" }
+        ],
+        drivingSchool.email
+      )
     ];
 
     await Promise.all(emailRequests);
