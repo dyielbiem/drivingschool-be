@@ -1,36 +1,6 @@
+import dayjs from "dayjs";
+
 import { getCoupon } from "./dbUtils/coupon.js";
-
-export const getFinalChargeAmount = (coupon, chargeAmount) => {
-  const finalChargeAmount = !coupon?.couponAmount
-    ? chargeAmount
-    : coupon?.couponAmount >= chargeAmount
-      ? 0
-      : chargeAmount - (coupon?.couponAmount || 0);
-
-  return finalChargeAmount;
-};
-
-export const validateCoupon = async (couponCode, drivingSchoolID) => {
-  if (!couponCode) {
-    return [null, true];
-  }
-
-  const { Item: coupon } = await getCoupon(
-    couponCode?.toLowerCase?.(),
-    drivingSchoolID
-  );
-
-  if (!coupon) {
-    return [coupon, false];
-  }
-
-  const expiryDate = new Date(coupon.toDate);
-  expiryDate.setDate(expiryDate.getDate() + 1);
-
-  const isValid = coupon.isActive && expiryDate > new Date();
-
-  return [coupon, isValid];
-};
 
 export const handleAuthorizeResponse = (response) => {
   const { resultCode, message } = response.messages || {};
@@ -55,4 +25,42 @@ export const handleAuthorizeResponse = (response) => {
     ok: true,
     errorMessage: ""
   };
+};
+
+export const validateCoupon = (coupon) => {
+  if (!coupon || !coupon.isActive) return false;
+  const currentDate = dayjs().startOf("day");
+  const couponFromDate = dayjs(coupon.fromDate, "YYYY-MM-DD").startOf("day");
+  const couponToDate = dayjs(coupon.toDate, "YYYY-MM-DD").endOf("day");
+
+  if (currentDate.isBefore(couponFromDate) || currentDate.isAfter(couponToDate))
+    return false;
+
+  return true;
+};
+
+export const getFinalChargeAmount = async (
+  couponCode,
+  drivingSchoolID,
+  coursePrice
+) => {
+  const invalidCouponError = "Invalid coupon code";
+  if (!couponCode)
+    return {
+      finalChargeAmount: coursePrice,
+      coupon: null
+    };
+
+  const { Item: coupon } = await getCoupon(
+    couponCode?.toLowerCase?.(),
+    drivingSchoolID
+  );
+
+  const isCouponValid = validateCoupon(coupon);
+  if (!isCouponValid) throw Error(invalidCouponError);
+
+  const couponDiscount = coupon.couponAmount || 0;
+  const finalChargeAmount = Math.max(coursePrice - couponDiscount, 0);
+
+  return { coupon, finalChargeAmount };
 };

@@ -1,13 +1,20 @@
 import dayjs from "dayjs";
+import { nanoid } from "nanoid";
 import { parseDate } from "chrono-node";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 import dynamoClient from "../../db_connection/dbCLient.js";
 import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
+import payment from "../../utils/payment.js";
 import { encrypt } from "../../utils/crypto.js";
-import { hashPassWord } from "../../utils/index.js";
+import { hashPassWord, validateObject } from "../../utils/index.js";
+import {
+  getFinalChargeAmount,
+  handleAuthorizeResponse
+} from "../../utils/enrollment.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
 import { getActiveSection } from "../../utils/dbUtils/section.js";
 
@@ -38,23 +45,16 @@ const addStudent = async (req, res) => {
       parentEmail,
       parentPhoneNumber,
       birthDate = "",
-      billingInformation = {
-        firstName: "",
-        lastName: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: "",
-        email: "",
-        phoneNumber: ""
-      }
+      billingInformation = null,
+      cardInformation = null,
+      couponCode = ""
     } = req.body;
 
     if (
       !userName ||
       !passWord ||
-      !courseID ||
       !confirmPassWord ||
+      !courseID ||
       !firstName ||
       !lastName ||
       !address ||
@@ -71,18 +71,115 @@ const addStudent = async (req, res) => {
 
     if (passWord !== confirmPassWord) throw Error("Passwords do not match");
 
-    // Check if course ID is valid
-    const { Item: course } = await getCourse(courseID);
-    if (!course) throw Error("Invalid course ID");
+    const CIFields = ["cardNumber", "cardCode", "cardExpiration"];
+    const BIFields = [
+      "firstName",
+      "lastName",
+      "address",
+      "city",
+      "state",
+      "zip",
+      "email",
+      "phoneNumber"
+    ];
 
-    // If course is valid, get the active section
-    const activeSection = await getActiveSection(drivingSchoolID);
+    const [
+      { Item: drivingSchool },
+      { Item: existingStudent },
+      { Item: course },
+      activeSection
+    ] = await Promise.all([
+      getDrivingSchool(drivingSchoolID),
+      getStudent(drivingSchoolID, userName),
+      getCourse(courseID),
+      getActiveSection(drivingSchoolID)
+    ]);
+
+    if (!drivingSchool) throw Error("Driving school does not exist");
+    if (existingStudent) throw Error("Student username is already taken");
+    if (!course) throw Error("Invalid course ID");
     if (!activeSection) throw Error("The driving school has no active section");
+
+    const { finalChargeAmount } = await getFinalChargeAmount(
+      couponCode,
+      drivingSchoolID,
+      course.coursePrice
+    );
+
+    let response = {
+      refId: "",
+      transactionResponse: {
+        transId: "",
+        accountNumber: "",
+        accountType: ""
+      }
+    };
+
+    if (cardInformation) {
+      validateObject(cardInformation, CIFields, "cardInformation");
+      validateObject(billingInformation, BIFields, "billingInformation");
+
+      if (finalChargeAmount > 0) {
+        const paymentID = nanoid(20);
+
+        const drivingSchoolCredentials = {
+          drivingSchoolID,
+          paymentLogInKey: drivingSchool.paymentLogInKey,
+          paymentTransactionKey: drivingSchool.paymentTransactionKey
+        };
+        const accountInformation = {
+          userName,
+          passWord,
+          confirmPassWord,
+          birthDate
+        };
+        const mailingInformation = {
+          firstName,
+          lastName,
+          company,
+          address,
+          city,
+          state,
+          zip,
+          country: "United States",
+          email,
+          phoneNumber
+        };
+
+        response = await payment(
+          drivingSchoolCredentials,
+          accountInformation,
+          mailingInformation,
+          {
+            ...billingInformation,
+            country: "United States"
+          },
+          cardInformation,
+          courseID,
+          course.courseName,
+          finalChargeAmount,
+          paymentID
+        );
+
+        const { ok, errorMessage } = handleAuthorizeResponse(response);
+        if (!ok) throw Error(errorMessage);
+      }
+    }
 
     const hashedPassWord = await hashPassWord(passWord);
     const encryptedPassWord = encrypt(passWord);
     const enrollmentDate = new Date();
     const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
+
+    const transformedBillingInformation = {};
+    if (billingInformation) {
+      Object.keys(billingInformation).forEach((key) => {
+        const transformedKey = `billing${key[0].toUpperCase()}${key.slice(1)}`;
+        transformedBillingInformation[transformedKey] = billingInformation[key];
+      });
+
+      transformedBillingInformation.billingCountry = "United States";
+    }
 
     const command = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
@@ -104,15 +201,6 @@ const addStudent = async (req, res) => {
         mailingCountry: "United States",
         mailingEmail: email,
         mailingPhoneNumber: phoneNumber,
-        billingFirstName: billingInformation.firstName || "",
-        billingLastName: billingInformation.lastName || "",
-        billingAddress: billingInformation.address || "",
-        billingCity: billingInformation.city || "",
-        billingState: billingInformation.state || "",
-        billingZip: billingInformation.zip || "",
-        billingCountry: "United States",
-        billingEmail: billingInformation.email || "",
-        billingPhoneNumber: billingInformation.phoneNumber || "",
         birthDate: strBirthDate,
         enrollmentDate: enrollmentDate.toString(),
         highSchool,
@@ -120,15 +208,20 @@ const addStudent = async (req, res) => {
         parentLastName,
         parentEmail,
         parentPhoneNumber,
-        isActive: true
+        isActive: true,
+        usedCouponCode: couponCode,
+        paymentID: response.refId,
+        transactionID: response.transactionResponse.transId,
+        accountNumber: response.transactionResponse.accountNumber,
+        accountType: response.transactionResponse.accountType,
+        paidAmount: cardInformation ? finalChargeAmount : 0,
+        ...transformedBillingInformation
       },
       ConditionExpression:
         "attribute_not_exists(studentUserName) AND attribute_not_exists(drivingSchoolID)"
     });
 
     await dynamoClient.send(command);
-
-    const { Item: drivingSchool } = await getDrivingSchool(drivingSchoolID);
 
     const emailRequests = [
       sendStudentWelcomeEmail(
@@ -167,7 +260,6 @@ const addStudent = async (req, res) => {
         drivingSchool.email
       )
     ];
-
     await Promise.all(emailRequests);
 
     res.status(200).json({
@@ -192,6 +284,8 @@ const addStudent = async (req, res) => {
       parentLastName,
       parentEmail,
       parentPhoneNumber,
+      usedCouponCode: couponCode,
+      paidAmount: cardInformation ? finalChargeAmount : 0,
       isActive: true
     });
   } catch (error) {

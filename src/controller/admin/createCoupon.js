@@ -1,4 +1,6 @@
+import dayjs from "dayjs";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
 
 /*
@@ -36,14 +38,17 @@ const createCoupon = async (req, res) => {
 
     const lowerCaseCouponCode = couponCode.toLowerCase?.();
 
+    const parsedFromDate = dayjs(fromDate).startOf("day").format("YYYY-MM-DD");
+    const parsedToDate = dayjs(toDate).startOf("day").format("YYYY-MM-DD");
+
     const command = new PutCommand({
       TableName: process.env.COUPON_TABLE,
       Item: {
         couponCode: lowerCaseCouponCode,
         drivingSchoolID,
         couponAmount,
-        fromDate,
-        toDate,
+        fromDate: parsedFromDate,
+        toDate: parsedToDate,
         isActive: true,
         dateAdded: Date(),
         addedBy: adminUserName
@@ -58,8 +63,8 @@ const createCoupon = async (req, res) => {
       couponCode: lowerCaseCouponCode,
       drivingSchoolID,
       couponAmount,
-      fromDate,
-      toDate,
+      fromDate: parsedFromDate,
+      toDate: parsedToDate,
       isActive: true,
       dateAdded: Date(),
       addedBy: adminUserName
