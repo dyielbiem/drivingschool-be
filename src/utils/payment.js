@@ -51,7 +51,7 @@ const payment = (
   billTo.setState(compressedField(billingInformation.state, 40));
   billTo.setZip(compressedField(billingInformation.zip, 20));
   billTo.setCountry(compressedField(billingInformation.country, 60));
-  billTo.setPhoneNumber(compressedField(billingInformation.city, 25));
+  billTo.setPhoneNumber(compressedField(billingInformation.phoneNumber, 25));
 
   const shipTo = new APIContracts.CustomerAddressType();
   shipTo.setFirstName(compressedField(mailingInformation.firstName, 50));
