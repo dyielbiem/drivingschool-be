@@ -1,6 +1,65 @@
-import { QueryCommand, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ulid } from "ulid";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
+import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { getSection } from "../../utils/dbUtils/section.js";
+import { getStudent, updateStudentItem } from "../../utils/dbUtils/student.js";
+import { getStudentResultPerChapterAndSection } from "../../utils/dbUtils/result.js";
+import { getSectionQuestions } from "../../utils/dbUtils/question.js";
+
+const generateCompletionEmailBody = (
+  studentUserName,
+  results,
+  forAdmin = true
+) => {
+  const salutation = forAdmin ? "Hello Admin," : `Hello ${studentUserName},`;
+  const openingParagraph = forAdmin
+    ? `This is to inform you that student <strong>${studentUserName}</strong>
+        has successfully completed the online course. The test scores are listed below.`
+    : "This is to inform you that you have successfully completed your online course. Your test scores are listed below.";
+
+  return `
+    <div style="max-width: 600px;">
+      <p style="margin-bottom: 16px; font-size:16px;">${salutation}</p>
+      <p style="margin-bottom: 12px; font-size:16px;">${openingParagraph}</p>
+      <div>
+        <strong style="margin: 0px; display: inline; font-size: 16px;">
+          Chapters
+        </strong>
+        <strong style="margin: 0px; float: right; display: inline; font-size: 16px;">
+          Score
+        </strong>
+      </div>
+      ${results
+        .map((r) => {
+          const {
+            chapterTitle,
+            sectionTitle,
+            hasTest,
+            score,
+            numberOfQuestions
+          } = r;
+          return `
+            <div>
+              <p style="margin: 0px; display: inline; font-size: 14px;">
+                ${chapterTitle || sectionTitle}
+              </p>
+              <p style="margin: 0px; float: right; display: inline; font-size: 14px;">
+                ${
+                  hasTest
+                    ? `${((score || 1) / (numberOfQuestions || 1)) * 100}%`
+                    : "N/A"
+                }
+              </p>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+};
 
 /*
 ---- Controller to generate the section test result
@@ -14,59 +73,28 @@ const generateSectionTestResult = async (req, res) => {
       throw Error("The field 'answers' must be an array, not a string");
     if (answers.length === 0) throw Error("Answers must not be an empty array");
 
-    // Check if section exists
-    const getSectionCmd = new GetCommand({
-      TableName: process.env.SECTION_TABLE,
-      Key: {
-        sectionID
-      }
-    });
+    const [{ Item: section }, { Items: test }, { Item: student }] =
+      await Promise.all([
+        getSection(sectionID),
+        getSectionQuestions(sectionID),
+        getStudent(drivingSchoolID, studentUserName)
+      ]);
 
-    const { Item: section } = await dynamoClient.send(getSectionCmd);
     if (!section) throw Error("Section does not exist");
-
-    // Get the test questions from the database
-    const queryQuestionsCmd = new QueryCommand({
-      TableName: process.env.QUESTION_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionIDValue",
-      ExpressionAttributeValues: {
-        ":sectionIDValue": sectionID
-      },
-      ProjectionExpression: "questionID, correctAnswer"
-    });
-
-    const { Items: test } = await dynamoClient.send(queryQuestionsCmd);
     if (test.length === 0) throw Error("Section has no test");
+    if (!student) throw Error("Student does not exist");
 
     // Check if the length of provided answers is valid
-    const invalidAnswersLength = {
-      conditionOne:
-        (!section.noOfQuestionsToShow ||
-          section.noOfQuestionsToShow > test.length) &&
-        answers.length !== test.length,
-      conditionTwo:
-        section.noOfQuestionsToShow &&
-        section.noOfQuestionsToShow <= test.length &&
-        section.noOfQuestionsToShow !== answers.length
-    };
+    const { noOfQuestionsToShow } = section;
+    const hasAnswersLengthError =
+      !noOfQuestionsToShow || noOfQuestionsToShow > test.length
+        ? answers.length !== test.length
+        : noOfQuestionsToShow !== answers.length;
 
-    if (invalidAnswersLength.conditionOne || invalidAnswersLength.conditionTwo)
+    if (hasAnswersLengthError)
       throw Error(
         "The provided answers does not match the length of the section questions"
       );
-
-    // Check if student exists
-    const getStudentCommand = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID,
-        studentUserName
-      }
-    });
-
-    const { Item: student } = await dynamoClient.send(getStudentCommand);
-    if (!student) throw Error("Student does not exist");
 
     // Calculate the correct answer of the student
     let noOfCorrectAnswers = 0;
@@ -92,6 +120,7 @@ const generateSectionTestResult = async (req, res) => {
     const scorePercentage = noOfCorrectAnswers / answers.length;
 
     const resultID = ulid();
+    const isPassed = scorePercentage >= 0.75;
     const putResultCommand = new PutCommand({
       TableName: process.env.RESULT_TABLE,
       Item: {
@@ -103,7 +132,7 @@ const generateSectionTestResult = async (req, res) => {
         numberOfQuestions: answers.length,
         answers,
         scorePercentage: scorePercentage * 100,
-        isPassed: scorePercentage >= 0.75,
+        isPassed,
         dateAnswered: Date()
       },
       ConditionExpression: "attribute_not_exists(resultID)"
@@ -111,13 +140,59 @@ const generateSectionTestResult = async (req, res) => {
 
     await dynamoClient.send(putResultCommand);
 
+    if (isPassed) {
+      const [{ Item: drivingSchool }, results] = await Promise.all([
+        getDrivingSchool(drivingSchoolID),
+        getStudentResultPerChapterAndSection(drivingSchoolID, studentUserName)
+      ]);
+
+      const adminEmailArgs = {
+        invokePath: "/api/student/send-email",
+        headers: {
+          "x-api-key": process.env.API_KEY
+        },
+        method: "POST",
+        body: {
+          emailReceiver: drivingSchool.email,
+          emailSubject: "Student Course Completion",
+          emailBody: generateCompletionEmailBody(studentUserName, results)
+        }
+      };
+
+      const studentEmailArgs = {
+        invokePath: "/api/student/send-email",
+        headers: {
+          "x-api-key": process.env.API_KEY
+        },
+        method: "POST",
+        body: {
+          emailReceiver: student.mailingEmail,
+          emailSubject: "Driving School Course Completion",
+          emailBody: generateCompletionEmailBody(
+            studentUserName,
+            results,
+            false
+          )
+        }
+      };
+
+      await Promise.all([
+        invokeFunction(adminEmailArgs),
+        invokeFunction(studentEmailArgs),
+        updateStudentItem(drivingSchoolID, studentUserName, {
+          ":completionDate": Date(),
+          ":isCourseCompleted": true
+        })
+      ]);
+    }
+
     res.status(200).json({
       resultID,
       sectionID,
       numberOfQuestions: answers.length,
       score: noOfCorrectAnswers,
       scorePercentage: scorePercentage * 100,
-      isPassed: scorePercentage >= 0.75
+      isPassed
     });
   } catch (error) {
     if (error.message === "The conditional request failed")

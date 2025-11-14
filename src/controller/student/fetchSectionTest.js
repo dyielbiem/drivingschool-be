@@ -43,8 +43,7 @@ const fetchSectionTest = async (req, res) => {
         Object.assign(question, {
           ...question,
           choices,
-          otherChoices: undefined,
-          correctAnswer: undefined
+          otherChoices: undefined
         });
       });
 

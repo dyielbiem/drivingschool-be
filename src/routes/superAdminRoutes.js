@@ -3,12 +3,14 @@ import authorizeSuperAdmin from "../middleware/authorizeSuperAdmin.js";
 import signUpSuperAdmin from "../controller/superAdmin/signUpSuperAdmin.js";
 import createDrivingSchool from "../controller/superAdmin/createDrivingSchool.js";
 import loginSuperAdmin from "../controller/superAdmin/logInSuperAdmin.js";
+import resetAdminPassword from "../controller/superAdmin/resetAdminPassword.js";
 import deleteAdmin from "../controller/superAdmin/deleteAdmin.js";
 import fetchAllSuperAdmins from "../controller/superAdmin/fetchAllSuperAdmins.js";
 import fetchAllAdmins from "../controller/superAdmin/fetchAllAdmins.js";
 import authenticateAPIKey from "../middleware/authenticateAPIKey.js";
 import obtainAccessToken from "../controller/superAdmin/obtainAccessToken.js";
 import validateRefreshToken from "../controller/superAdmin/validateRefreshToken.js";
+import addAdmin from "../controller/superAdmin/addAdmin.js";
 
 /*
 ------- Router for super admin
@@ -26,7 +28,13 @@ superAdminRouter.post(
   authorizeSuperAdmin,
   createDrivingSchool
 );
+superAdminRouter.post("/admin", authorizeSuperAdmin, addAdmin);
 superAdminRouter.delete("/admin", authorizeSuperAdmin, deleteAdmin);
-superAdminRouter.get("/fetch-admins", authorizeSuperAdmin, fetchAllAdmins);
+superAdminRouter.patch(
+  "/admin/password",
+  authorizeSuperAdmin,
+  resetAdminPassword
+);
+superAdminRouter.get("/admin/list", authorizeSuperAdmin, fetchAllAdmins);
 
 export default superAdminRouter;

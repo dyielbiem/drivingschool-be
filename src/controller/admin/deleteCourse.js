@@ -1,5 +1,4 @@
-import { DeleteCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
+import { updateCourseItem } from "../../utils/dbUtils/course.js";
 
 /*
 ---- Controller to delete a course of a driving school
@@ -10,18 +9,11 @@ const deleteCourse = async (req, res) => {
     const { courseID } = req.query;
     if (!courseID) throw Error("Course ID must be provided");
 
-    const command = new DeleteCommand({
-      TableName: process.env.COURSE_TABLE,
-      Key: {
-        courseID
-      },
-      ConditionExpression: "attribute_exists(courseID)",
-      ReturnValues: "ALL_OLD"
+    await updateCourseItem(courseID, { ":isDeleted": true });
+
+    return res.status(200).json({
+      message: "Course has been deleted"
     });
-
-    const response = await dynamoClient.send(command);
-
-    return res.status(200).json(response);
   } catch (error) {
     if (error.message === "The conditional request failed")
       return res.status(400).json({ error: "Course does not exist" });

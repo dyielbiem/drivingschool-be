@@ -44,6 +44,9 @@ import updateSubChapterTitle from "../controller/admin/updateSubChapterTitle.js"
 import addStudent from "../controller/admin/addStudent.js";
 import fetchSiteSettings from "../controller/admin/fetchSiteSettings.js";
 import updateSiteSettings from "../controller/admin/updateSiteSettings.js";
+import fetchPolicy from "../controller/admin/fetchPolicy.js";
+import fetchPublicPolicy from "../controller/admin/fetchPublicPolicy.js";
+import updatePolicy from "../controller/admin/updatePolicy.js";
 import fetchEmailContent from "../controller/admin/fetchEmailContent.js";
 import updateEmailContent from "../controller/admin/updateEmailContent.js";
 import generateCourseImageSignedURL from "../controller/admin/generateCourseImageSignedURL.js";
@@ -64,12 +67,27 @@ import updateShownChapterQCount from "../controller/admin/updateShownChapterQCou
 import updateShownSectionQCount from "../controller/admin/updateShownSectionQCount.js";
 import generateChapterImageSignedURL from "../controller/admin/generateChapterImageSignedURL.js";
 import fetchSubChaptersProgress from "../controller/admin/fetchSubChaptersProgress.js";
+import updateStudentPassword from "../controller/admin/updateStudentPassword.js";
+import fetchStudent from "../controller/admin/fetchStudent.js";
+import fetchStudentPassword from "../controller/admin/fetchStudentPassword.js";
+import emailStudentAccountInfo from "../controller/admin/emailStudentAccountInfo.js";
+import addAffiliation from "../controller/admin/addAffiliation.js";
+import fetchAffiliation from "../controller/admin/fetchAffiliation.js";
+import updateAffiliation from "../controller/admin/updateAffiliation.js";
+import deleteAffiliation from "../controller/admin/deleteAffiliation.js";
+import fetchAllAffiliations from "../controller/admin/fetchAllAffiliations.js";
+import fetchAffiliationStudents from "../controller/admin/fetchAffiliationStudents.js";
+import updateChaptersOrder from "../controller/admin/updateChaptersOrder.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
     windowMs: 2 * 60 * 1000,
     max: 5,
-    message: "You can request send a request again after 2 minutes"
+    handler: (_, res) => {
+      res.status(429).json({
+        error: "You can send a request again after 2 minutes"
+      });
+    }
   });
 
 const adminRouter = Router();
@@ -116,6 +134,11 @@ adminRouter.patch(
   "/section/chapter/content",
   authorizeAdmin,
   updateChapterContent
+);
+adminRouter.patch(
+  "/section/chapter/list/order",
+  authorizeAdmin,
+  updateChaptersOrder
 );
 adminRouter.get("/section/chapter/list", authorizeAdmin, fetchAllChapters);
 adminRouter.get("/section/chapter", authorizeAdmin, fetchChapterByID);
@@ -165,7 +188,9 @@ adminRouter.post("/section/question", authorizeAdmin, addSectionQuestion);
 adminRouter.get("/section/test", authorizeAdmin, fetchSectionTest);
 adminRouter.delete("/question", authorizeAdmin, deleteQuestion);
 adminRouter.patch("/question", authorizeAdmin, updateQuestion);
+adminRouter.get("/student", authorizeAdmin, fetchStudent);
 adminRouter.post("/student", authorizeAdmin, addStudent);
+adminRouter.get("/student/password", authorizeAdmin, fetchStudentPassword);
 adminRouter.get(
   "/student/section/list",
   authorizeAdmin,
@@ -192,6 +217,9 @@ adminRouter.get("/coupon/list", authorizeAdmin, fetchAllCoupons);
 adminRouter.get("/billing/list", authorizeAdmin, fetchAllBillingInfo);
 adminRouter.get("/setting/site", authorizeAdmin, fetchSiteSettings);
 adminRouter.patch("/setting/site", authorizeAdmin, updateSiteSettings);
+adminRouter.get("/policy", authorizeAdmin, fetchPolicy);
+adminRouter.get("/policy/public", authenticateAPIKey, fetchPublicPolicy);
+adminRouter.patch("/policy", authorizeAdmin, updatePolicy);
 adminRouter.get("/setting/email", authorizeAdmin, fetchEmailContent);
 adminRouter.patch("/setting/email", authorizeAdmin, updateEmailContent);
 adminRouter.patch("/password", authorizeAdmin, updatePassword);
@@ -217,6 +245,22 @@ adminRouter.patch(
   "/section/question/shown-count",
   authorizeAdmin,
   updateShownSectionQCount
+);
+adminRouter.patch("/student/password", authorizeAdmin, updateStudentPassword);
+adminRouter.get(
+  "/student/account/email",
+  authorizeAdmin,
+  emailStudentAccountInfo
+);
+adminRouter.post("/affiliation", authorizeAdmin, addAffiliation);
+adminRouter.get("/affiliation", authorizeAdmin, fetchAffiliation);
+adminRouter.patch("/affiliation", authorizeAdmin, updateAffiliation);
+adminRouter.delete("/affiliation", authorizeAdmin, deleteAffiliation);
+adminRouter.get("/affiliation/list", authorizeAdmin, fetchAllAffiliations);
+adminRouter.get(
+  "/affiliation/student/list",
+  authorizeAdmin,
+  fetchAffiliationStudents
 );
 
 export default adminRouter;

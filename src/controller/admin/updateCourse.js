@@ -7,8 +7,9 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 */
 const updateCourse = async (req, res) => {
   try {
-    const { courseID, coursePrice, courseDesc, isActive } = req.body;
-    if (!courseID || !coursePrice || isActive === undefined)
+    const { courseID, courseName, coursePrice, courseDesc, isActive } =
+      req.body;
+    if (!courseName || !courseID || !coursePrice || isActive === undefined)
       throw Error("All required fields must be provided");
     if (typeof coursePrice !== "number")
       throw Error("Course price must be a number");
@@ -21,11 +22,15 @@ const updateCourse = async (req, res) => {
         courseID
       },
       UpdateExpression:
-        "SET coursePrice = :coursePriceValue, courseDesc = :courseDescValue, isActive = :isActiveValue",
+        "SET courseName = :courseName, " +
+        "coursePrice = :coursePrice, " +
+        "courseDesc = :courseDesc, " +
+        "isActive = :isActive",
       ExpressionAttributeValues: {
-        ":coursePriceValue": coursePrice,
-        ":courseDescValue": courseDesc || "",
-        ":isActiveValue": isActive
+        ":courseName": courseName,
+        ":coursePrice": coursePrice,
+        ":courseDesc": courseDesc || "",
+        ":isActive": isActive
       },
       ConditionExpression: "attribute_exists(courseID)",
       ReturnValues: "ALL_NEW"

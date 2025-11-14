@@ -34,10 +34,12 @@ const createCoupon = async (req, res) => {
     if (fromDateFormatted > toDateFormatted)
       throw Error("Invalid coupon date validity");
 
+    const lowerCaseCouponCode = couponCode.toLowerCase?.();
+
     const command = new PutCommand({
       TableName: process.env.COUPON_TABLE,
       Item: {
-        couponCode,
+        couponCode: lowerCaseCouponCode,
         drivingSchoolID,
         couponAmount,
         fromDate,
@@ -53,7 +55,7 @@ const createCoupon = async (req, res) => {
     await dynamoClient.send(command);
 
     return res.status(200).json({
-      couponCode,
+      couponCode: lowerCaseCouponCode,
       drivingSchoolID,
       couponAmount,
       fromDate,

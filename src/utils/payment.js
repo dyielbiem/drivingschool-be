@@ -23,7 +23,6 @@ const payment = (
 ) => {
   const { APIContracts } = authorizenet;
   const { APIControllers } = authorizenet;
-  // const SDKConstants = authorizenet.Constants;
 
   const decryptedPaymentLogInKey = decrypt(
     drivingSchoolCredentials.paymentLogInKey
@@ -44,18 +43,22 @@ const payment = (
   const billTo = new APIContracts.CustomerAddressType();
   billTo.setFirstName(compressedField(billingInformation.firstName, 50));
   billTo.setLastName(compressedField(billingInformation.lastName, 50));
-  billTo.setCompany(compressedField(billingInformation.company, 50));
+  billTo.setCompany(
+    compressedField(billingInformation.company || "Not applicable", 50)
+  );
   billTo.setAddress(compressedField(billingInformation.address, 60));
   billTo.setCity(compressedField(billingInformation.city, 40));
   billTo.setState(compressedField(billingInformation.state, 40));
   billTo.setZip(compressedField(billingInformation.zip, 20));
   billTo.setCountry(compressedField(billingInformation.country, 60));
-  billTo.setPhoneNumber(compressedField(billingInformation.city, 25));
+  billTo.setPhoneNumber(compressedField(billingInformation.phoneNumber, 25));
 
   const shipTo = new APIContracts.CustomerAddressType();
   shipTo.setFirstName(compressedField(mailingInformation.firstName, 50));
   shipTo.setLastName(compressedField(mailingInformation.lastName, 50));
-  shipTo.setCompany(compressedField(mailingInformation.company, 50));
+  shipTo.setCompany(
+    compressedField(mailingInformation.company || "Not applicable", 50)
+  );
   shipTo.setAddress(compressedField(mailingInformation.address, 60));
   shipTo.setCity(compressedField(mailingInformation.city, 40));
   shipTo.setState(compressedField(mailingInformation.state, 40));
@@ -118,7 +121,11 @@ const payment = (
   const transactionController = new APIControllers.CreateTransactionController(
     createRequest.getJSON()
   );
-  // transactionController.setEnvironment(SDKConstants.endpoint.production);
+
+  if (process.env.IS_PRODUCTION === "true") {
+    const SDKConstants = authorizenet.Constants;
+    transactionController.setEnvironment(SDKConstants.endpoint.production);
+  }
 
   return new Promise((resolve) => {
     transactionController.execute(() => {

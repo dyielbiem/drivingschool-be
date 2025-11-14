@@ -24,11 +24,12 @@ const addCourse = async (req, res) => {
     const checkCourseCommand = new QueryCommand({
       TableName: process.env.COURSE_TABLE,
       IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "courseName = :courseNameValue",
+      KeyConditionExpression: "drivingSchoolID = :drivingSchoolID",
+      FilterExpression: "courseName = :courseName AND isDeleted <> :isDeleted",
       ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":courseNameValue": courseName
+        ":drivingSchoolID": drivingSchoolID,
+        ":courseName": courseName,
+        ":isDeleted": true
       }
     });
 

@@ -1,5 +1,7 @@
 import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+
 import dynamoClient from "../../db_connection/dbCLient.js";
+import { getCourse } from "../../utils/dbUtils/course.js";
 
 /*
 ---- Controller to fetch the section if the type of the course is online
@@ -9,18 +11,9 @@ const fetchSection = async (req, res) => {
   try {
     const { courseID, sectionID, drivingSchoolID, studentUserName } = req.body;
 
-    const getCourseCommand = new GetCommand({
-      TableName: process.env.COURSE_TABLE,
-      Key: {
-        courseID: courseID
-      },
-      ProjectionExpression: "courseID, courseType"
-    });
+    const { Item: course } = await getCourse(courseID);
 
-    const { Item: course } = await dynamoClient.send(getCourseCommand);
-    if (!course) throw Error("Invalid course ID");
-
-    if (course.courseType !== "Online")
+    if (!course || course.courseType !== "Online")
       return res.status(200).json({ message: "Course is non-online type" });
 
     const getSectionCommand = new GetCommand({

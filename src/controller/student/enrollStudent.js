@@ -1,17 +1,25 @@
+import dayjs from "dayjs";
 import { nanoid } from "nanoid";
-import bcrypt from "bcryptjs";
-import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { parseDate } from "chrono-node";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
+
 import payment from "../../utils/payment.js";
 import dynamoClient from "../../db_connection/dbCLient.js";
-import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
-
-const getFinalChargeAmount = (couponItem, chargeAmount) => {
-  if (!couponItem?.couponAmount) return chargeAmount;
-
-  if (couponItem?.couponAmount >= chargeAmount) return 0;
-
-  return chargeAmount - couponItem.couponAmount;
-};
+import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
+import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
+import { requiredBillingInfo } from "../../constants/index.js";
+import { hashPassWord } from "../../utils/index.js";
+import { encrypt } from "../../utils/crypto.js";
+import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
+import { getCourse } from "../../utils/dbUtils/course.js";
+import { getActiveSection } from "../../utils/dbUtils/section.js";
+import { getAffiliationByCode } from "../../utils/dbUtils/affiliation.js";
+import {
+  getFinalChargeAmount,
+  validateCoupon,
+  handleAuthorizeResponse
+} from "../../utils/enrollment.js";
 
 /*
 ---- Controller to enroll a student
@@ -21,12 +29,13 @@ const enrollStudent = async (req, res) => {
   try {
     const {
       drivingSchoolCredentials,
-      accountInformation,
-      mailingInformation,
-      billingInformation,
-      cardInformation,
+      accountInformation = {},
+      mailingInformation = {},
+      billingInformation = {},
+      cardInformation = {},
       courseID,
-      couponCode
+      couponCode,
+      affiliationCode
     } = req.body;
 
     if (
@@ -39,14 +48,14 @@ const enrollStudent = async (req, res) => {
     if (
       !accountInformation?.userName ||
       !accountInformation?.passWord ||
-      !accountInformation?.confirmPassWord
+      !accountInformation?.confirmPassWord ||
+      !accountInformation?.birthDate
     )
       throw Error("Account information must be complete");
 
     if (
       !mailingInformation?.firstName ||
       !mailingInformation?.lastName ||
-      !mailingInformation?.company ||
       !mailingInformation?.address ||
       !mailingInformation?.city ||
       !mailingInformation?.state ||
@@ -57,181 +66,136 @@ const enrollStudent = async (req, res) => {
     )
       throw Error("Mailing information must be complete");
 
-    if (
-      !billingInformation?.firstName ||
-      !billingInformation?.lastName ||
-      !billingInformation?.company ||
-      !billingInformation?.address ||
-      !billingInformation?.city ||
-      !billingInformation?.state ||
-      !billingInformation?.zip ||
-      !billingInformation?.country ||
-      !billingInformation?.email ||
-      !billingInformation?.phoneNumber
-    )
-      throw Error("Billing information must be complete");
+    if (accountInformation.userName.includes(" "))
+      throw Error("Username must not include spaces");
 
-    if (
-      !cardInformation?.cardNumber ||
-      !cardInformation?.cardCode ||
-      !cardInformation?.cardExpiration
-    )
-      throw Error("Card information must be complete");
+    const parsedBirthDate = parseDate(accountInformation.birthDate);
+    if (!parsedBirthDate) throw Error("Invalid birth date format");
 
     if (!courseID) throw Error("Course ID must be provided");
 
     if (accountInformation?.passWord !== accountInformation?.confirmPassWord)
       throw Error("Passwords do not match");
 
-    // Check if driving school is existing
-    const drivingSchoolGetCommand = new GetCommand({
-      TableName: process.env.DRIVING_SCHOOL_TABLE,
-      Key: {
-        drivingSchoolID: drivingSchoolCredentials.drivingSchoolID
-      }
-    });
-
-    const drivingSchoolResult = await dynamoClient.send(
-      drivingSchoolGetCommand
-    );
-
-    if (!drivingSchoolResult.Item)
-      throw Error("The driving school does not exist");
-
-    // Check if username is available
-    const studentGetCommand = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
-        studentUserName: accountInformation.userName
-      }
-    });
-
-    const studentResult = await dynamoClient.send(studentGetCommand);
-
-    if (studentResult.Item) throw Error("Username is already in use");
-
-    // Check if course ID is valid
-    const courseCommand = new GetCommand({
-      TableName: process.env.COURSE_TABLE,
-      Key: {
-        courseID: courseID
-      },
-      ProjectionExpression: "courseID, courseType, courseName, coursePrice"
-    });
-
-    const { Item: courseResult } = await dynamoClient.send(courseCommand);
-    if (!courseResult) throw Error("Invalid course ID");
-
-    // If course is valid, get the active section
-    const sectionCommand = new QueryCommand({
-      TableName: process.env.SECTION_TABLE,
-      IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "isActive  = :isActiveValue",
-      ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolCredentials.drivingSchoolID,
-        ":isActiveValue": true
-      },
-      ProjectionExpression: "sectionID"
-    });
-
-    const { Items: sectionResult } = await dynamoClient.send(sectionCommand);
-    if (sectionResult.length === 0)
-      throw Error("The driving school has no active section");
-
-    // Check if the provided coupon is valid
-    let couponItem;
-    if (couponCode) {
-      const couponCommand = new GetCommand({
-        TableName: process.env.COUPON_TABLE,
-        Key: {
-          drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
-          couponCode
-        }
-      });
-
-      const { Item } = await dynamoClient.send(couponCommand);
-
-      if (!Item) throw Error("Invalid coupon code");
-
-      const expiryDate = new Date(Item.toDate);
-      expiryDate.setDate(expiryDate.getDate() + 1);
-
-      if (!Item.isActive || expiryDate < new Date())
-        throw Error("Invalid coupon code");
-
-      couponItem = Item;
+    let affiliation = null;
+    if (affiliationCode) {
+      affiliation = await getAffiliationByCode(
+        drivingSchoolCredentials.drivingSchoolID,
+        affiliationCode
+      );
+      if (!affiliation) throw Error("Invalid affiliation code");
     }
 
+    const [
+      { Item: drivingSchool },
+      { Item: student },
+      { Item: course },
+      activeSection
+    ] = await Promise.all([
+      getDrivingSchool(drivingSchoolCredentials.drivingSchoolID),
+      getStudent(
+        drivingSchoolCredentials.drivingSchoolID,
+        accountInformation.userName
+      ),
+      getCourse(courseID),
+      getActiveSection(drivingSchoolCredentials.drivingSchoolID)
+    ]);
+
+    if (!drivingSchool) throw Error("The driving school does not exist");
+    if (student) throw Error("Username is already in use");
+    if (!course) throw Error("Invalid course ID");
+    if (!activeSection) throw Error("The driving school has no active section");
+
+    // Check if the provided coupon is valid
+    const [coupon, isCouponValid] = await validateCoupon(
+      couponCode,
+      drivingSchoolCredentials.drivingSchoolID
+    );
+    if (!isCouponValid) throw Error("Invalid coupon code");
+
     // Get the final charge amount
-    const finalChargeAmount = parseFloat(
-      getFinalChargeAmount(couponItem, courseResult.coursePrice).toFixed(2)
-    );
+    const finalChargeAmount = getFinalChargeAmount(coupon, course.coursePrice);
 
-    if (finalChargeAmount === 0)
-      throw Error("The coupon code is not applicable for this transaction");
+    let response = {
+      refId: "",
+      transactionResponse: {
+        transId: "",
+        accountNumber: "",
+        accountType: ""
+      }
+    };
 
-    const paymentID = nanoid(20);
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassWord = await bcrypt.hash(accountInformation.passWord, salt);
+    /* 
+      If final charge amount is more than zero,
+      Create a request to Authorize.net API Gateway
+      to charge the credit card 
+    */
+    if (finalChargeAmount > 0) {
+      const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
 
-    // Create a request to Authorize.net API Gateway
-    // to charge the credit card
-    const respond = await payment(
-      drivingSchoolCredentials,
-      accountInformation,
-      mailingInformation,
-      billingInformation,
-      cardInformation,
-      courseID,
-      courseResult.courseName,
-      finalChargeAmount,
-      paymentID
-    );
+      if (!cardNumber || !cardCode || !cardExpiration) {
+        throw Error("Card information must be complete");
+      }
 
-    if (respond.messages.resultCode !== "Ok")
-      return res.status(400).json({
-        error:
-          (respond.transactionResponse?.errors &&
-            respond.transactionResponse.errors[0].errorText) ||
-          (respond.messages?.message && respond.messages?.message[0].text) ||
-          "An error occured in payment transaction"
-      });
+      if (requiredBillingInfo.some((field) => !billingInformation?.[field]))
+        throw Error("Billing information must be complete");
 
-    if (respond.transactionResponse.responseCode !== "1")
-      return res.status(400).json({
-        error: "The credit card was declined"
-      });
+      const paymentID = nanoid(20);
+      response = await payment(
+        drivingSchoolCredentials,
+        accountInformation,
+        mailingInformation,
+        billingInformation,
+        cardInformation,
+        courseID,
+        course.courseName,
+        finalChargeAmount,
+        paymentID
+      );
 
-    // Add the student to database upon the
-    // successful payment transaction
+      const { ok, errorMessage } = handleAuthorizeResponse(response);
+      if (!ok) throw Error(errorMessage);
+    }
+
+    const hashedPassWord = await hashPassWord(accountInformation.passWord);
+    const encryptedPassWord = encrypt(accountInformation.passWord);
+    const enrollmentDate = new Date();
+    const strBirthDate = dayjs(parsedBirthDate).format("MM-DD-YYYY");
+    const affiliationAttr = affiliation
+      ? {
+          affiliationID: affiliation.affiliationID,
+          affiliationCode: affiliation.affiliationCode
+        }
+      : {};
+
+    // Add the student to database
     const putCommand = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
       Item: {
         drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
         studentUserName: accountInformation.userName,
         passWord: hashedPassWord,
+        encryptedPassWord,
         courseID: courseID,
-        sectionID: sectionResult[0]?.sectionID,
-        usedCouponCode: couponCode,
-        paymentID: respond.refId,
-        transactionID: respond.transactionResponse.transId,
-        accountNumber: respond.transactionResponse.accountNumber,
-        accountType: respond.transactionResponse.accountType,
-        billingFirstName: billingInformation.firstName,
-        billingLastName: billingInformation.lastName,
-        billingCompany: billingInformation.company,
-        billingAddress: billingInformation.address,
-        billingCity: billingInformation.city,
-        billingState: billingInformation.state,
-        billingZip: billingInformation.zip,
-        billingCountry: billingInformation.country,
-        billingEmail: billingInformation.email,
-        billingPhoneNumber: billingInformation.phoneNumber,
+        sectionID: activeSection.sectionID,
+        usedCouponCode: coupon?.couponCode || "",
+        paymentID: response.refId,
+        transactionID: response.transactionResponse.transId,
+        accountNumber: response.transactionResponse.accountNumber,
+        accountType: response.transactionResponse.accountType,
+        billingFirstName: billingInformation.firstName || "",
+        billingLastName: billingInformation.lastName || "",
+        billingCompany: billingInformation.company || "Not applicable",
+        billingAddress: billingInformation.address || "",
+        billingCity: billingInformation.city || "",
+        billingState: billingInformation.state || "",
+        billingZip: billingInformation.zip || "",
+        billingCountry: billingInformation.country || "",
+        billingEmail: billingInformation.email || "",
+        billingPhoneNumber: billingInformation.phoneNumber || "",
         mailingFirstName: mailingInformation.firstName,
         mailingLastName: mailingInformation.lastName,
-        mailingCompany: mailingInformation.company,
+        mailingCompany: mailingInformation.company || "",
         mailingAddress: mailingInformation.address,
         mailingCity: mailingInformation.city,
         mailingState: mailingInformation.state,
@@ -239,62 +203,72 @@ const enrollStudent = async (req, res) => {
         mailingCountry: mailingInformation.country,
         mailingEmail: mailingInformation.email,
         mailingPhoneNumber: mailingInformation.phoneNumber,
-        enrollmentDate: Date(),
+        highSchool: accountInformation.highSchool || "",
+        birthDate: strBirthDate,
+        enrollmentDate: enrollmentDate.toString(),
         paidAmount: finalChargeAmount,
         isActive: true,
-        courseType: courseResult.courseType
+        courseType: course.courseType,
+        ...affiliationAttr
       }
     });
 
     await dynamoClient.send(putCommand);
 
-    const emailSubject =
-      drivingSchoolResult.Item.emailSubject ||
-      `Welcome to ${drivingSchoolResult.Item.drivingSchoolName}`;
-    let emailBody =
-      drivingSchoolResult.Item.emailBody ||
-      `Hello ${accountInformation.userName}, welcome aboard to ${drivingSchoolResult.Item.drivingSchoolName}! Get ready to hit the road with confidence.`;
+    const emailRequests = [
+      sendStudentWelcomeEmail(
+        mailingInformation.email,
+        drivingSchool.emailSubject,
+        `${drivingSchool.emailBody || ""}`
+          .replace("{ username }", accountInformation.userName)
+          .replace("{ password }", accountInformation.passWord)
+      ),
+      emailAdminAboutNewStudent(
+        [
+          { label: "First Name", value: mailingInformation.firstName },
+          { label: "Last Name", value: mailingInformation.lastName },
+          { label: "Date of Birth", value: strBirthDate },
+          { label: "Address", value: mailingInformation.address },
+          { label: "City", value: mailingInformation.city },
+          { label: "State", value: mailingInformation.state },
+          { label: "Zip Code", value: mailingInformation.zip },
+          { label: "Phone Number", value: mailingInformation.phoneNumber },
+          { label: "Email Address", value: mailingInformation.email },
+          {
+            label: "Start Date",
+            value: dayjs(enrollmentDate).format("MM-DD-YYYY")
+          },
+          { label: "Username", value: accountInformation.userName },
+          { label: "Password", value: accountInformation.passWord },
+          { label: "Course", value: course.courseName },
+          { label: "Course Price", value: course.coursePrice },
+          { label: "Coupon Code", value: coupon?.couponCode || "" },
+          { label: "Coupon Price", value: coupon?.couponAmount || "" },
+          { label: "School", value: accountInformation.highSchool || "" }
+        ],
+        drivingSchool.email
+      )
+    ];
 
-    const userNameTemplatePattern = /\{ username \}/g;
-    const passWordTemplatePattern = /\{ password \}/g;
-
-    emailBody = emailBody.replace(
-      userNameTemplatePattern,
-      accountInformation.userName
-    );
-
-    emailBody = emailBody.replace(
-      passWordTemplatePattern,
-      accountInformation.passWord
-    );
-
-    const invokeFunctionArgs = {
-      invokePath: "/api/student/send-email",
-      headers: {
-        "x-api-key": process.env.API_KEY
-      },
-      method: "POST",
-      body: {
-        emailReceiver: mailingInformation.email,
-        emailSubject: emailSubject,
-        emailBody: emailBody
-      }
-    };
-
-    await invokeFunction(invokeFunctionArgs);
+    await Promise.all(emailRequests);
 
     res.status(200).json({
       drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
       userName: accountInformation.userName,
-      paymentID: respond.refId,
-      transactionID: respond.transactionResponse.transId,
+      paymentID: response.refId,
+      transactionID: response.transactionResponse.transId,
       paidAmount: finalChargeAmount,
-      sectionID: sectionResult[0]?.sectionID,
+      sectionID: activeSection.sectionID,
       message: "The enrollment process was successful",
-      courseType: courseResult.courseType
+      courseType: course.courseType
     });
   } catch (error) {
-    if (!error.code) return res.status(400).json({ error: error.message });
+    if (!error.code) {
+      console.log("ERROR: ", error.message); // eslint-disable-line
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    console.log("ERROR: ", error.message); // eslint-disable-line
     res.status(400).json(error);
   }
 };

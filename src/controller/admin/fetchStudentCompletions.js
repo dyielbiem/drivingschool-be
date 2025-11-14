@@ -1,5 +1,8 @@
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
+import { getStudentResults } from "../../utils/dbUtils/result.js";
+import { getSectionChapters } from "../../utils/dbUtils/chapter.js";
+import { getSectionSubChapters } from "../../utils/dbUtils/subChapter.js";
+import { getDrivingSchoolQuestions } from "../../utils/dbUtils/question.js";
 
 /*
 ---- Controller to fetch a student test results
@@ -12,118 +15,106 @@ const fetchStudentCompletions = async (req, res) => {
 
     if (!studentUserName) throw Error("Student username must be provided");
 
-    const getStudentCommand = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        studentUserName,
-        drivingSchoolID
-      }
-    });
-
-    const { Item: student } = await dynamoClient.send(getStudentCommand);
+    const { Item: student } = await getStudent(
+      drivingSchoolID,
+      studentUserName
+    );
     if (!student) throw Error("Student does not exist");
+    const {
+      sectionID,
+      completedChapters = [],
+      viewedSubChapters = []
+    } = student;
 
-    const queryResultsCommand = new QueryCommand({
-      TableName: process.env.RESULT_TABLE,
-      IndexName: "StudentIndex",
-      KeyConditionExpression:
-        "studentUserName = :studentUserName AND drivingSchoolID = :drivingSchoolID",
-      ExpressionAttributeValues: {
-        ":studentUserName": studentUserName,
-        ":drivingSchoolID": drivingSchoolID
-      }
-    });
+    const [
+      { Items: sectionChapters = [] },
+      { Items: studentResults = [] },
+      { Items: chapterQuestions = [] }
+    ] = await Promise.all([
+      getSectionChapters(sectionID),
+      getStudentResults(drivingSchoolID, studentUserName),
+      getDrivingSchoolQuestions(drivingSchoolID, {
+        FilterExpression: "attribute_exists(chapterID)"
+      })
+    ]);
 
-    const { Items: testResults } = await dynamoClient.send(queryResultsCommand);
-    testResults.sort((a, b) => {
+    if (sectionChapters.length === 0)
+      throw Error("Section does not have any chapter");
+
+    sectionChapters.sort((a, b) => a.chapterID.localeCompare(b.chapterID));
+    studentResults.sort((a, b) => {
       if (a.sectionID && !b.sectionID) return 1;
       if (b.sectionID && !a.sectionID) return -1;
       return b.resultID.localeCompare(a.resultID);
     });
 
-    const queryChapterCommand = new QueryCommand({
-      TableName: process.env.CHAPTER_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionID",
-      ExpressionAttributeValues: {
-        ":sectionID": student.sectionID
-      }
-    });
-
-    const { Items: chapters } = await dynamoClient.send(queryChapterCommand);
-    if (chapters.length === 0) throw Error("Section does not have any chapter");
-
-    chapters.sort((a, b) => a.chapterID.localeCompare(b.chapterID));
-
-    const sectionTestResult = testResults.find((item) => item.sectionID);
-
-    const completions = chapters.map((chapter) => {
-      const isChapterCompleted = student.completedChapters?.find(
-        (item) => item.chapterID === chapter.chapterID
+    const sectionTestResult = studentResults.find((item) => item.sectionID);
+    const completions = sectionChapters.map((chapter) => {
+      const { chapterID, chapterTitle } = chapter;
+      const isChapterCompleted = completedChapters.find(
+        (c) => c.chapterID === chapterID
+      );
+      const chapterHasTest = chapterQuestions.find(
+        (q) => q.chapterID === chapterID
       );
 
-      if (!isChapterCompleted)
-        return {
-          chapterID: chapter.chapterID,
-          chapterTitle: chapter.chapterTitle,
-          progressStatus: "Not completed"
-        };
+      const chapterTestResult =
+        studentResults.find((r) => r.chapterID === chapterID && r.isPassed) ||
+        studentResults.find((r) => r.chapterID === chapterID) ||
+        null;
 
-      const latestChapterResult = testResults.find(
-        (item) => item.chapterID === chapter.chapterID
-      );
+      const {
+        resultID,
+        score = null,
+        numberOfQuestions = null,
+        isPassed = false,
+        dateAnswered = null
+      } = chapterTestResult || {};
 
-      if (!latestChapterResult)
-        return {
-          chapterID: chapter.chapterID,
-          chapterTitle: chapter.chapterTitle,
-          progressStatus: "Completed",
-          dateCompleted: isChapterCompleted.dateCompleted
-        };
+      const progressStatus = isChapterCompleted
+        ? "Completed"
+        : chapterHasTest && chapterTestResult && !isPassed
+          ? "Exam not passed"
+          : "Not completed";
 
-      const { score, numberOfQuestions, isPassed, dateAnswered } =
-        latestChapterResult;
+      const dateCompleted =
+        dateAnswered || isChapterCompleted?.dateCompleted || null;
 
       return {
-        chapterID: chapter.chapterID,
-        chapterTitle: chapter.chapterTitle,
-        progressStatus: isPassed ? "Completed" : "Exam not passed",
+        chapterID,
+        chapterTitle,
+        resultID,
+        progressStatus,
         score,
         numberOfQuestions,
-        dateCompleted: dateAnswered
+        dateCompleted
       };
     });
 
+    const {
+      score = null,
+      numberOfQuestions = null,
+      isPassed = false,
+      dateAnswered = null
+    } = sectionTestResult || {};
     completions.push({
-      score: sectionTestResult?.score,
-      numberOfQuestions: sectionTestResult?.numberOfQuestions,
-      sectionID: student.sectionID,
+      sectionID: sectionID,
       sectionTitle: "Final Test",
       progressStatus: !sectionTestResult
         ? "Not completed"
-        : sectionTestResult?.isPassed
+        : isPassed
           ? "Completed"
           : "Exam not passed",
-      dateCompleted: sectionTestResult?.dateAnswered
+      score,
+      numberOfQuestions,
+      dateCompleted: dateAnswered
     });
 
-    const querySubChaptersCommand = new QueryCommand({
-      TableName: process.env.SUB_CHAPTER_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionID",
-      ExpressionAttributeValues: {
-        ":sectionID": student.sectionID
-      }
-    });
-
-    const { Items: subChapters } = await dynamoClient.send(
-      querySubChaptersCommand
-    );
-
+    const { Items: subChapters = [] } = await getSectionSubChapters(sectionID);
     res.status(200).json({
       completions,
-      viewedSubChaptersCount: student.viewedSubChapters?.length || 0,
-      totalSubChaptersCount: subChapters.length
+      viewedSubChaptersCount: viewedSubChapters.length || 0,
+      totalSubChaptersCount: subChapters.length || 0
     });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });

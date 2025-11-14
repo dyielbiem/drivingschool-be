@@ -1,7 +1,6 @@
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
-import { encrypt } from "../../utils/crypto.js";
 import invokeFunction from "../../lambda_invoke_connection/invokeFunction.js";
+import { encrypt } from "../../utils/crypto.js";
+import { getStudent } from "../../utils/dbUtils/student.js";
 
 /*
 ---- Controller to get code when reset password
@@ -14,15 +13,10 @@ const getResetPasswordCode = async (req, res) => {
     if (!studentUserName || !drivingSchoolID)
       throw Error("All required fields must be provided");
 
-    const command = new GetCommand({
-      TableName: process.env.STUDENT_TABLE,
-      Key: {
-        studentUserName,
-        drivingSchoolID
-      }
-    });
-
-    const { Item: student } = await dynamoClient.send(command);
+    const { Item: student } = await getStudent(
+      drivingSchoolID,
+      studentUserName
+    );
     if (!student) throw Error("Student does not exist");
 
     const verifyExpiration = new Date();
@@ -31,16 +25,18 @@ const getResetPasswordCode = async (req, res) => {
       Math.floor(Math.random() * 100000)
     ).padStart(6, "0");
 
-    const emailBody = `<p style="font-size: 1rem">Hi ${studentUserName},</p>
-    <p style="margin: 0; font-size: 1rem">
-      We've received a request to reset your password.
-    </p>
-    <p style="margin: 0; font-size: 1rem">
-      Please provide the following code to continue:
-    </p>
-    <p>
-      <strong style="font-size: 2rem">${verificationCode}</strong>
-    </p>`;
+    const emailBody = `
+      <p style="font-size: 1rem">Hi ${studentUserName},</p>
+      <p style="margin: 0; font-size: 1rem">
+        We've received a request to reset your password.
+      </p>
+      <p style="margin: 0; font-size: 1rem">
+        Please provide the following code to continue:
+      </p>
+      <p>
+        <strong style="font-size: 2rem">${verificationCode}</strong>
+      </p>
+    `;
 
     const invokeFunctionArgs = {
       invokePath: "/api/student/send-email",

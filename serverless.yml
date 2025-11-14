@@ -13,6 +13,7 @@ custom:
   questionTable: "${sls:stage}-driving-school-question"
   resultTable: "${sls:stage}-driving-school-result"
   couponTable: "${sls:stage}-driving-school-coupon"
+  affiliationTable: "${sls:stage}-driving-school-affiliation"
   imagesBucket: "${sls:stage}-driving-school-backend-images"
   s3:
     host: localhost
@@ -27,7 +28,6 @@ custom:
       migrate: true
       port: 8000
       dbPath: "./"
-      inMemory: false
       shareDb: true
       seed: true
     seed:
@@ -55,6 +55,8 @@ custom:
             sources: [./seed/DrivingSchoolResult.json]
           - table: ${self:custom.couponTable}
             sources: [./seed/DrivingSchoolCoupon.json]
+          - table: ${self:custom.affiliationTable}
+            sources: [./seed/DrivingSchoolAffiliation.json]
 
 provider:
   name: aws
@@ -175,6 +177,16 @@ provider:
             - Fn::GetAtt: [CouponTable, Arn]
         - Effect: Allow
           Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [AffiliationTable, Arn]
+        - Effect: Allow
+          Action:
             - s3:GetObject
             - s3:PutObject
             - s3:DeleteObject
@@ -195,6 +207,7 @@ provider:
     QUESTION_TABLE: ${self:custom.questionTable}
     RESULT_TABLE: ${self:custom.resultTable}
     COUPON_TABLE: ${self:custom.couponTable}
+    AFFILIATION_TABLE: ${self:custom.affiliationTable}
     IMAGES_BUCKET: ${self:custom.imagesBucket}
     API_KEY: ${env:API_KEY}
     SUPER_ADMIN_JWT_SECRET: ${env:SUPER_ADMIN_JWT_SECRET}
@@ -209,6 +222,8 @@ provider:
     EMAILJS_TEMPLATE_ID: ${env:EMAILJS_TEMPLATE_ID}
     EMAILJS_PUBLIC_KEY: ${env:EMAILJS_PUBLIC_KEY}
     EMAILJS_PRIVATE_KEY: ${env:EMAILJS_PRIVATE_KEY}
+    ADMIN_EMAIL_RECEIVER: ${env:ADMIN_EMAIL_RECEIVER}
+    IS_PRODUCTION: ${env:IS_PRODUCTION}
     STAGE: ${sls:stage}
 
 functions:
@@ -218,6 +233,9 @@ functions:
     timeout: 300
     events:
       - httpApi: "*"
+  addChapterOrderCmd:
+    name: ${sls:stage}-add-chapter-order-cmd
+    handler: src/command/addChapterOrder.handler
 
 resources:
   Resources:
@@ -280,6 +298,8 @@ resources:
             AttributeType: S
           - AttributeName: studentUserName
             AttributeType: S
+          - AttributeName: affiliationID
+            AttributeType: S
         KeySchema:
           - AttributeName: drivingSchoolID
             KeyType: HASH
@@ -294,6 +314,22 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+          - IndexName: AffiliationIDIndex
+            KeySchema:
+              - AttributeName: affiliationID
+                KeyType: HASH
+            Projection:
+              ProjectionType: INCLUDE
+              NonKeyAttributes:
+                - mailingFirstName
+                - mailingLastName
+                - mailingEmail
+                - courseID
+                - enrollmentDate
+                - affiliationCode
+                - paidAmount
+                - usedCouponCode
+                - isActive
     CourseTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -474,6 +510,36 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.couponTable}
         GlobalSecondaryIndexes:
+          - IndexName: DrivingSchoolIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    AffiliationTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: affiliationID
+            AttributeType: S
+          - AttributeName: affiliationCode
+            AttributeType: S
+          - AttributeName: drivingSchoolID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: affiliationID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.affiliationTable}
+        GlobalSecondaryIndexes:
+          - IndexName: AffiliationCodeIndex
+            KeySchema:
+              - AttributeName: drivingSchoolID
+                KeyType: HASH
+              - AttributeName: affiliationCode
+                KeyType: RANGE
+            Projection:
+              ProjectionType: KEYS_ONLY
           - IndexName: DrivingSchoolIndex
             KeySchema:
               - AttributeName: drivingSchoolID

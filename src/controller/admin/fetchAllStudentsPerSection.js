@@ -1,5 +1,6 @@
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import dynamoClient from "../../db_connection/dbCLient.js";
+import { getAllStudentsInSection } from "../../utils/dbUtils/student.js";
+import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
+import { paginate } from "../../utils/index.js";
 
 /*
 ---- Controller to fetch all the students of a section
@@ -8,72 +9,40 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 const fetchAllStudentsPerSection = async (req, res) => {
   try {
     const { drivingSchoolID } = req.body;
-    const { sectionID } = req.query;
+    const { sectionID, page = 1, pageSize = 50 } = req.query;
 
     if (!sectionID) throw Error("Section ID must be provided");
 
-    const getChaptersCommand = new QueryCommand({
-      TableName: process.env.CHAPTER_TABLE,
-      IndexName: "SectionIndex",
-      KeyConditionExpression: "sectionID = :sectionIDValue",
-      ExpressionAttributeValues: {
-        ":sectionIDValue": sectionID
-      }
-    });
+    const [students, { Item: drivingSchool = {} }] = await Promise.all([
+      getAllStudentsInSection(drivingSchoolID, sectionID),
+      getDrivingSchool(drivingSchoolID, { ProjectionExpression: "noOfRows" })
+    ]);
 
-    const { Items: chapters } = await dynamoClient.send(getChaptersCommand);
-    if (chapters.length === 0) throw Error("Section does not have chapters");
-
-    const sortedChapters = chapters.sort((a, b) =>
-      a.chapterID.localeCompare(b.chapterID)
-    );
-
-    const command = new QueryCommand({
-      TableName: process.env.STUDENT_TABLE,
-      IndexName: "DrivingSchoolIndex",
-      KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
-      FilterExpression: "sectionID = :sectionIDValue",
-      ExpressionAttributeValues: {
-        ":drivingSchoolIDValue": drivingSchoolID,
-        ":sectionIDValue": sectionID
-      }
-    });
-
-    const { Items: students } = await dynamoClient.send(command);
     if (students.length === 0) return res.status(200).json({ allStudents: [] });
 
-    // Set the chpater title to progress name
-    students.forEach((student) => {
-      if (!student.progressID) return;
-      const chapterNumber = sortedChapters.findIndex(
-        (obj) => obj.chapterID === student.progressID
-      );
-
-      if (chapterNumber < 0) return;
-
-      Object.assign(student, {
-        ...student,
-        chapterProgress: chapterNumber + 1
-      });
-    });
-
-    const allStudents = students.sort(
-      (a, b) => new Date(a.enrollmentDate) - new Date(b.enrollmentDate)
-    );
-
-    const noOfRowsCommand = new GetCommand({
-      TableName: process.env.DRIVING_SCHOOL_TABLE,
-      Key: {
-        drivingSchoolID
-      },
-      ProjectionExpression: "noOfRows"
-    });
+    const sortedStudent = students
+      .map((item) => ({
+        ...item,
+        parsedEnrollmentDate: new Date(item.enrollmentDate),
+        passWord: undefined,
+        encryptedPassWord: undefined
+      }))
+      .sort((a, b) => a.parsedEnrollmentDate - b.parsedEnrollmentDate);
 
     const {
-      Item: { noOfRows }
-    } = await dynamoClient.send(noOfRowsCommand);
+      data: allStudents,
+      totalCount,
+      totalPages,
+      hasNext
+    } = paginate(sortedStudent, page, pageSize);
 
-    res.status(200).json({ allStudents, noOfRows: noOfRows || 0 });
+    res.status(200).json({
+      totalCount,
+      totalPages,
+      hasNext,
+      allStudents,
+      noOfRows: drivingSchool.noOfRows || 0
+    });
   } catch (error) {
     if (!error.code) return res.status(400).json({ error: error.message });
     res.status(400).json(error);
