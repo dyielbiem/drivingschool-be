@@ -46,7 +46,7 @@ const addStudent = async (req, res) => {
       parentPhoneNumber,
       birthDate = "",
       billingInformation = null,
-      cardInformation = null,
+      cardInformationAlwaysNull = null,
       couponCode = ""
     } = req.body;
 
@@ -115,8 +115,12 @@ const addStudent = async (req, res) => {
       }
     };
 
-    if (cardInformation) {
-      validateObject(cardInformation, CIFields, "cardInformation");
+    if (cardInformationAlwaysNull) {
+      validateObject(
+        cardInformationAlwaysNull,
+        CIFields,
+        "cardInformationAlwaysNull"
+      );
       validateObject(billingInformation, BIFields, "billingInformation");
 
       if (finalChargeAmount > 0) {
@@ -154,7 +158,7 @@ const addStudent = async (req, res) => {
             ...billingInformation,
             country: "United States"
           },
-          cardInformation,
+          cardInformationAlwaysNull,
           courseID,
           course.courseName,
           finalChargeAmount,
@@ -214,7 +218,7 @@ const addStudent = async (req, res) => {
         transactionID: response.transactionResponse.transId,
         accountNumber: response.transactionResponse.accountNumber,
         accountType: response.transactionResponse.accountType,
-        paidAmount: cardInformation ? finalChargeAmount : 0,
+        paidAmount: cardInformationAlwaysNull ? finalChargeAmount : 0,
         ...transformedBillingInformation
       },
       ConditionExpression:
@@ -285,7 +289,7 @@ const addStudent = async (req, res) => {
       parentEmail,
       parentPhoneNumber,
       usedCouponCode: couponCode,
-      paidAmount: cardInformation ? finalChargeAmount : 0,
+      paidAmount: cardInformationAlwaysNull ? finalChargeAmount : 0,
       isActive: true
     });
   } catch (error) {
