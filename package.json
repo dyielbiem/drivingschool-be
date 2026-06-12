@@ -25,6 +25,7 @@
     "remove": "^0.1.5",
     "serverless-dynamodb": "^0.2.47",
     "serverless-http": "^3.1.1",
+    "stripe": "^22.2.0",
     "ulid": "^2.3.0"
   },
   "scripts": {

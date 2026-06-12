@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import dayjs from "dayjs";
 import { nanoid } from "nanoid";
 import { parseDate } from "chrono-node";
@@ -34,13 +35,17 @@ const enrollStudent = async (req, res) => {
       cardInformation = {},
       courseID,
       couponCode,
-      affiliationCode
+      affiliationCode,
+      paymentMethod
     } = req.body;
 
+    if (!drivingSchoolCredentials?.drivingSchoolID)
+      throw Error("Driving school credentials must be complete");
+
     if (
-      !drivingSchoolCredentials?.paymentLogInKey ||
-      !drivingSchoolCredentials?.paymentTransactionKey ||
-      !drivingSchoolCredentials?.drivingSchoolID
+      paymentMethod !== "stripe" &&
+      (!drivingSchoolCredentials?.paymentTransactionKey ||
+        !drivingSchoolCredentials?.paymentLogInKey)
     )
       throw Error("Driving school credentials must be complete");
 
@@ -101,7 +106,8 @@ const enrollStudent = async (req, res) => {
     ]);
 
     if (!drivingSchool) throw Error("The driving school does not exist");
-    if (student) throw Error("Username is already in use");
+    if (student && (student.paymentMethod !== "stripe" || student.isPaid))
+      throw Error("Username is already in use");
     if (!course) throw Error("Invalid course ID");
     if (!activeSection) throw Error("The driving school has no active section");
 
@@ -112,7 +118,7 @@ const enrollStudent = async (req, res) => {
       course.coursePrice
     );
 
-    let response = {
+    let authorizeResponse = {
       refId: "",
       transactionResponse: {
         transId: "",
@@ -120,37 +126,62 @@ const enrollStudent = async (req, res) => {
         accountType: ""
       }
     };
+    let stripeResponse = null;
 
     /* 
-      If final charge amount is more than zero,
-      Create a request to Authorize.net API Gateway
-      to charge the credit card 
+      Handle non-zero final charge amount
     */
     if (finalChargeAmount > 0) {
-      const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
+      if (paymentMethod === "stripe") {
+        const stripe = new Stripe(process.env.STRIPE_SK);
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: finalChargeAmount * 100,
+          currency: "usd",
+          metadata: {
+            drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
+            studentUserName: accountInformation.userName,
+            courseName: course.courseName?.slice(0, 500),
+            coursePrice: course.coursePrice,
+            usedCouponCode: coupon?.couponCode || "",
+            usedCouponAmount: coupon?.couponAmount || ""
+          }
+        });
 
-      if (!cardNumber || !cardCode || !cardExpiration) {
-        throw Error("Card information must be complete");
+        stripeResponse = {
+          isStudentActivated: false,
+          paymentIntentID: paymentIntent.id,
+          amountToPay: paymentIntent.amount / 100,
+          usedCouponCode: coupon?.couponCode || "",
+          usedCouponAmount: coupon?.couponAmount || "",
+          clientSecret: paymentIntent.client_secret,
+          stripePk: process.env.STRIPE_SK
+        };
+      } else {
+        const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
+
+        if (!cardNumber || !cardCode || !cardExpiration) {
+          throw Error("Card information must be complete");
+        }
+
+        if (requiredBillingInfo.some((field) => !billingInformation?.[field]))
+          throw Error("Billing information must be complete");
+
+        const paymentID = nanoid(20);
+        authorizeResponse = await payment(
+          drivingSchoolCredentials,
+          accountInformation,
+          mailingInformation,
+          billingInformation,
+          cardInformation,
+          courseID,
+          course.courseName,
+          finalChargeAmount,
+          paymentID
+        );
+
+        const { ok, errorMessage } = handleAuthorizeResponse(authorizeResponse);
+        if (!ok) throw Error(errorMessage);
       }
-
-      if (requiredBillingInfo.some((field) => !billingInformation?.[field]))
-        throw Error("Billing information must be complete");
-
-      const paymentID = nanoid(20);
-      response = await payment(
-        drivingSchoolCredentials,
-        accountInformation,
-        mailingInformation,
-        billingInformation,
-        cardInformation,
-        courseID,
-        course.courseName,
-        finalChargeAmount,
-        paymentID
-      );
-
-      const { ok, errorMessage } = handleAuthorizeResponse(response);
-      if (!ok) throw Error(errorMessage);
     }
 
     const hashedPassWord = await hashPassWord(accountInformation.passWord);
@@ -175,10 +206,10 @@ const enrollStudent = async (req, res) => {
         courseID: courseID,
         sectionID: activeSection.sectionID,
         usedCouponCode: coupon?.couponCode || "",
-        paymentID: response.refId,
-        transactionID: response.transactionResponse.transId,
-        accountNumber: response.transactionResponse.accountNumber,
-        accountType: response.transactionResponse.accountType,
+        paymentID: authorizeResponse.refId,
+        transactionID: authorizeResponse.transactionResponse.transId,
+        accountNumber: authorizeResponse.transactionResponse.accountNumber,
+        accountType: authorizeResponse.transactionResponse.accountType,
         billingFirstName: billingInformation.firstName || "",
         billingLastName: billingInformation.lastName || "",
         billingCompany: billingInformation.company || "Not applicable",
@@ -203,13 +234,18 @@ const enrollStudent = async (req, res) => {
         birthDate: strBirthDate,
         enrollmentDate: enrollmentDate.toString(),
         paidAmount: finalChargeAmount,
-        isActive: true,
+        isActive: !stripeResponse,
+        paymentMethod: paymentMethod || "authorize",
         courseType: course.courseType,
         ...affiliationAttr
       }
     });
-
     await dynamoClient.send(putCommand);
+
+    if (stripeResponse) {
+      res.status(200).json(stripeResponse);
+      return;
+    }
 
     const emailRequests = [
       sendStudentWelcomeEmail(
@@ -249,10 +285,11 @@ const enrollStudent = async (req, res) => {
     await Promise.all(emailRequests);
 
     res.status(200).json({
+      isStudentActivated: true,
       drivingSchoolID: drivingSchoolCredentials.drivingSchoolID,
       userName: accountInformation.userName,
-      paymentID: response.refId,
-      transactionID: response.transactionResponse.transId,
+      paymentID: authorizeResponse.refId,
+      transactionID: authorizeResponse.transactionResponse.transId,
       paidAmount: finalChargeAmount,
       sectionID: activeSection.sectionID,
       message: "The enrollment process was successful",

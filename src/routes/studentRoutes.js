@@ -22,6 +22,7 @@ import getResetPasswordCode from "../controller/student/getResetPasswordCode.js"
 import verifyResetPasswordCode from "../controller/student/verifyResetPasswordCode.js";
 import resetPassword from "../controller/student/resetPassword.js";
 import updateProgress from "../controller/student/updateProgress.js";
+import confirmEnrollmentStripePayment from "../controller/student/confirmEnrollmentStripePayment.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -45,6 +46,11 @@ studentRouter.get("/access-token", obtainAccessToken);
 studentRouter.get("/username", authenticateAPIKey, checkStudentUserName);
 studentRouter.post("/send-email", authenticateAPIKey, sendEmail);
 studentRouter.post("/enroll", authenticateAPIKey, enrollStudent);
+studentRouter.post(
+  "/enroll/stripe/payment/confirm",
+  authenticateAPIKey,
+  confirmEnrollmentStripePayment
+);
 studentRouter.post("/login", authenticateAPIKey, loginStudent);
 studentRouter.post("/coupon", authenticateAPIKey, redeemCoupon);
 studentRouter.get("/section", authorizeStudent, fetchSection);

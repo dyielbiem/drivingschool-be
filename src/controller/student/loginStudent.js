@@ -25,7 +25,8 @@ const loginStudent = async (req, res) => {
     });
 
     const { Item } = await dynamoClient.send(command);
-    if (!Item) throw Error("Username or password is incorrect");
+    if (!Item || !Item.isActive)
+      throw Error("Username or password is incorrect");
 
     const isPasswordCorrect = await bcrypt.compare(passWord, Item.passWord);
 
