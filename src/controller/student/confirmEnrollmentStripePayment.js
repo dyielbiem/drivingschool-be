@@ -15,7 +15,7 @@ import { getCoupon } from "../../utils/dbUtils/coupon.js";
 const confirmEnrollmentStripePayment = async (req, res) => {
   try {
     const stripe = new Stripe(process.env.STRIPE_SK);
-    const { paymentIntentID = "pi_3ThWiTAQBnUueoEI1DwIXrcc" } = req.body;
+    const { paymentIntentID } = req.body;
 
     if (!paymentIntentID) throw Error("Payment intent ID is required");
 

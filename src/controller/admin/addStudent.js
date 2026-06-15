@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import dayjs from "dayjs";
 import { nanoid } from "nanoid";
 import { parseDate } from "chrono-node";
@@ -46,8 +47,9 @@ const addStudent = async (req, res) => {
       parentPhoneNumber,
       birthDate = "",
       billingInformation = null,
-      cardInformationAlwaysNull = null,
-      couponCode = ""
+      cardInformation = null,
+      couponCode = "",
+      paymentMethod
     } = req.body;
 
     if (
@@ -96,17 +98,22 @@ const addStudent = async (req, res) => {
     ]);
 
     if (!drivingSchool) throw Error("Driving school does not exist");
-    if (existingStudent) throw Error("Student username is already taken");
+    if (
+      existingStudent &&
+      (existingStudent.paymentMethod !== "stripe" || existingStudent.isPaid)
+    )
+      throw Error("Student username is already taken");
     if (!course) throw Error("Invalid course ID");
     if (!activeSection) throw Error("The driving school has no active section");
 
-    const { finalChargeAmount } = await getFinalChargeAmount(
+    const { finalChargeAmount, coupon } = await getFinalChargeAmount(
       couponCode,
       drivingSchoolID,
       course.coursePrice
     );
 
-    let response = {
+    let stripeResponse = null;
+    let authorizeResponse = {
       refId: "",
       transactionResponse: {
         transId: "",
@@ -115,58 +122,82 @@ const addStudent = async (req, res) => {
       }
     };
 
-    if (cardInformationAlwaysNull) {
-      validateObject(
-        cardInformationAlwaysNull,
-        CIFields,
-        "cardInformationAlwaysNull"
-      );
-      validateObject(billingInformation, BIFields, "billingInformation");
+    if (finalChargeAmount > 0) {
+      if (paymentMethod === "stripe" && billingInformation) {
+        const stripe = new Stripe(process.env.STRIPE_SK);
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: finalChargeAmount * 100,
+          currency: "usd",
+          metadata: {
+            drivingSchoolID: drivingSchoolID,
+            studentUserName: userName,
+            courseName: course.courseName?.slice(0, 500),
+            coursePrice: course.coursePrice,
+            usedCouponCode: coupon?.couponCode || "",
+            usedCouponAmount: coupon?.couponAmount || ""
+          }
+        });
 
-      if (finalChargeAmount > 0) {
-        const paymentID = nanoid(20);
-
-        const drivingSchoolCredentials = {
-          drivingSchoolID,
-          paymentLogInKey: drivingSchool.paymentLogInKey,
-          paymentTransactionKey: drivingSchool.paymentTransactionKey
+        stripeResponse = {
+          paymentIntentID: paymentIntent.id,
+          amountToPay: paymentIntent.amount / 100,
+          usedCouponCode: coupon?.couponCode || "",
+          usedCouponAmount: coupon?.couponAmount || "",
+          clientSecret: paymentIntent.client_secret,
+          stripePk: process.env.STRIPE_PK
         };
-        const accountInformation = {
-          userName,
-          passWord,
-          confirmPassWord,
-          birthDate
-        };
-        const mailingInformation = {
-          firstName,
-          lastName,
-          company,
-          address,
-          city,
-          state,
-          zip,
-          country: "United States",
-          email,
-          phoneNumber
-        };
+      }
 
-        response = await payment(
-          drivingSchoolCredentials,
-          accountInformation,
-          mailingInformation,
-          {
-            ...billingInformation,
-            country: "United States"
-          },
-          cardInformationAlwaysNull,
-          courseID,
-          course.courseName,
-          finalChargeAmount,
-          paymentID
-        );
+      if (paymentMethod !== "stripe" && cardInformation) {
+        validateObject(cardInformation, CIFields, "cardInformation");
+        validateObject(billingInformation, BIFields, "billingInformation");
 
-        const { ok, errorMessage } = handleAuthorizeResponse(response);
-        if (!ok) throw Error(errorMessage);
+        if (finalChargeAmount > 0) {
+          const paymentID = nanoid(20);
+
+          const drivingSchoolCredentials = {
+            drivingSchoolID,
+            paymentLogInKey: drivingSchool.paymentLogInKey,
+            paymentTransactionKey: drivingSchool.paymentTransactionKey
+          };
+          const accountInformation = {
+            userName,
+            passWord,
+            confirmPassWord,
+            birthDate
+          };
+          const mailingInformation = {
+            firstName,
+            lastName,
+            company,
+            address,
+            city,
+            state,
+            zip,
+            country: "United States",
+            email,
+            phoneNumber
+          };
+
+          authorizeResponse = await payment(
+            drivingSchoolCredentials,
+            accountInformation,
+            mailingInformation,
+            {
+              ...billingInformation,
+              country: "United States"
+            },
+            cardInformation,
+            courseID,
+            course.courseName,
+            finalChargeAmount,
+            paymentID
+          );
+
+          const { ok, errorMessage } =
+            handleAuthorizeResponse(authorizeResponse);
+          if (!ok) throw Error(errorMessage);
+        }
       }
     }
 
@@ -184,6 +215,11 @@ const addStudent = async (req, res) => {
 
       transformedBillingInformation.billingCountry = "United States";
     }
+    const paidAmount =
+      (paymentMethod === "stripe" && billingInformation) ||
+      (paymentMethod !== "stripe" && cardInformation)
+        ? finalChargeAmount
+        : 0;
 
     const command = new PutCommand({
       TableName: process.env.STUDENT_TABLE,
@@ -212,20 +248,25 @@ const addStudent = async (req, res) => {
         parentLastName,
         parentEmail,
         parentPhoneNumber,
-        isActive: true,
         usedCouponCode: couponCode,
-        paymentID: response.refId,
-        transactionID: response.transactionResponse.transId,
-        accountNumber: response.transactionResponse.accountNumber,
-        accountType: response.transactionResponse.accountType,
-        paidAmount: cardInformationAlwaysNull ? finalChargeAmount : 0,
+        paymentID: authorizeResponse.refId,
+        transactionID: authorizeResponse.transactionResponse.transId,
+        accountNumber: authorizeResponse.transactionResponse.accountNumber,
+        accountType: authorizeResponse.transactionResponse.accountType,
+        paidAmount,
+        isActive: !stripeResponse,
+        paymentMethod: paymentMethod || "authorize",
+        isPaid: !stripeResponse,
         ...transformedBillingInformation
-      },
-      ConditionExpression:
-        "attribute_not_exists(studentUserName) AND attribute_not_exists(drivingSchoolID)"
+      }
     });
 
     await dynamoClient.send(command);
+
+    if (stripeResponse) {
+      res.status(200).json(stripeResponse);
+      return;
+    }
 
     const emailRequests = [
       sendStudentWelcomeEmail(
@@ -289,7 +330,7 @@ const addStudent = async (req, res) => {
       parentEmail,
       parentPhoneNumber,
       usedCouponCode: couponCode,
-      paidAmount: cardInformationAlwaysNull ? finalChargeAmount : 0,
+      paidAmount,
       isActive: true
     });
   } catch (error) {

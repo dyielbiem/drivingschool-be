@@ -154,7 +154,7 @@ const enrollStudent = async (req, res) => {
           usedCouponCode: coupon?.couponCode || "",
           usedCouponAmount: coupon?.couponAmount || "",
           clientSecret: paymentIntent.client_secret,
-          stripePk: process.env.STRIPE_SK
+          stripePk: process.env.STRIPE_PK
         };
       } else {
         const { cardNumber, cardCode, cardExpiration } = cardInformation || {};
@@ -237,6 +237,7 @@ const enrollStudent = async (req, res) => {
         isActive: !stripeResponse,
         paymentMethod: paymentMethod || "authorize",
         courseType: course.courseType,
+        isPaid: !stripeResponse,
         ...affiliationAttr
       }
     });
