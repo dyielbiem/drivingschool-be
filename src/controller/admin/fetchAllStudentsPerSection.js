@@ -21,6 +21,7 @@ const fetchAllStudentsPerSection = async (req, res) => {
     if (students.length === 0) return res.status(200).json({ allStudents: [] });
 
     const sortedStudent = students
+      .filter((item) => item.paymentMethod !== "stripe" || item.isPaid)
       .map((item) => ({
         ...item,
         parsedEnrollmentDate: new Date(item.enrollmentDate),

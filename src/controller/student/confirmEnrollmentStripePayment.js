@@ -19,8 +19,16 @@ const confirmEnrollmentStripePayment = async (req, res) => {
 
     if (!paymentIntentID) throw Error("Payment intent ID is required");
 
-    const { status, metadata = {} } =
-      await stripe.paymentIntents.retrieve(paymentIntentID);
+    const {
+      status,
+      metadata = {},
+      payment_method: paymentMethod
+    } = await stripe.paymentIntents.retrieve(paymentIntentID, {
+      expand: ["payment_method"]
+    });
+
+    const brand = paymentMethod?.card?.brand ?? null;
+    const last4 = paymentMethod?.card?.last4 ?? null;
 
     if (status !== "succeeded")
       throw Error("Payment transaction did not succeed");
@@ -39,7 +47,9 @@ const confirmEnrollmentStripePayment = async (req, res) => {
     await updateStudentItem(drivingSchoolID, studentUserName, {
       ":isActive": true,
       ":isPaid": true,
-      ":stripePaymentIntentID": paymentIntentID
+      ":transactionID": paymentIntentID,
+      ":accountNumber": last4 ? `XXXX${last4}` : null,
+      ":accountType": brand
     });
 
     const [{ Item: drivingSchool }, { Item: course }] = await Promise.all([
