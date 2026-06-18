@@ -21,7 +21,8 @@ const checkStudentUserName = async (req, res) => {
     });
 
     const { Item: student } = await dynamoClient.send(command);
-    if (student) throw Error("Username is already taken");
+    if (student && (student.paymentMethod !== "stripe" || student.isPaid))
+      throw Error("Username is already taken");
 
     res.status(200).json({ message: "Username is available" });
   } catch (error) {
