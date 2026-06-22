@@ -8,7 +8,7 @@ import dynamoClient from "../../db_connection/dbCLient.js";
 import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
 import payment from "../../utils/payment.js";
-import { encrypt } from "../../utils/crypto.js";
+import { encrypt, decrypt } from "../../utils/crypto.js";
 import { hashPassWord, validateObject } from "../../utils/index.js";
 import {
   getFinalChargeAmount,
@@ -124,7 +124,11 @@ const addStudent = async (req, res) => {
 
     if (finalChargeAmount > 0) {
       if (paymentMethod === "stripe" && billingInformation) {
-        const stripe = new Stripe(process.env.STRIPE_SK);
+        if (!drivingSchool.stripeSecretKey)
+          throw Error("Driving school does not have Stripe secret key");
+
+        const decryptedStripeSecretKey = decrypt(drivingSchool.stripeSecretKey);
+        const stripe = new Stripe(decryptedStripeSecretKey);
         const paymentIntent = await stripe.paymentIntents.create({
           amount: finalChargeAmount * 100,
           currency: "usd",
@@ -334,9 +338,18 @@ const addStudent = async (req, res) => {
       isActive: true
     });
   } catch (error) {
-    if (error.message === "The conditional request failed")
-      return res.status(400).json({ error: "Student already exists" });
-    if (!error.code) return res.status(400).json({ error: error.message });
+    console.log(JSON.stringify(error, null, 2)); // eslint-disable-line
+
+    if (error.message?.includes?.("Invalid API Key provided")) {
+      res.status(400).json({ error: "Incorrect Stripe secret key" });
+      return;
+    }
+
+    if (!error.code) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
     res.status(400).json(error);
   }
 };

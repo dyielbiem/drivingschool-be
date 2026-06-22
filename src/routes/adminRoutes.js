@@ -80,6 +80,8 @@ import fetchAffiliationStudents from "../controller/admin/fetchAffiliationStuden
 import updateChaptersOrder from "../controller/admin/updateChaptersOrder.js";
 import fetchPaginatedStudentsPerSection from "../controller/admin/fetchPaginatedStudentsPerSection.js";
 import confirmAddStudentStripePayment from "../controller/admin/confirmEnrollmentStripePayment.js";
+import updateDrivingSchoolStripeSK from "../controller/admin/updateDrivingSchoolStripeSK.js";
+import checkDrivingSchoolStripeSK from "../controller/admin/checkDrivingSchoolStripeSK.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -273,6 +275,16 @@ adminRouter.get(
   "/affiliation/student/list",
   authorizeAdmin,
   fetchAffiliationStudents
+);
+adminRouter.patch(
+  "/driving-school/stripe/secret-key",
+  authorizeAdmin,
+  updateDrivingSchoolStripeSK
+);
+adminRouter.get(
+  "/driving-school/stripe/secret-key",
+  authorizeAdmin,
+  checkDrivingSchoolStripeSK
 );
 
 export default adminRouter;

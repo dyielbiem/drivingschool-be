@@ -10,7 +10,7 @@ import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
 import { requiredBillingInfo } from "../../constants/index.js";
 import { hashPassWord } from "../../utils/index.js";
-import { encrypt } from "../../utils/crypto.js";
+import { encrypt, decrypt } from "../../utils/crypto.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getStudent } from "../../utils/dbUtils/student.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
@@ -133,7 +133,11 @@ const enrollStudent = async (req, res) => {
     */
     if (finalChargeAmount > 0) {
       if (paymentMethod === "stripe") {
-        const stripe = new Stripe(process.env.STRIPE_SK);
+        if (!drivingSchool.stripeSecretKey)
+          throw Error("Driving school does not have Stripe secret key");
+
+        const decryptedStripeSecretKey = decrypt(drivingSchool.stripeSecretKey);
+        const stripe = new Stripe(decryptedStripeSecretKey);
         const paymentIntent = await stripe.paymentIntents.create({
           amount: finalChargeAmount * 100,
           currency: "usd",
@@ -297,12 +301,21 @@ const enrollStudent = async (req, res) => {
       courseType: course.courseType
     });
   } catch (error) {
+    console.log(JSON.stringify(error, null, 2)); // eslint-disable-line
+
+    if (
+      error.message?.includes?.("Invalid API Key provided") ||
+      error.code === "ERR_OSSL_WRONG_FINAL_BLOCK_LENGTH"
+    ) {
+      res.status(400).json({ error: "Incorrect Stripe secret key" });
+      return;
+    }
+
     if (!error.code) {
-      console.log("ERROR: ", error.message); // eslint-disable-line
       res.status(400).json({ error: error.message });
       return;
     }
-    console.log("ERROR: ", error.message); // eslint-disable-line
+
     res.status(400).json(error);
   }
 };

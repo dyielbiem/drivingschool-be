@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 
 import sendStudentWelcomeEmail from "../../utils/sendStudentWelcomeEmail.js";
 import emailAdminAboutNewStudent from "../../utils/emailAdminAboutNewStudent.js";
+import { decrypt } from "../../utils/crypto.js";
 import { getStudent, updateStudentItem } from "../../utils/dbUtils/student.js";
 import { getDrivingSchool } from "../../utils/dbUtils/drivingSchool.js";
 import { getCourse } from "../../utils/dbUtils/course.js";
@@ -14,10 +15,17 @@ import { getCoupon } from "../../utils/dbUtils/coupon.js";
 */
 const confirmEnrollmentStripePayment = async (req, res) => {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SK);
-    const { paymentIntentID } = req.body;
+    const { paymentIntentID, drivingSchoolID } = req.body;
 
+    if (!drivingSchoolID) throw Error("Driving school ID is required");
     if (!paymentIntentID) throw Error("Payment intent ID is required");
+
+    const { Item: drivingSchool } = await getDrivingSchool(drivingSchoolID);
+    if (!drivingSchool.stripeSecretKey)
+      throw Error("Driving school does not have Stripe secret key");
+
+    const decryptedStripeSecretKey = decrypt(drivingSchool.stripeSecretKey);
+    const stripe = new Stripe(decryptedStripeSecretKey);
 
     const {
       status,
@@ -33,7 +41,7 @@ const confirmEnrollmentStripePayment = async (req, res) => {
     if (status !== "succeeded")
       throw Error("Payment transaction did not succeed");
 
-    const { drivingSchoolID, studentUserName, usedCouponCode } = metadata;
+    const { studentUserName, usedCouponCode } = metadata;
     const { Item: student } = await getStudent(
       drivingSchoolID,
       studentUserName
@@ -52,10 +60,7 @@ const confirmEnrollmentStripePayment = async (req, res) => {
       ":accountType": brand
     });
 
-    const [{ Item: drivingSchool }, { Item: course }] = await Promise.all([
-      getDrivingSchool(drivingSchoolID),
-      getCourse(student.courseID)
-    ]);
+    const { Item: course } = await getCourse(student.courseID);
     let coupon = null;
     if (usedCouponCode) {
       const { Item } = await getCoupon(usedCouponCode, drivingSchoolID);
