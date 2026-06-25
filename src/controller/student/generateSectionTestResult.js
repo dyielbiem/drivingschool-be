@@ -12,11 +12,13 @@ import { getSectionQuestions } from "../../utils/dbUtils/question.js";
 const generateCompletionEmailBody = (
   studentUserName,
   results,
-  forAdmin = true
+  forAdmin = true,
+  firstName = "",
+  lastName = ""
 ) => {
   const salutation = forAdmin ? "Hello Admin," : `Hello ${studentUserName},`;
   const openingParagraph = forAdmin
-    ? `This is to inform you that student <strong>${studentUserName}</strong>
+    ? `This is to inform you that student <strong>${firstName} ${lastName} (${studentUserName})</strong>
         has successfully completed the online course. The test scores are listed below.`
     : "This is to inform you that you have successfully completed your online course. Your test scores are listed below.";
 
@@ -155,7 +157,13 @@ const generateSectionTestResult = async (req, res) => {
         body: {
           emailReceiver: drivingSchool.email,
           emailSubject: "Student Course Completion",
-          emailBody: generateCompletionEmailBody(studentUserName, results)
+          emailBody: generateCompletionEmailBody(
+            studentUserName,
+            results,
+            true,
+            student.mailingFirstName,
+            student.mailingLastName
+          )
         }
       };
 

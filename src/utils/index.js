@@ -22,3 +22,11 @@ export const paginate = (items, page = 1, pageSize = 50) => {
     data: items.slice(startIdx, endIdx)
   };
 };
+
+export const validateObject = (obj, requiredFields, objName = "Object") => {
+  if (!obj) throw Error(`${objName} is required`);
+
+  requiredFields.forEach((field) => {
+    if (!obj[field]) throw Error(`${objName}.${field} is required`);
+  });
+};

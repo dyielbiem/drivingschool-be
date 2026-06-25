@@ -78,6 +78,7 @@ import deleteAffiliation from "../controller/admin/deleteAffiliation.js";
 import fetchAllAffiliations from "../controller/admin/fetchAllAffiliations.js";
 import fetchAffiliationStudents from "../controller/admin/fetchAffiliationStudents.js";
 import updateChaptersOrder from "../controller/admin/updateChaptersOrder.js";
+import fetchPaginatedStudentsPerSection from "../controller/admin/fetchPaginatedStudentsPerSection.js";
 
 const establishedRequestLimiter = () =>
   rateLimit({
@@ -200,6 +201,11 @@ adminRouter.patch("/student", authorizeAdmin, updateStudent);
 adminRouter.delete("/student", authorizeAdmin, deleteStudent);
 adminRouter.patch("/student/status", authorizeAdmin, updateStudentStatus);
 adminRouter.get("/student/all", authorizeAdmin, fetchAllStudentsPerSection);
+adminRouter.get(
+  "/section/student/list",
+  authorizeAdmin,
+  fetchPaginatedStudentsPerSection
+);
 adminRouter.get(
   "/student/test/result/list",
   authorizeAdmin,

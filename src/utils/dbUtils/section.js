@@ -43,3 +43,21 @@ export const getActiveSection = async (drivingSchoolID) => {
 
   return sections?.[0] || null;
 };
+
+export const getDrivingSchoolSectionList = async (
+  drivingSchoolID,
+  otherArgs = {}
+) => {
+  const sectionCommand = new QueryCommand({
+    TableName: process.env.SECTION_TABLE,
+    IndexName: "DrivingSchoolIndex",
+    KeyConditionExpression: "drivingSchoolID = :drivingSchoolIDValue",
+    ExpressionAttributeValues: {
+      ":drivingSchoolIDValue": drivingSchoolID
+    },
+    ...otherArgs
+  });
+
+  const results = await dynamoClient.send(sectionCommand);
+  return results;
+};

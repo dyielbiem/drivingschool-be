@@ -580,3 +580,10 @@ plugins:
   - serverless-dynamodb
   - serverless-offline
   - serverless-s3-local
+
+package:
+  patterns:
+    - "!node_modules/**/test/**"
+    - "!node_modules/**/tests/**"
+    - "!node_modules/**/*.md"
+    - "!node_modules/**/*.map"

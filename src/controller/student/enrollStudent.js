@@ -17,7 +17,6 @@ import { getActiveSection } from "../../utils/dbUtils/section.js";
 import { getAffiliationByCode } from "../../utils/dbUtils/affiliation.js";
 import {
   getFinalChargeAmount,
-  validateCoupon,
   handleAuthorizeResponse
 } from "../../utils/enrollment.js";
 
@@ -106,15 +105,12 @@ const enrollStudent = async (req, res) => {
     if (!course) throw Error("Invalid course ID");
     if (!activeSection) throw Error("The driving school has no active section");
 
-    // Check if the provided coupon is valid
-    const [coupon, isCouponValid] = await validateCoupon(
+    // Get final charge amount and coupon
+    const { finalChargeAmount, coupon } = await getFinalChargeAmount(
       couponCode,
-      drivingSchoolCredentials.drivingSchoolID
+      drivingSchoolCredentials.drivingSchoolID,
+      course.coursePrice
     );
-    if (!isCouponValid) throw Error("Invalid coupon code");
-
-    // Get the final charge amount
-    const finalChargeAmount = getFinalChargeAmount(coupon, course.coursePrice);
 
     let response = {
       refId: "",
