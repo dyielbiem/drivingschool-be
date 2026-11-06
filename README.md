@@ -1,3 +1,7 @@
+## Frontend Repository
+
+[Driving School Frontend Repository](https://github.com/dyielbiem/drivingschool-fe)
+
 ## Minimum Requirements
 
 - Java v21.0.1
